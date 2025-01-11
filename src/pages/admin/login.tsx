@@ -25,7 +25,7 @@ const Login = () => {
         event.preventDefault();
         event.stopPropagation();
 
-        try {
+        try {   
             setPending(true)
             const form = event.currentTarget;
             if (form.checkValidity() === false) {

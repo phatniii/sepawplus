@@ -103,6 +103,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 userData,
                 userTakecarepersonData: takecareperson,
                 safezoneData: safezone,
+                
               });
             } else {
               await replyMessage({

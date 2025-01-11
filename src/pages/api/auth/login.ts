@@ -28,12 +28,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
                 }
             });
 
+            console.log(user)
             if (!user) {
                 return res.status(401).json({ message: 'Username หรือ Password ไม่ถูกต้อง' });
+
             }
+            
 
             // ตรวจสอบรหัสผ่าน
+            console.log(password,user.users_passwd)
             const isPasswordMatch = await compare(password, user.users_passwd);
+            console.log(isPasswordMatch)
             if (!isPasswordMatch) {
                 return res.status(401).json({ message: 'User หรือ Password ไม่ถูกต้อง' });
             }

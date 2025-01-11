@@ -1,6 +1,6 @@
 
 - npx prisma migrate
-- prisma migrate dev or prisma db push
+- npx prisma migrate dev or prisma db push
 - npx prisma generate
 ## Step 1: Install PostgreSQL
 
