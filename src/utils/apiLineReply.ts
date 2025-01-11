@@ -816,64 +816,41 @@ export const replyUserInfo = async ({
 
 export const replyUserData = async ({
     replyToken,
-    userData,
-    userTakecarepersonData
+    userData
 }: ReplyUserData) => {
     try {
         const profile = await getUserProfile(userData.users_line_id);
-
-        // เตรียมข้อมูลผู้สูงอายุ
-        let contentTakecareperson = [
-            layoutBoxBaseline("ข้อมูล", 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุ'),
-        ];
-
-        if (userTakecarepersonData) {
-            contentTakecareperson = [
-                layoutBoxBaseline("ชื่อ-สกุล", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`),
-                layoutBoxBaseline("วันเดือนปีเกิด", `${moment(userTakecarepersonData.takecare_birthday).format('DD/MM/YYYY')}`),
-                layoutBoxBaseline("ที่อยู่", `${userTakecarepersonData.takecare_number || '-'} หมู่ ${userTakecarepersonData.takecare_moo || '-'}`),
-                layoutBoxBaseline("ถนน", `${userTakecarepersonData.takecare_road || '-'}`),
-                layoutBoxBaseline("ตำบล", `${userTakecarepersonData.takecare_tubon || '-'}`),
-                layoutBoxBaseline("อำเภอ", `${userTakecarepersonData.takecare_amphur || '-'}`),
-                layoutBoxBaseline("จังหวัด", `${userTakecarepersonData.takecare_province || '-'}`),
-                layoutBoxBaseline("รหัสไปรษณีย์", `${userTakecarepersonData.takecare_postcode || '-'}`),
-                layoutBoxBaseline("เบอร์โทร", `${userTakecarepersonData.takecare_tel1 || '-'}`),
-                layoutBoxBaseline("โรคประจำตัว", `${userTakecarepersonData.takecare_disease || '-'}`),
-                layoutBoxBaseline("ยาที่ใช้ประจำ", `${userTakecarepersonData.takecare_drug || '-'}`),
-            ];
-        }
-
         const requestData = {
             replyToken,
             messages: [
                 {
-                    type: "flex",
-                    altText: "ลงทะเบียน",
+                    type    : "flex",
+                    altText : "ลงทะเบียน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type: "box",
-                            layout: "vertical",
+                            type    : "box",
+                            layout  : "vertical",
                             contents: [
                                 {
-                                    type: "text",
-                                    text: "ข้อมูลลงทะเบียน",
-                                    color: "#FFB400",
-                                    size: "xl",
+                                    type  : "text",
+                                    text  : "ข้อมูลลงทะเบียน",
+                                    color : "#FFB400",
+                                    size  : "xl",
                                     weight: "bold",
-                                    wrap: true,
+                                    wrap  : true
                                 },
                                 {
-                                    type: "text",
-                                    text: `คุณ ${profile.displayName}`,
-                                    size: "sm",
-                                    color: "#555555",
-                                    wrap: true,
-                                    margin: "sm",
+                                    type  : "text",
+                                    text  : `คุณ ${profile.displayName}`,
+                                    size  : "sm",
+                                    color : "#555555",
+                                    wrap  : true,
+                                    margin: "sm"
                                 },
                                 {
-                                    type: "separator",
-                                    margin: "xxl",
+                                    type  : "separator",
+                                    margin: "xxl"
                                 },
                                 {
                                     type: "box",
@@ -892,53 +869,33 @@ export const replyUserData = async ({
                                         layoutBoxBaseline("รหัสไปรษณีย์", `${userData.users_postcode || '-'}`),
                                         layoutBoxBaseline("เบอร์โทรศัพท์", `${userData.users_tel1 || '-'}`),
                                         layoutBoxBaseline("LINE ID", userData.users_line_id),
-                                    ],
+                                    ]
+
                                 },
                                 {
-                                    type: "separator",
-                                    margin: "xxl",
-                                },
-                                {
-                                    type: "text",
-                                    text: "ข้อมูลผู้สูงอายุ",
-                                    size: "md",
-                                    color: "#555555",
-                                    wrap: true,
-                                    margin: "sm",
-                                },
-                                {
-                                    type: "box",
-                                    layout: "vertical",
-                                    margin: "xxl",
-                                    spacing: "sm",
-                                    contents: contentTakecareperson,
-                                },
-                                {
-                                    type: "button",
-                                    style: "primary",
+                                    type  : "button",
+                                    style : "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type: "uri",
+                                        type : "uri",
                                         label: "ลงทะเบียนผู้สูงอายุ",
-                                        uri: `${WEB_API}/elderly_registration?auToken=${userData.users_line_id}`,
-                                    },
+                                        uri  : `${WEB_API}/elderly_registration?auToken=${userData.users_line_id}`
+                                    }
                                 },
-                            ],
-                        },
-                    },
-                },
+                            ]
+                        }
+                    }
+                }
             ],
         };
-
-        await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
+       await axios.post(LINE_MESSAGING_API, requestData, { headers:LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
         }
     }
-};
-
+}
 
 export const replyNotification = async ({
     replyToken,
