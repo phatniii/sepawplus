@@ -144,21 +144,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       
         case "การเชื่อมต่อนาฬิกา": {
           console.log("Handling device connection for user:", userId);
-      
+          console.log("Webhook Event Received:", req.body);
           const userData = await safeApiCall(() => getUser(userId));
-          console.log("User Data:", userData);
-      
           if (userData) {
-              await replyConnection({
-                  replyToken,
-                  userData,
-              });
+            await replyConnection({
+              replyToken,
+              userData,
+            });
           } else {
-              console.log("User not found:", userId);
-              await replyNotRegistration({ replyToken, userId });
+            await replyNotRegistration({ replyToken, userId });
           }
           break;
-      }
+        }
       
         case "การยืม-คืนอุปกรณ์": {
           console.log("Handling borrow equipment request for user:", userId);
