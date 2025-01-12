@@ -144,17 +144,30 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       
         case "การเชื่อมต่อนาฬิกา": {
           console.log("Handling device connection for user:", userId);
-          const userData = await safeApiCall(() => getUser(userId));
-          if (userData) {
-            await replyConnection({
-              replyToken,
-              userData,
-            });
-          } else {
-            await replyNotRegistration({ replyToken, userId });
+      
+          try {
+              const userData = await safeApiCall(() => getUser(userId));
+              console.log("Fetched user data:", userData);
+      
+              if (userData && userData.users_line_id) {
+                  console.log("User data is valid. Proceeding to reply.");
+                  await replyUserInfo({ replyToken, userData });
+                  await replyConnection({ replyToken, userData });
+              } else {
+                  console.log("User data is incomplete or missing:", userData);
+                  await replyNotRegistration({ replyToken, userId });
+              }
+          } catch (error) {
+              console.error("Error handling device connection:", error);
+              await replyMessage({
+                  replyToken,
+                  message: "เกิดข้อผิดพลาดในการดำเนินการ กรุณาลองใหม่อีกครั้ง",
+              });
           }
+      
           break;
-        }
+      }
+      
       
         case "การยืม-คืนอุปกรณ์": {
           console.log("Handling borrow equipment request for user:", userId);
