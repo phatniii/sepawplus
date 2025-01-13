@@ -457,7 +457,7 @@ export const replyConnection = async ({
                                     margin: "xxl",
                                     spacing: "sm",
                                     contents: [
-                                        layoutBoxBaseline("ชื่อ-สกุล", `${userTakecarepersonData.takecare_sname}`, 4, 5),
+                                        layoutBoxBaseline("ชื่อ-สกุล", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, 4, 5),
                                         layoutBoxBaseline("เบอร์โทร", `${userTakecarepersonData.takecare_tel1 || '-'}`, 4, 5),
                                     ]
 
