@@ -144,17 +144,54 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       
         case "การเชื่อมต่อนาฬิกา": {
           console.log("Handling device connection for user:", userId);
-          const userData = await safeApiCall(() => getUser(userId));
-          if (userData) {
-            await replyConnection({
-              replyToken,
-              userData,
-            });
-          } else {
-            await replyNotRegistration({ replyToken, userId });
+          try {
+              // ดึงข้อมูลผู้ใช้งาน
+              const userData = await safeApiCall(() => getUser(userId));
+              if (userData) {
+                  console.log("Fetched user data:", userData);
+      
+                  // เข้ารหัส users_id
+                  const encodedUserId = encodeURIComponent(userData.users_id);
+      
+                  // ดึงข้อมูลผู้สูงอายุ (Takecare person)
+                  const takecareperson = await safeApiCall(() =>
+                      getTakecareperson(encodedUserId)
+                  );
+      
+                  if (takecareperson?.takecare_id) {
+                      console.log("Fetched takecareperson data:", takecareperson);
+      
+                      // รวมชื่อและนามสกุลของผู้สูงอายุ
+                      const takecareFirstName = takecareperson?.takecare_fname || "ไม่ระบุชื่อ";
+                      const takecareLastName = takecareperson?.takecare_sname || "ไม่ระบุนามสกุล";
+                      const takecareFullName = `${takecareFirstName} ${takecareLastName}`;
+      
+                      // ตอบกลับพร้อมข้อมูลชื่อผู้สูงอายุ
+                      await replyMessage({
+                          replyToken,
+                          message: `การเชื่อมต่อนาฬิกาสำเร็จสำหรับผู้สูงอายุ ${takecareFullName}`,
+                      });
+                  } else {
+                      console.error("Takecare person data not found.");
+                      await replyMessage({
+                          replyToken,
+                          message: "ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุ ไม่สามารถดำเนินการเชื่อมต่อได้",
+                      });
+                  }
+              } else {
+                  console.error("User data not found.");
+                  await replyNotRegistration({ replyToken, userId });
+              }
+          } catch (error) {
+              console.error("Error occurred while handling device connection:", error);
+              await replyMessage({
+                  replyToken,
+                  message: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+              });
           }
           break;
-        }
+      }
+      
       
         case "การยืม-คืนอุปกรณ์": {
           console.log("Handling borrow equipment request for user:", userId);
