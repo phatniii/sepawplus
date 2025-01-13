@@ -145,11 +145,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         case "การเชื่อมต่อนาฬิกา": {
           console.log("Handling device connection for user:", userId);
           const userData = await safeApiCall(() => getUser(userId));
-          const takecareFirstName = userData?.takecare_fname || "ไม่ระบุชื่อ";
-          const takecareLastName = userData?.takecare_sname || "ไม่ระบุนามสกุล";
-  
-          console.log("Takecare First Name:", takecareFirstName);
-          console.log("Takecare Last Name:", takecareLastName);
           if (userData) {
             await replyConnection({
               replyToken,
