@@ -49,9 +49,12 @@ interface ReplyUserData {
         users_status_id: {
             status_name: string;
         }
-    };
-    userTakecarepersonData?: any;
-}
+    },
+    userTakecarepersonData: {
+        takecare_fname: string;
+        takecare_sname: string;
+    },
+};
 interface ReplySettingData {
     replyToken: string;
     userData: {
