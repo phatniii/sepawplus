@@ -5,6 +5,7 @@ import {
   replyMenuBorrowequipment,
   replyUserInfo,
   replyNotRegistration,
+  replyUserData,
   replyLocation,
   replySetting,
   replyConnection, // สำหรับ "การเชื่อมต่ออุปกรณ์"
@@ -119,14 +120,33 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       
         case "ลงทะเบียน": {
           console.log("Handling registration request for user:", userId);
-          const userData = await safeApiCall(() => getUser(userId));
-          if (userData) {
-            await replyUserInfo({ replyToken, userData });
-          } else {
-            await replyRegistration({ replyToken, userId });
+          try {
+              // ดึงข้อมูลผู้ใช้งาน
+              const userData = await safeApiCall(() => getUser(userId));
+      
+              if (userData) {
+                  console.log("User already registered:", userData);
+      
+                  // แสดงข้อมูลผู้ดูแล และเมนู "ลงทะเบียนผู้สูงอายุ"
+                  await replyUserData({ replyToken, userData });
+              } else {
+                  console.log("User not registered yet.");
+      
+                  // เรียกฟังก์ชันเพื่อเริ่มกระบวนการลงทะเบียนใหม่
+                  await replyRegistration({ replyToken, userId });
+              }
+          } catch (error) {
+              console.error("Error occurred during registration handling:", error);
+      
+              // แจ้งข้อผิดพลาดให้ผู้ใช้ทราบ
+              await replyMessage({
+                  replyToken,
+                  message: "เกิดข้อผิดพลาดในการลงทะเบียน กรุณาลองใหม่อีกครั้ง",
+              });
           }
           break;
-        }
+      }
+      
       
         case "ดูข้อมูลผู้ใช้งาน": {
           console.log("Handling user info request for user:", userId);
