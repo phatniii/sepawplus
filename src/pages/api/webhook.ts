@@ -145,11 +145,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                       getTakecareperson(encodedUserId)
                   );
       
-                  // เรียกใช้ replyUserInfo เพื่อตอบกลับข้อมูลผู้ใช้งาน
+                  // เรียกใช้ replyUserInfo เพื่อตอบกลับข้อมูล
                   await replyUserInfo({
                       replyToken,
                       userData,
-                      userTakecarepersonData, // จะส่ง null หากไม่มีข้อมูลผู้สูงอายุ
+                      userTakecarepersonData: userTakecarepersonData?.takecare_id ? userTakecarepersonData : null, // ส่งข้อมูลผู้สูงอายุถ้ามี
                   });
               } else {
                   console.error("User data not found.");
