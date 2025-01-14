@@ -129,57 +129,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         }
       
         case "ดูข้อมูลผู้ใช้งาน": {
-          console.log("Handling user info request for user:", userId);
-          try {
-              // ดึงข้อมูลผู้ใช้งาน
-              const userData = await safeApiCall(() => getUser(userId));
-      
-              if (userData) {
-                  console.log("Fetched user data:", userData);
-      
-                  // เข้ารหัส users_id
-                  const encodedUserId = encodeURIComponent(userData.users_id);
-      
-                  // ดึงข้อมูลผู้สูงอายุ (Takecare person)
-                  const userTakecarepersonData = await safeApiCall(() =>
-                      getTakecareperson(encodedUserId)
-                  );
-      
-                  if (userTakecarepersonData?.takecare_id) {
-                      console.log("Fetched takecareperson data:", userTakecarepersonData);
-      
-                      // เรียกใช้ replyUserInfo เพื่อตอบกลับข้อมูล
-                      await replyUserInfo({
-                          replyToken,
-                          userData,
-                          userTakecarepersonData,
-                      });
-                  } else {
-                      console.error("Takecare person data not found.");
-                      // กรณีไม่พบข้อมูลผู้สูงอายุ
-                      await replyMessage({
-                          replyToken,
-                          message: "ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุ กรุณาเพิ่มข้อมูลก่อน",
-                      });
-                  }
-              } else {
-                  console.error("User data not found.");
-                  // กรณีไม่พบข้อมูลผู้ใช้งาน
-                  await replyMessage({
-                      replyToken,
-                      message: "ไม่พบข้อมูลผู้ใช้งานในระบบ กรุณาลงทะเบียนก่อน",
-                  });
-              }
-          } catch (error) {
-              console.error("Error occurred while fetching user info:", error);
-              // กรณีเกิดข้อผิดพลาด
-              await replyMessage({
-                  replyToken,
-                  message: "เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาลองใหม่อีกครั้ง",
-              });
+          console.log("Fetching user info for:", userId);
+          const userData = await safeApiCall(() => getUser(userId));
+          if (userData) {
+            await replyUserInfo({ replyToken, userData });
+          } else {
+            await replyMessage({
+              replyToken,
+              message: "ไม่พบข้อมูลผู้ใช้งานในระบบ",
+            });
           }
           break;
-      }
+        }
       
       
         case "การเชื่อมต่อนาฬิกา": {
