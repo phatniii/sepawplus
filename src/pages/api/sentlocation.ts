@@ -5,27 +5,36 @@ import { replyNotification } from '@/utils/apiLineReply';
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
         try {
-            const { uid } = req.body;
+            const { uId, takecare_id, distance, latitude, longitude, battery, status } = req.body;
+
+            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery || !status) {
+                return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
+            }
+
             const user = await prisma.users.findFirst({
-                where: { users_id: Number(uid) }
+                where: { users_id: Number(uId) }
             });
 
             const takecareperson = await prisma.takecareperson.findFirst({
                 where: {
-                    users_id: user?.users_id,
+                    users_id: Number(uId),
+                    takecare_id: Number(takecare_id),
                     takecare_status: 1
                 }
             });
 
             if (user && takecareperson) {
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
+                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว\n
+                ระยะทาง: ${distance} เมตร\n
+                พิกัด: ละติจูด ${latitude}, ลองจิจูด ${longitude}\n
+                แบตเตอรี่: ${battery}%\n
+                สถานะ: ${status}`;
 
-                // ตรวจสอบว่า users_line_id ไม่เป็น null
                 const replyToken = user.users_line_id || '';
 
                 await replyNotification({ replyToken, message });
 
-                return res.status(200).json({ message: 'success', data: user });
+                return res.status(200).json({ message: 'success', data: { user, takecareperson } });
             } else {
                 return res.status(400).json({ message: 'error', data: 'ไม่พบข้อมูล' });
             }
