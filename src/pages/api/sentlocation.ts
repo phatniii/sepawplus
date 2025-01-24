@@ -12,6 +12,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
             }
 
+            // ค้นหาผู้ใช้และผู้ดูแล
             const user = await prisma.users.findFirst({
                 where: { users_id: Number(uId) }
             });
@@ -25,22 +26,36 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             });
 
             if (user && takecareperson) {
+                // สร้างข้อความแจ้งเตือน
                 const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
 
+                // ส่งการแจ้งเตือนไปยัง Line
                 const replyToken = user.users_line_id || '';
-
                 await replyNotification({ replyToken, message });
 
+                // บันทึกข้อมูลลงในฐานข้อมูล location
+                const newLocation = await prisma.location.create({
+                    data: {
+                        users_id: Number(uId),
+                        takecare_id: Number(takecare_id),
+                        locat_timestamp: new Date(), // ใช้เวลาปัจจุบัน
+                        locat_latitude: latitude.toString(),
+                        locat_longitude: longitude.toString(),
+                        locat_status: Number(status),
+                        locat_distance: Number(distance),
+                        locat_battery: Number(battery),
+                        locat_noti_time: new Date(), // ใช้เวลาปัจจุบัน
+                        locat_noti_status: 1, // ตั้งค่าการแจ้งเตือน (1 = แจ้งเตือนแล้ว)
+                    },
+                });
+
+                // ส่งการตอบกลับ
                 return res.status(200).json({ 
                     message: 'success', 
                     data: { 
                         user, 
                         takecareperson, 
-                        distance, 
-                        latitude, 
-                        longitude, 
-                        battery, 
-                        status 
+                        location: newLocation 
                     } 
                 });
             } else {
