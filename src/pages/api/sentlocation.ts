@@ -7,6 +7,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         try {
             const { uId, takecare_id, distance, latitude, longitude, battery, status } = req.body;
 
+            // ตรวจสอบว่าพารามิเตอร์ครบถ้วน
             if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery || !status) {
                 return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
             }
@@ -24,17 +25,24 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             });
 
             if (user && takecareperson) {
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว\n
-                ระยะทาง: ${distance} เมตร\n
-                พิกัด: ละติจูด ${latitude}, ลองจิจูด ${longitude}\n
-                แบตเตอรี่: ${battery}%\n
-                สถานะ: ${status}`;
+                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
 
                 const replyToken = user.users_line_id || '';
 
                 await replyNotification({ replyToken, message });
 
-                return res.status(200).json({ message: 'success', data: { user, takecareperson } });
+                return res.status(200).json({ 
+                    message: 'success', 
+                    data: { 
+                        user, 
+                        takecareperson, 
+                        distance, 
+                        latitude, 
+                        longitude, 
+                        battery, 
+                        status 
+                    } 
+                });
             } else {
                 return res.status(400).json({ message: 'error', data: 'ไม่พบข้อมูล' });
             }
