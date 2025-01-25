@@ -9,11 +9,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
             console.log("Received Data:", req.body);
 
-            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery || !status) {
+            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery || status === undefined) {
                 return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
             }
 
-            // อัปเดตหรือเพิ่มข้อมูลในฐานข้อมูล
+            // บันทึกข้อมูลในฐานข้อมูล
             const updatedLocation = await prisma.location.create({
                 data: {
                     users_id: Number(uId),
@@ -42,9 +42,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 },
             });
 
-            // ส่งการแจ้งเตือนหากข้อมูลผู้ใช้และผู้ดูแลครบถ้วน
-            if (user && takecareperson) {
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
+            // ส่งการแจ้งเตือนเฉพาะกรณี status === 1
+            if (user && takecareperson && status === 1) {
+                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nกำลังออกนอก Safezone ชั้นที่ 1`;
 
                 // ตรวจสอบว่า users_line_id มีค่า
                 const replyToken = user.users_line_id || '';
