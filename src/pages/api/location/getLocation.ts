@@ -10,7 +10,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         try {
             const { users_id, takecare_id } = req.query;
 
-            // ตรวจสอบพารามิเตอร์
             if (!users_id || !takecare_id || isNaN(Number(users_id)) || isNaN(Number(takecare_id))) {
                 return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ถูกต้อง' });
             }
@@ -22,7 +21,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                     takecare_id: Number(takecare_id),
                 },
                 orderBy: {
-                    locat_timestamp: 'desc', // เรียงตามเวลาล่าสุด
+                    location_id: 'desc', // เรียงลำดับตาม location_id จากล่าสุด
                 },
             });
 
