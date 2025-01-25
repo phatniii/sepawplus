@@ -13,7 +13,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
             }
 
-            // บันทึกข้อมูลในฐานข้อมูล
+            // อัปเดตหรือเพิ่มข้อมูลในฐานข้อมูล
             const updatedLocation = await prisma.location.create({
                 data: {
                     users_id: Number(uId),
@@ -38,22 +38,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 where: {
                     users_id: Number(uId),
                     takecare_id: Number(takecare_id),
+                    takecare_status: 1,
                 },
             });
 
-            // ส่งการแจ้งเตือนในกรณี locat_status === 1
+            // ส่งการแจ้งเตือนหากข้อมูลผู้ใช้และผู้ดูแลครบถ้วน
             if (user && takecareperson) {
-                let message = '';
+                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
+
+                // ตรวจสอบว่า users_line_id มีค่า
                 const replyToken = user.users_line_id || '';
 
-                if (status === 1) {
-                    message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
-                }
-
-                // ส่งข้อความแจ้งเตือน
-                if (message && replyToken) {
+                if (replyToken) {
                     await replyNotification({ replyToken, message });
-                } else if (!replyToken) {
+                } else {
                     console.warn("User does not have a Line ID for notification");
                 }
             }
