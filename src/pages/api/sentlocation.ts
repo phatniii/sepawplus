@@ -9,7 +9,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
             console.log("Received Data:", req.body);
 
-            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery || !status) {
+            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery || status === undefined) {
                 return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
             }
 
@@ -29,6 +29,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 },
             });
 
+            // หาก `status` เป็น 0 หรือ 2 ไม่ต้องแจ้งเตือน
+            if (Number(status) !== 1) {
+                console.log(`Status is ${status}, no notification sent.`);
+                return res.status(200).json({
+                    message: 'success',
+                    data: updatedLocation,
+                });
+            }
+
             // ค้นหาข้อมูลผู้ใช้และผู้ดูแล
             const user = await prisma.users.findFirst({
                 where: { users_id: Number(uId) },
@@ -38,22 +47,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 where: {
                     users_id: Number(uId),
                     takecare_id: Number(takecare_id),
+                    takecare_status: 1,
                 },
             });
 
-            // ส่งการแจ้งเตือนในกรณี locat_status === 1
+            // ส่งการแจ้งเตือนเฉพาะเมื่อ `status === 1`
             if (user && takecareperson) {
-                let message = '';
+                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
+
+                // ตรวจสอบว่า users_line_id มีค่า
                 const replyToken = user.users_line_id || '';
 
-                if (status === 1) {
-                    message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
-                }
-
-                // ส่งข้อความแจ้งเตือน
-                if (message && replyToken) {
+                if (replyToken) {
                     await replyNotification({ replyToken, message });
-                } else if (!replyToken) {
+                } else {
                     console.warn("User does not have a Line ID for notification");
                 }
             }
