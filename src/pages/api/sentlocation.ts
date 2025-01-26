@@ -9,7 +9,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
             console.log("Received Data:", req.body);
 
-            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery || status === undefined) {
+            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery || !status) {
                 return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
             }
 
@@ -38,20 +38,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 where: {
                     users_id: Number(uId),
                     takecare_id: Number(takecare_id),
-                    takecare_status: 1,
                 },
             });
 
-            // ส่งการแจ้งเตือนเฉพาะกรณี status === 1
-            if (user && takecareperson && status === 1) {
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nกำลังออกนอก Safezone ชั้นที่ 1`;
-
-                // ตรวจสอบว่า users_line_id มีค่า
+            // ส่งการแจ้งเตือนในกรณี locat_status === 1
+            if (user && takecareperson) {
+                let message = '';
                 const replyToken = user.users_line_id || '';
 
-                if (replyToken) {
+                if (status === 1) {
+                    message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
+                }
+
+                // ส่งข้อความแจ้งเตือน
+                if (message && replyToken) {
                     await replyNotification({ replyToken, message });
-                } else {
+                } else if (!replyToken) {
                     console.warn("User does not have a Line ID for notification");
                 }
             }
