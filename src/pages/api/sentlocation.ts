@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
-import { replyNotification } from '@/utils/apiLineReply';
+import { replyNotification, replyNotificationPostback } from '@/utils/apiLineReply';
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'PUT') {
@@ -29,8 +29,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 },
             });
 
-            // หาก `status` เป็น 0 หรือ 2 ไม่ต้องแจ้งเตือน
-            if (Number(status) !== 1) {
+            if (Number(status) === 0) {
                 console.log(`Status is ${status}, no notification sent.`);
                 return res.status(200).json({
                     message: 'success',
@@ -51,21 +50,34 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 },
             });
 
-            // ส่งการแจ้งเตือนเฉพาะเมื่อ `status === 1`
             if (user && takecareperson) {
+                const replyToken = user.users_line_id || '';
                 const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
 
-                // ตรวจสอบว่า users_line_id มีค่า
-                const replyToken = user.users_line_id || '';
+                if (Number(status) === 1) {
+                    if (replyToken) {
+                        await replyNotification({ replyToken, message });
+                    } else {
+                        console.warn("User does not have a Line ID for notification");
+                    }
+                }
 
-                if (replyToken) {
-                    await replyNotification({ replyToken, message });
-                } else {
-                    console.warn("User does not have a Line ID for notification");
+                if (Number(status) === 2) {
+                    const postbackMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 2 แล้ว`;
+                    if (replyToken) {
+                        await replyNotificationPostback({
+                            userId: Number(uId),
+                            takecarepersonId: Number(takecare_id),
+                            type: 'alert',
+                            message: postbackMessage,
+                            replyToken,
+                        });
+                    } else {
+                        console.warn("User does not have a Line ID for postback notification");
+                    }
                 }
             }
 
-            // ตอบกลับเมื่อสำเร็จ
             return res.status(200).json({
                 message: 'success',
                 data: updatedLocation,
