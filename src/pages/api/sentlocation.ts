@@ -13,6 +13,45 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
             }
 
+            // ดึงข้อมูล Safezone จากฐานข้อมูล
+            const safezone = await prisma.safezone.findFirst({
+                where: {
+                    takecare_id: Number(takecare_id),
+                    users_id: Number(uId),
+                },
+            });
+
+            if (!safezone) {
+                return res.status(404).json({
+                    message: 'error',
+                    data: 'ไม่พบข้อมูล Safezone',
+                });
+            }
+
+            // กำหนด r1 และ r2 จาก safezone
+            const r1 = safezone.safez_radiuslv1;
+            const r2 = safezone.safez_radiuslv2;
+
+            // คำนวณระยะ 80% ของ Safezone 2
+            const safezoneThreshold = r2 * 0.8;
+
+            // คำนวณสถานะจากระยะทาง
+            let calculatedStatus = 0; // เริ่มต้นสถานะเป็น "อยู่ในบ้าน"
+
+            if (distance <= r1) {
+                // อยู่ในบ้าน
+                calculatedStatus = 0;
+            } else if (distance > r1 && distance <= safezoneThreshold) {
+                // เข้าใกล้ Safezone 2 (80%)
+                calculatedStatus = 3;
+            } else if (distance > r1 && distance <= r2) {
+                // กำลังออกนอกบ้าน
+                calculatedStatus = 1;
+            } else if (distance > r2) {
+                // ออกนอกเขตปลอดภัย
+                calculatedStatus = 2;
+            }
+
             // บันทึกข้อมูลในฐานข้อมูล
             const updatedLocation = await prisma.location.create({
                 data: {
@@ -21,7 +60,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                     locat_timestamp: new Date(),
                     locat_latitude: latitude.toString(),
                     locat_longitude: longitude.toString(),
-                    locat_status: Number(status),
+                    locat_status: calculatedStatus,
                     locat_distance: Number(distance),
                     locat_battery: Number(battery),
                     locat_noti_time: new Date(),
@@ -29,8 +68,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 },
             });
 
-            if (Number(status) === 0) {
-                console.log(`Status is ${status}, no notification sent.`);
+            // ไม่ต้องแจ้งเตือนเมื่อสถานะเป็น 0
+            if (calculatedStatus === 0) {
+                console.log(`Status is ${calculatedStatus}, no notification sent.`);
                 return res.status(200).json({
                     message: 'success',
                     data: updatedLocation,
@@ -52,17 +92,28 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
             if (user && takecareperson) {
                 const replyToken = user.users_line_id || '';
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
 
-                if (Number(status) === 1) {
+                if (calculatedStatus === 3) {
+                    // สถานะ: เข้าใกล้ Safezone 2 (80%)
+                    const warningMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nเข้าใกล้ Safezone 2 (80%) แล้ว`;
+                    if (replyToken) {
+                        await replyNotification({
+                            replyToken,
+                            message: warningMessage,
+                        });
+                    } else {
+                        console.warn("User does not have a Line ID for notification");
+                    }
+                } else if (calculatedStatus === 1) {
+                    // สถานะ: กำลังออกนอกบ้าน
+                    const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
                     if (replyToken) {
                         await replyNotification({ replyToken, message });
                     } else {
                         console.warn("User does not have a Line ID for notification");
                     }
-                }
-
-                if (Number(status) === 2) {
+                } else if (calculatedStatus === 2) {
+                    // สถานะ: ออกนอกเขตปลอดภัย
                     const postbackMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 2 แล้ว`;
                     if (replyToken) {
                         await replyNotificationPostback({
