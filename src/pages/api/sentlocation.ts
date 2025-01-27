@@ -5,7 +5,7 @@ import { replyNotification, replyNotificationPostback } from '@/utils/apiLineRep
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'PUT') {
         try {
-            const { uId, takecare_id, distance, latitude, longitude, battery } = req.body; // ไม่รับ status จาก req.body
+            const { uId, takecare_id, distance, latitude, longitude, battery } = req.body;
 
             console.log("Received Data:", req.body);
 
@@ -40,12 +40,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
             if (distance <= r1) {
                 calculatedStatus = 0; // อยู่ในบ้าน
-            } else if (distance > r1 && distance <= safezoneThreshold) {
-                calculatedStatus = 3; // เข้าใกล้ Safezone 2 (80%)
-            } else if (distance > r1 && distance <= r2) {
-                calculatedStatus = 1; // กำลังออกนอกบ้าน
+            } else if (distance > r1 && distance < safezoneThreshold) {
+                calculatedStatus = 1; // ออกนอก Safezone ชั้นที่ 1
+            } else if (distance >= safezoneThreshold && distance <= r2) {
+                calculatedStatus = 3; // เข้าใกล้ Safezone 2
             } else if (distance > r2) {
-                calculatedStatus = 2; // ออกนอกเขตปลอดภัย
+                calculatedStatus = 2; // ออกนอก Safezone ชั้นที่ 2
             }
 
             // บันทึกข้อมูลในฐานข้อมูล
@@ -90,8 +90,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 const replyToken = user.users_line_id || '';
 
                 if (calculatedStatus === 3) {
-                    // สถานะ: เข้าใกล้ Safezone 2 (80%)
-                    const warningMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nเข้าใกล้ Safezone 2 (80%) แล้ว`;
+                    // สถานะ: เข้าใกล้ Safezone 2
+                    const warningMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nเข้าใกล้ Safezone 2 แล้ว`;
                     if (replyToken) {
                         await replyNotification({
                             replyToken,
@@ -101,7 +101,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                         console.warn("User does not have a Line ID for notification");
                     }
                 } else if (calculatedStatus === 1) {
-                    // สถานะ: กำลังออกนอกบ้าน
+                    // สถานะ: ออกนอก Safezone ชั้นที่ 1
                     const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
                     if (replyToken) {
                         await replyNotification({ replyToken, message });
@@ -109,7 +109,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                         console.warn("User does not have a Line ID for notification");
                     }
                 } else if (calculatedStatus === 2) {
-                    // สถานะ: ออกนอกเขตปลอดภัย
+                    // สถานะ: ออกนอก Safezone ชั้นที่ 2
                     const postbackMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 2 แล้ว`;
                     if (replyToken) {
                         await replyNotificationPostback({
