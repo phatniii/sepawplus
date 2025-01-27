@@ -5,11 +5,11 @@ import { replyNotification, replyNotificationPostback } from '@/utils/apiLineRep
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'PUT') {
         try {
-            const { uId, takecare_id, distance, latitude, longitude, battery, status } = req.body;
+            const { uId, takecare_id, distance, latitude, longitude, battery } = req.body; // ไม่รับ status จาก req.body
 
             console.log("Received Data:", req.body);
 
-            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery || status === undefined) {
+            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery) {
                 return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
             }
 
@@ -36,20 +36,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             const safezoneThreshold = r2 * 0.8;
 
             // คำนวณสถานะจากระยะทาง
-            let calculatedStatus = 0; // เริ่มต้นสถานะเป็น "อยู่ในบ้าน"
+            let calculatedStatus = 0;
 
             if (distance <= r1) {
-                // อยู่ในบ้าน
-                calculatedStatus = 0;
+                calculatedStatus = 0; // อยู่ในบ้าน
             } else if (distance > r1 && distance <= safezoneThreshold) {
-                // เข้าใกล้ Safezone 2 (80%)
-                calculatedStatus = 3;
+                calculatedStatus = 3; // เข้าใกล้ Safezone 2 (80%)
             } else if (distance > r1 && distance <= r2) {
-                // กำลังออกนอกบ้าน
-                calculatedStatus = 1;
+                calculatedStatus = 1; // กำลังออกนอกบ้าน
             } else if (distance > r2) {
-                // ออกนอกเขตปลอดภัย
-                calculatedStatus = 2;
+                calculatedStatus = 2; // ออกนอกเขตปลอดภัย
             }
 
             // บันทึกข้อมูลในฐานข้อมูล
@@ -60,7 +56,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                     locat_timestamp: new Date(),
                     locat_latitude: latitude.toString(),
                     locat_longitude: longitude.toString(),
-                    locat_status: calculatedStatus,
+                    locat_status: calculatedStatus, // ใช้ calculatedStatus ที่คำนวณได้
                     locat_distance: Number(distance),
                     locat_battery: Number(battery),
                     locat_noti_time: new Date(),
