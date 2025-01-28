@@ -8,42 +8,45 @@ import { decrypt } from '@/utils/helpers'
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'GET') {
         try {
-            // const id = req.query.id
-            const id = decrypt(req.query.id as string);
-            if(id){
-                const takecarepersonId = Array.isArray(id) ? parseInt(id[0], 10) : parseInt(id, 10);
-                if (!isNaN(takecarepersonId)) {
-                    const response = await prisma.takecareperson.findFirst({
-                        where: {
-                            takecare_id: takecarepersonId,
-                            takecare_status: 1,
-                        },
-                        include: { // ถ้าไม่ใส่ include จะไม่เอาข้อมูลจากตารางอื่นมาด้วย
-                            gender_id_ref:{
-                                select:{
-                                    gender_describe: true
-                                }
-                            },
-                            marry_id_ref:{
-                                select:{
-                                    marry_describe: true
-                                }
-                            },
-                            // users_status_id: true, // ถ้าไม่ใส่ select จะเอาทุก field
-                        },
-                    })
-                    return res.status(200).json({ message: 'success', data: response })
-                }
+            const id = decrypt(req.query.id as string); // ถอดรหัส ID
+            if (!id) {
+                return res.status(400).json({ message: 'Invalid ID', data: null });
             }
-            return res.status(400).json({ message: 'error', data: 'ไม่สามารถดึงข้อมูลได้' })
-            
+
+            const takecarepersonId = Array.isArray(id) ? parseInt(id[0], 10) : parseInt(id, 10);
+            if (isNaN(takecarepersonId)) {
+                return res.status(400).json({ message: 'Invalid ID format', data: null });
+            }
+
+            // ค้นหา `takecareperson` โดยใช้ `takecare_id` หรือ `users_id`
+            const response = await prisma.takecareperson.findFirst({
+                where: {
+                    OR: [
+                        { takecare_id: takecarepersonId },
+                        { users_id: takecarepersonId },
+                    ],
+                    takecare_status: 1,
+                },
+                include: {
+                    gender_id_ref: {
+                        select: { gender_describe: true },
+                    },
+                    marry_id_ref: {
+                        select: { marry_describe: true },
+                    },
+                },
+            });
+
+            if (!response) {
+                return res.status(404).json({ message: 'Data not found', data: null });
+            }
+
+            return res.status(200).json({ message: 'Success', data: response });
         } catch (error) {
-            return res.status(400).json({ message: 'error', data: error })
+            return res.status(500).json({ message: 'Error occurred', data: error });
         }
-
     } else {
-        res.setHeader('Allow', ['GET'])
-        res.status(400).json({ message: `วิธี ${req.method} ไม่อนุญาต` })
+        res.setHeader('Allow', ['GET']);
+        return res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
     }
-
 }
