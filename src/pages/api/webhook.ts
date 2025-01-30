@@ -34,7 +34,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   try {
     const event = events[0];
-    const { replyToken, source, type, message } = event;
+    const { replyToken, source, type, message, postback } = event;
     const userId = source?.userId;
 
     // ตรวจสอบ replyToken และ userId
@@ -117,7 +117,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           }
           break;
         }
-      
+
         case "ลงทะเบียน": {
           console.log("Handling registration request for user:", userId);
           try {
@@ -145,8 +145,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               });
           }
           break;
-      }
-      
+        }
       
         case "ดูข้อมูลผู้ใช้งาน": {
           console.log("Handling user info request for user:", userId);
@@ -188,8 +187,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               });
           }
           break;
-      }
-      
+        }
       
       
         case "การเชื่อมต่อนาฬิกา": {
@@ -236,8 +234,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               });
           }
           break;
-      }
-      
+        }
       
         case "การยืม-คืนอุปกรณ์": {
           console.log("Handling borrow equipment request for user:", userId);
@@ -291,9 +288,23 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           break;
         }
       }
+    } else if (type === "postback") {
+      // จัดการกรณีข้อความประเภท postback
+      console.log(`Received postback from user: ${userId}`);
+      const postbackData = postback?.data;
+      console.log("Postback data:", postbackData);
+
+      // คุณสามารถเพิ่มการตรวจสอบและการตอบกลับที่เหมาะสมตาม data ของ postback
+      await replyMessage({
+        replyToken,
+        message: "ขอบคุณที่ตอบกลับ! ข้อความนี้ถูกส่งจากปุ่ม postback.",
+      });
     } else {
       console.warn("Unsupported message type:", type);
-      await replyMessage({ replyToken, message: "ประเภทข้อความนี้ยังไม่รองรับ" });
+      await replyMessage({
+        replyToken,
+        message: "ประเภทข้อความนี้ยังไม่รองรับ",
+      });
     }
 
     return res.status(200).json({ message: "Success" });
