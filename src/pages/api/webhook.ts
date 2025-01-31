@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from "next"; 
+import { NextApiRequest, NextApiResponse } from "next";
 import {
   replyMessage,
   replyRegistration,
@@ -287,39 +287,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           await replyMessage({
             replyToken,
             message: "คำสั่งไม่ถูกต้อง กรุณาเลือกคำสั่งจากเมนู",
-          });
-          break;
-        }
-      }
-    } else if (type === "postback") {
-      // หากเป็น postback
-      const postbackData = event.postback?.data; // ข้อมูลที่ส่งมาจากการคลิกปุ่มใน flex message
-      console.log("Received postback data:", postbackData);
-
-      switch (postbackData) {
-        case "type=accept": {
-          // หากเป็นการตอบรับเคส
-          await replyMessage({
-            replyToken,
-            message: "คุณได้ตอบรับเคสช่วยเหลือแล้ว!"
-          });
-          break;
-        }
-
-        case "type=close": {
-          // หากเป็นการปิดเคส
-          await replyMessage({
-            replyToken,
-            message: "เคสช่วยเหลือถูกปิดแล้ว!"
-          });
-          break;
-        }
-
-        default: {
-          console.warn("Unknown postback data received:", postbackData);
-          await replyMessage({
-            replyToken,
-            message: "ประเภทข้อความนี้ยังไม่รองรับ"
           });
           break;
         }
