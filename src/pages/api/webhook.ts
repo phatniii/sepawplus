@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from "next";  
 import {
   replyMessage,
   replyRegistration,
@@ -34,7 +34,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   try {
     const event = events[0];
-    const { replyToken, source, type, message } = event;
+    const { replyToken, source, type, message, postback } = event;
     const userId = source?.userId;
 
     // ตรวจสอบ replyToken และ userId
@@ -123,21 +123,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           try {
               // ดึงข้อมูลผู้ใช้งาน
               const userData = await safeApiCall(() => getUser(userId));
-      
+
               if (userData) {
                   console.log("User already registered:", userData);
-      
+
                   // แสดงข้อมูลผู้ดูแล และเมนู "ลงทะเบียนผู้สูงอายุ"
                   await replyUserData({ replyToken, userData });
               } else {
                   console.log("User not registered yet.");
-      
+
                   // เรียกฟังก์ชันเพื่อเริ่มกระบวนการลงทะเบียนใหม่
                   await replyRegistration({ replyToken, userId });
               }
           } catch (error) {
               console.error("Error occurred during registration handling:", error);
-      
+
               // แจ้งข้อผิดพลาดให้ผู้ใช้ทราบ
               await replyMessage({
                   replyToken,
@@ -146,25 +146,24 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           }
           break;
       }
-      
-      
+
         case "ดูข้อมูลผู้ใช้งาน": {
           console.log("Handling user info request for user:", userId);
           try {
               // ดึงข้อมูลผู้ใช้งาน
               const userData = await safeApiCall(() => getUser(userId));
-      
+
               if (userData) {
                   console.log("Fetched user data:", userData);
-      
+
                   // เข้ารหัส users_id
                   const encodedUserId = encodeURIComponent(userData.users_id);
-      
+
                   // ดึงข้อมูลผู้สูงอายุ (Takecare person)
                   const userTakecarepersonData = await safeApiCall(() =>
                       getTakecareperson(encodedUserId)
                   );
-      
+
                   // เรียกใช้ replyUserInfo เพื่อตอบกลับข้อมูล
                   await replyUserInfo({
                       replyToken,
@@ -189,99 +188,40 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           }
           break;
       }
-      
-      
-      
-        case "การเชื่อมต่อนาฬิกา": {
-          console.log("Handling device connection for user:", userId);
-          try {
-              // ดึงข้อมูลผู้ใช้งาน
-              const userData = await safeApiCall(() => getUser(userId));
-              if (userData) {
-                  console.log("Fetched user data:", userData);
-      
-                  // เข้ารหัส users_id
-                  const encodedUserId = encodeURIComponent(userData.users_id);
-      
-                  // ดึงข้อมูลผู้สูงอายุ (Takecare person)
-                  const takecareperson = await safeApiCall(() =>
-                      getTakecareperson(encodedUserId)
-                  );
-      
-                  if (takecareperson?.takecare_id) {
-                      console.log("Fetched takecareperson data:", takecareperson);
-      
-                      // เรียกใช้ replyConnection เพื่อตอบกลับข้อมูล
-                      await replyConnection({
-                          replyToken,
-                          userData,
-                          userTakecarepersonData: takecareperson,
-                      });
-                  } else {
-                      console.error("Takecare person data not found.");
-                      await replyMessage({
-                          replyToken,
-                          message: "ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุ ไม่สามารถดำเนินการเชื่อมต่อได้",
-                      });
-                  }
-              } else {
-                  console.error("User data not found.");
-                  await replyNotRegistration({ replyToken, userId });
-              }
-          } catch (error) {
-              console.error("Error occurred while handling device connection:", error);
+
+        // Handle postback
+        if (type === "postback" && postback?.data) {
+          console.log("Received postback data:", postback.data);
+          const postbackData = postback.data;
+
+          switch (postbackData) {
+            case "type=accept": {
               await replyMessage({
-                  replyToken,
-                  message: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+                replyToken,
+                message: "คุณได้ตอบรับเคสช่วยเหลือแล้ว!"
               });
+              break;
+            }
+
+            case "type=close": {
+              await replyMessage({
+                replyToken,
+                message: "เคสช่วยเหลือถูกปิดแล้ว!"
+              });
+              break;
+            }
+
+            default: {
+              console.warn("Unknown postback data received:", postbackData);
+              await replyMessage({
+                replyToken,
+                message: "ประเภทข้อความนี้ยังไม่รองรับ"
+              });
+              break;
+            }
           }
-          break;
-      }
-      
-      
-        case "การยืม-คืนอุปกรณ์": {
-          console.log("Handling borrow equipment request for user:", userId);
-          const userData = await safeApiCall(() => getUser(userId));
-          if (userData) {
-            await replyMenuBorrowequipment({ replyToken, userData });
-          } else {
-            await replyNotRegistration({ replyToken, userId });
-          }
-          break;
         }
-      
-        case "แจ้งเตือน": {
-          console.log("Handling notification request");
-          await replyNotification({
-            replyToken,
-            message: "ระบบแจ้งเตือนกำลังทำงาน",
-          });
-          break;
-        }
-      
-        case "SOS": {
-          console.log("Handling emergency SOS");
-          await replyNotificationSOS({
-            replyToken,
-            message: "มีการแจ้งเตือนฉุกเฉิน! โปรดตรวจสอบด่วน",
-          });
-          break;
-        }
-      
-        case "แบบสอบถาม": {
-          console.log("Handling survey request for user:", userId);
-          const userData = await safeApiCall(() => getUser(userId));
-          if (userData) {
-            await replyNotificationSendDocQuery({
-              replyToken,
-              userData,
-            });
-          } else {
-            await replyNotRegistration({ replyToken, userId });
-          }
-          break;
-        }
-      
+
         default: {
           console.warn("Unknown command received:", userMessage);
           await replyMessage({
