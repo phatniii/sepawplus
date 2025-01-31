@@ -86,7 +86,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           }
           break;
         }
-
+      
         case "ตั้งค่าเขตปลอดภัย": {
           console.log("Handling safe zone setup for user:", userId);
           const userData = await safeApiCall(() => getUser(userId));
@@ -104,6 +104,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 userData,
                 userTakecarepersonData: takecareperson,
                 safezoneData: safezone,
+                
               });
             } else {
               await replyMessage({
@@ -116,38 +117,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           }
           break;
         }
-
-        case "ส่งความช่วยเหลือเพิ่มเติม": {
-          // ทำการส่งตำแหน่งหรือข้อมูลอื่นๆที่จำเป็นไปยังกลุ่มหรือผู้ใช้
-          const userData = await safeApiCall(() => getUser(userId));
-          if (userData) {
-            const takecareperson = await safeApiCall(() =>
-              getTakecareperson(userData.users_id)
-            );
-            if (takecareperson?.takecare_id) {
-              const safezone = await safeApiCall(() =>
-                getSafezone(takecareperson.takecare_id, userData.users_id)
-              );
-              const location = await safeApiCall(() =>
-                getLocation(
-                  takecareperson.takecare_id,
-                  userData.users_id,
-                  safezone?.safezone_id
-                )
-              );
-              // ส่งตำแหน่งในข้อความไปยังกลุ่ม
-              await replyLocation({
-                replyToken,
-                userData,
-                userTakecarepersonData: takecareperson,
-                safezoneData: safezone,
-                locationData: location,
-              });
-            }
-          }
-          break;
-        }
-
+      
         case "ลงทะเบียน": {
           console.log("Handling registration request for user:", userId);
           try {
@@ -175,8 +145,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               });
           }
           break;
-        }
-
+      }
+      
+      
         case "ดูข้อมูลผู้ใช้งาน": {
           console.log("Handling user info request for user:", userId);
           try {
@@ -217,8 +188,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               });
           }
           break;
-        }
-
+      }
+      
+      
+      
         case "การเชื่อมต่อนาฬิกา": {
           console.log("Handling device connection for user:", userId);
           try {
@@ -263,8 +236,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               });
           }
           break;
-        }
-
+      }
+      
+      
         case "การยืม-คืนอุปกรณ์": {
           console.log("Handling borrow equipment request for user:", userId);
           const userData = await safeApiCall(() => getUser(userId));
@@ -275,7 +249,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           }
           break;
         }
-
+        
+      
         case "แจ้งเตือน": {
           console.log("Handling notification request");
           await replyNotification({
@@ -284,7 +259,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           });
           break;
         }
-
+      
         case "SOS": {
           console.log("Handling emergency SOS");
           await replyNotificationSOS({
@@ -293,7 +268,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           });
           break;
         }
-
+      
         case "แบบสอบถาม": {
           console.log("Handling survey request for user:", userId);
           const userData = await safeApiCall(() => getUser(userId));
@@ -307,7 +282,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           }
           break;
         }
-
+      
         default: {
           console.warn("Unknown command received:", userMessage);
           await replyMessage({
