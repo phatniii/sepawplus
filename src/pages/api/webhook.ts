@@ -249,7 +249,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           }
           break;
         }
-        
       
         case "แจ้งเตือน": {
           console.log("Handling notification request");

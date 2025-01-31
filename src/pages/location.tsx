@@ -238,8 +238,10 @@ const Location = () => {
 
                         </GoogleMap>
                         <div className={styles.buttonLayout}>
-                            <a className={`btn btn-primary ${styles.button}`} href="tel:123-456-7890">โทรหาผู้สูงอายุ  <i className="fas fa-phone"></i></a>
+                    {dataUser.takecareData?.takecare_tel1 && (
+                        <a className={`btn btn-primary ${styles.button}`}href={`tel:${dataUser.takecareData?.takecare_tel1}`}> โทรหาผู้สูงอายุ <i className="fas fa-phone"></i> </a>)}
                         </div>
+
                     </>
                 )
             }
