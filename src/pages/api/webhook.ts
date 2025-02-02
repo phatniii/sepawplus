@@ -8,7 +8,7 @@ import {
   replyUserData,
   replyLocation,
   replySetting,
-  replyConnection, // สำหรับ "การเชื่อมต่ออุปกรณ์"
+  replyConnection, // สำหรับ "การเชื่อมต่ออุปกรณ์" โค้ดเหมือนเดิม
   replyNotification, // สำหรับ "แจ้งเตือน"
   replyNotificationSOS, // สำหรับ "SOS"
   replyNotificationSendDocQuery // สำหรับ "แบบสอบถาม"
