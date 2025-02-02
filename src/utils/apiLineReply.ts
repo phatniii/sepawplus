@@ -986,7 +986,7 @@ export const replyNotificationPostback = async ({
     try {
 
         const requestData = {
-            to:userId,
+            to:replyToken,
             messages: [
                 {
                     type    : "flex",
