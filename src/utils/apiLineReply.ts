@@ -986,7 +986,7 @@ export const replyNotificationPostback = async ({
     try {
 
         const requestData = {
-            to:userId,
+            to:replyToken,
             messages: [
                 {
                     type    : "flex",
@@ -1052,7 +1052,7 @@ export const replyNotificationPostback = async ({
                                     action: {
                                         type : "postback",
                                         label: "ส่งความช่วยเหลือเพิ่มเติม",
-                                        data : `userLineId=${userId}&takecarepersonId=${takecarepersonId}&type=${type}`,
+                                        data : `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
                                 {
