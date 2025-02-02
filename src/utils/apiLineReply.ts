@@ -1027,7 +1027,7 @@ export const replyNotificationPostback = async ({
                                     wrap : true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[ 
+                                    contents:[
                                         {
                                             type      : "span",
                                             text      : message,
@@ -1084,32 +1084,7 @@ export const replyNotificationPostback = async ({
                 }
             ],
         };
-
-        // ส่งข้อความไปยัง LINE Messaging API
-        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
-
-        // ข้อมูลที่เราจะส่งไปยัง LINE กลุ่ม
-        const groupLineId = 'C66dcad590cfc841cdd7eab315bf47a0f';  // กรุณาเปลี่ยนเป็น groupLineId ของกลุ่มที่ต้องการส่งข้อความไป
-        const groupMessage = `ข้อมูลจากผู้ใช้:
-        User ID: ${userId}
-        Take Care Person ID: ${takecarepersonId}
-        Type: ${type}
-        Message: ${message}`;
-
-        // ข้อความที่ส่งไปยัง LINE Group
-        const groupRequestData = {
-            to: groupLineId,  // ใส่ groupLineId ของกลุ่ม
-            messages: [
-                {
-                    type: 'text',
-                    text: groupMessage,
-                }
-            ]
-        };
-
-        // ส่งข้อความไปยัง LINE Group
-        await axios.post(LINE_PUSH_MESSAGING_API, groupRequestData, { headers: LINE_HEADER });
-
+       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
