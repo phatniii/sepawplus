@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import axios from "axios";
 import prisma from '@/lib/prisma'
 import _ from "lodash";
-//โค้ดล่าสุด
+
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
         try {
