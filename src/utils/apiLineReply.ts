@@ -981,116 +981,115 @@ export const replyNotificationPostback = async ({
     takecarepersonId,
     type,
     message,
-    replyToken
-}: ReplyNotificationPostback ) => {
+    replyToken, // อาจยังคงรับค่าไว้หากต้องการใช้สำหรับข้อมูลอื่น
+  }: ReplyNotificationPostback) => {
     try {
-
-        const requestData = {
-            to:replyToken,
-            messages: [
-                {
-                    type    : "flex",
-                    altText : "แจ้งเตือน",
-                    contents: {
-                        type: "bubble",
-                        body: {
-                            type    : "box",
-                            layout  : "vertical",
-                            contents: [
-                                {
-                                    type    : "text",
-                                    text    : " ",
-                                    contents: [
-                                        {
-                                            type      : "span",
-                                            text      : "แจ้งเตือนเขตปลอดภัย",
-                                            color     : "#FC0303",
-                                            size      : "xl",
-                                            weight    : "bold",
-                                            decoration: "none"
-                                        },
-                                        {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xxl",
-                                            decoration: "none"
-                                        }
-                                    ]
-                                },
-                                {
-                                    type  : "separator",
-                                    margin: "md"
-                                },
-                                {
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap : true,
-                                    lineSpacing: "5px",
-                                    margin: "md",
-                                    contents:[
-                                        {
-                                            type      : "span",
-                                            text      : message,
-                                            color     : "#555555",
-                                            size      : "md",
-                                            // decoration: "none",
-                                            // wrap      : true
-                                        },
-                                        {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
-                                            decoration: "none"
-                                        }
-                                    ]
-                                },
-                                {
-                                    type  : "button",
-                                    style : "primary",
-                                    height: "sm",
-                                    margin: "xxl",
-                                    action: {
-                                        type : "postback",
-                                        label: "ส่งความช่วยเหลือเพิ่มเติม",
-                                        data : `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
-                                    }
-                                },
-                                {
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap : true,
-                                    lineSpacing: "5px",
-                                    margin: "md",
-                                    contents:[
-                                        {
-                                            type      : "span",
-                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
-                                            color     : "#FC0303",
-                                            size      : "md",
-                                            // decoration: "none",
-                                            // wrap      : true
-                                        },
-                                        {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
-                                            decoration: "none"
-                                        }
-                                    ]
-                                },
-                            ]
-                        }
-                    }
-                }
-            ],
-        };
-       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
+      // กำหนด targetId สำหรับการส่งข้อความ
+      // หากต้องการส่งไปยังกลุ่ม ให้แทนที่ด้วย group id ที่ถูกต้อง
+      const targetId = userId; // ในที่นี้ใช้ userId ที่ได้จาก postback data
+      const requestData = {
+        to: targetId,
+        messages: [
+          {
+            type: "flex",
+            altText: "แจ้งเตือน",
+            contents: {
+              type: "bubble",
+              body: {
+                type: "box",
+                layout: "vertical",
+                contents: [
+                  {
+                    type: "text",
+                    text: " ",
+                    contents: [
+                      {
+                        type: "span",
+                        text: "แจ้งเตือนเขตปลอดภัย",
+                        color: "#FC0303",
+                        size: "xl",
+                        weight: "bold",
+                        decoration: "none",
+                      },
+                      {
+                        type: "span",
+                        text: " ",
+                        size: "xxl",
+                        decoration: "none",
+                      },
+                    ],
+                  },
+                  {
+                    type: "separator",
+                    margin: "md",
+                  },
+                  {
+                    type: "text",
+                    text: " ",
+                    wrap: true,
+                    lineSpacing: "5px",
+                    margin: "md",
+                    contents: [
+                      {
+                        type: "span",
+                        text: message,
+                        color: "#555555",
+                        size: "md",
+                      },
+                      {
+                        type: "span",
+                        text: " ",
+                        size: "xl",
+                        decoration: "none",
+                      },
+                    ],
+                  },
+                  {
+                    type: "button",
+                    style: "primary",
+                    height: "sm",
+                    margin: "xxl",
+                    action: {
+                      type: "postback",
+                      label: "ส่งความช่วยเหลือเพิ่มเติม",
+                      data: `userLineId=${userId}&takecarepersonId=${takecarepersonId}&type=${type}`,
+                    },
+                  },
+                  {
+                    type: "text",
+                    text: " ",
+                    wrap: true,
+                    lineSpacing: "5px",
+                    margin: "md",
+                    contents: [
+                      {
+                        type: "span",
+                        text: "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
+                        color: "#FC0303",
+                        size: "md",
+                      },
+                      {
+                        type: "span",
+                        text: " ",
+                        size: "xl",
+                        decoration: "none",
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+  
+      await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
-        if (error instanceof Error) {
-            console.log(error.message);
-        }
+      if (error instanceof Error) {
+        console.log(error.message);
+      }
     }
-}
+  };
 
 export const replyNotificationSOS = async ({
     replyToken,
