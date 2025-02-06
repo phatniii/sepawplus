@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from "next"; 
 import {
   replyMessage,
   replyRegistration,
@@ -25,7 +25,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   console.log("Request body:", JSON.stringify(req.body, null, 2)); // Debugging: ดูข้อมูลทั้งหมดในคำขอ
 
   const events = req.body?.events;
-  console.log("event", events)
+  console.log("event", events); 
 
   // กรณี events ไม่มีข้อมูล (เช่น การ Verify Webhook)
   if (!events || events.length === 0) {
@@ -44,8 +44,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(200).json({ message: "Missing replyToken or userId" });
     }
 
-    //trst
-    console.log("type", type)
+    console.log("type", type);
+
     if (type === "message" && message?.type === "text") {
       const userMessage = message.text.trim();
       console.log(`Received message: "${userMessage}" from user: ${userId}`);
@@ -307,27 +307,26 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const params = new URLSearchParams(data);
       const userLineId = params.get("userLineId");
       const takecarepersonId = params.get("takecarepersonId");
-      const type = params.get("type");
+      const actionType = params.get("type");
 
       // Handle postback (กรณีปุ่ม postback)
-      if (type === "postback") {
+      if (actionType === "postback") {  // ใช้ actionType ที่ถูกกำหนดจาก URLSearchParams
         console.log(`Postback accepted for user: ${userLineId}, takecarepersonId: ${takecarepersonId}`);
 
         // แจ้งเตือนเมื่อกดปุ่ม postback
-        // ส่งข้อความการช่วยเหลือเพิ่มเติม
         const message = "ส่งคำขอความช่วยเหลือเพิ่มเติมแล้ว";
         await replyNotification({
           replyToken,
           message: message,
         });
-      } else if (type === "alert") {
+      } else if (actionType === "alert") {
         console.log(`Alert triggered for user: ${userLineId}, takecarepersonId: ${takecarepersonId}`);
         await replyNotification({
           replyToken,
           message: "ระบบแจ้งเตือนกรณีฉุกเฉิน",
         });
       } else {
-        console.warn("Unsupported type received:", type);
+        console.warn("Unsupported type received:", actionType);
         await replyMessage({
           replyToken,
           message: "ประเภทข้อมูลนี้ไม่รองรับ",
