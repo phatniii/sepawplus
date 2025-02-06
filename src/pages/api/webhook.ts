@@ -314,15 +314,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const actionType = params.get("type");
 
       // ตรวจสอบว่าเป็นการกดปุ่ม "ส่งความช่วยเหลือเพิ่มเติม"
-      if (userLineId && takecarepersonId && actionType === "alert") {
-        console.log(`Handling postback for user ${userLineId} with takecarepersonId ${takecarepersonId} and type ${actionType}`);
-
+      if (userLineId && takecarepersonId) {
+        console.log(`Handling postback for user ${userLineId} with takecarepersonId ${takecarepersonId}`);
+      
         // ส่งข้อความตอบกลับ
         await replyNotification({
           replyToken,
-          message: "ส่งขอความช่วยเหลือแล้ว"
+          message: "ส่งคำขอความช่วยเหลือแล้ว"
         });
       }
+      
     } else {
       console.warn("Unsupported message type:", type);
       await replyMessage({ replyToken, message: "ประเภทข้อความนี้ยังไม่รองรับ" });
