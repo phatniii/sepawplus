@@ -172,8 +172,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
 				if(events.type === "postback" && events.postback?.data){
           console.log(`Received postback data: ${events.postback.data}`);
+          console.log("Group ID:", events.source.groupId);
 					const postback = parseQueryString(events.postback.data)
-				
+				  
 					if(postback.type === 'safezone'){
 						const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) })
 						if(replyToken){
