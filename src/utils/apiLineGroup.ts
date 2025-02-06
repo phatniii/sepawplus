@@ -13,7 +13,6 @@ const LINE_HEADER = {
 
 interface ReplyNotification {
     resUser          : {
-        groupId: any;
         users_related_borrow: string;
         users_fname         : string;
         users_sname         : string;
@@ -113,7 +112,7 @@ export const replyNotification = async ({
        const longitude = Number(locationData.locat_longitude)
 
         const requestData = {
-            to:resUser.groupId,
+            to:resUser.users_related_borrow,
             messages: [
                 {
                     type     : "location",
