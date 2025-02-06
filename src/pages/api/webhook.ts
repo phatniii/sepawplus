@@ -284,6 +284,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           break;
         }
       
+        case "ส่งข้อความเพิ่มเติม": {
+          console.log("Handling emergency SOS");
+          await replyNotificationSOS({
+            replyToken,
+            message: "มีการแจ้งเตือนฉุกเฉิน! โปรดตรวจสอบด่วน",
+          });
+          break;
+        }
+        
         default: {
           console.warn("Unknown command received:", userMessage);
           await replyMessage({
