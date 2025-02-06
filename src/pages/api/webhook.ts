@@ -25,7 +25,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   console.log("Request body:", JSON.stringify(req.body, null, 2)); // Debugging: ดูข้อมูลทั้งหมดในคำขอ
 
   const events = req.body?.events;
-  console.log("event",events) 
+  console.log("event",events)
 
   // กรณี events ไม่มีข้อมูล (เช่น การ Verify Webhook)
   if (!events || events.length === 0) {
@@ -35,7 +35,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   try {
     const event = events[0];
-    const { replyToken, source, type, message } = event;
+    const { replyToken, source, type, message, postback } = event;
     const userId = source?.userId;
 
     // ตรวจสอบ replyToken และ userId
@@ -43,8 +43,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       console.error("Missing replyToken or userId", { replyToken, userId });
       return res.status(200).json({ message: "Missing replyToken or userId" });
     }
-    //trst
-    console.log("type",type)
+
     if (type === "message" && message?.type === "text") {
       const userMessage = message.text.trim();
       console.log(`Received message: "${userMessage}" from user: ${userId}`);
@@ -106,7 +105,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 userData,
                 userTakecarepersonData: takecareperson,
                 safezoneData: safezone,
-                
               });
             } else {
               await replyMessage({
@@ -119,7 +117,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           }
           break;
         }
-      
+
         case "ลงทะเบียน": {
           console.log("Handling registration request for user:", userId);
           try {
@@ -301,6 +299,29 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           });
           break;
         }
+      }
+    } else if (type === "postback" && postback) {
+      const { data } = postback;
+      console.log("Received postback data:", data);
+
+      const params = new URLSearchParams(data);
+      const userLineId = params.get("userLineId");
+      const takecarepersonId = params.get("takecarepersonId");
+      const type = params.get("type");
+
+      // Handle postback (กรณีปุ่ม postback)
+      if (type === "accept") {
+        console.log(`Accepted case for user: ${userLineId}, takecarepersonId: ${takecarepersonId}`);
+        await replyMessage({
+          replyToken,
+          message: "ส่งขอความช่วยเหลือแล้ว",
+        });
+      } else if (type === "close") {
+        console.log(`Closed case for user: ${userLineId}, takecarepersonId: ${takecarepersonId}`);
+        await replyMessage({
+          replyToken,
+          message: "เคสถูกปิดแล้ว",
+        });
       }
     } else {
       console.warn("Unsupported message type:", type);
