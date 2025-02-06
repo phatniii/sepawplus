@@ -1,5 +1,4 @@
-
-import { NextApiRequest, NextApiResponse } from 'next'
+import { NextApiRequest, NextApiResponse } from 'next'; 
 import { NextResponse } from 'next/server'
 import axios from "axios";
 import prisma from '@/lib/prisma'
@@ -12,7 +11,9 @@ type Data = {
 	message: string;
 	data?: any;
 }
+
 const getUser = async (userId: string) => {
+  console.log(`Fetching user data for userId: ${userId}`);
 	const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${userId}`);
 	if(responseUser.data?.data){
 		return responseUser.data.data
@@ -20,7 +21,9 @@ const getUser = async (userId: string) => {
 		return null
 	}
 }
+
 const getGroupLine = async (groupId: string) => {
+  console.log(`Fetching group line data for groupId: ${groupId}`);
 	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/master/getGroupLine?group_line_id=${groupId}`);
 	if(response.data?.data){
 		return response.data.data
@@ -28,7 +31,9 @@ const getGroupLine = async (groupId: string) => {
 		return null
 	}
 }
+
 const addGroupLine = async (groupId: string) => {
+  console.log(`Adding group line for groupId: ${groupId}`);
 	const response = await axios.post(`${process.env.WEB_DOMAIN}/api/master/getGroupLine`, { group_line_id: groupId, group_name: '' });
 	if(response.data?.id){
 		return response.data.id
@@ -38,6 +43,7 @@ const addGroupLine = async (groupId: string) => {
 }
 
 const getUserTakecareperson = async (userId: string) => {
+  console.log(`Fetching takecareperson data for userId: ${userId}`);
 	const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUserTakecareperson/${userId}`);
 	if(responseUser.data?.data){
 		return responseUser.data.data
@@ -45,7 +51,9 @@ const getUserTakecareperson = async (userId: string) => {
 		return null
 	}
 }
+
 const getSafezone = async (takecare_id: number, users_id: number) => {
+  console.log(`Fetching safezone for takecare_id: ${takecare_id} and users_id: ${users_id}`);
 	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/setting/getSafezone?takecare_id=${takecare_id}&users_id=${users_id}`);
 	if(response.data?.data){
 		return response.data.data
@@ -53,7 +61,9 @@ const getSafezone = async (takecare_id: number, users_id: number) => {
 		return null
 	}
 }
+
 const getLocation = async (takecare_id: number, users_id: number, safezone_id:number) => {
+  console.log(`Fetching location data for takecare_id: ${takecare_id}, users_id: ${users_id}, and safezone_id: ${safezone_id}`);
 	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/location/getLocation?takecare_id=${takecare_id}&users_id=${users_id}&safezone_id=${safezone_id}`);
 	if(response.data?.data){
 		return response.data.data
@@ -69,12 +79,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 				const events = req.body.events[0]
 
 				const replyToken = events.replyToken
+        console.log(`Received replyToken: ${replyToken}`);
 
 				const userId = events.source.userId
-				
+        console.log(`Received userId: ${userId}`);
+
 				if(events.type === "message" && events.source.type === "user"){
 					
 					if(events.message.type === "text"){
+            console.log(`Received message text: ${events.message.text}`);
 						if(events.message.text === "ลงทะเบียน"){
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
@@ -82,7 +95,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 							}else{
 								await replyRegistration({replyToken, userId})
 							}
-						} else if (events.message.text === "การยืม การคืนครุภัณฑ์") {
+						} else if (events.message.text === "การยืม-คืนอุปกรณ์") {
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
 								await replyMenuBorrowequipment({replyToken, userData : responseUser})
@@ -99,7 +112,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								}else{
 									await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถเชื่อมต่อนาฬิกาได้' })
 								}
-								
 							}else{
 								await replyNotRegistration({replyToken, userId})
 							}
@@ -137,7 +149,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 							}else{
 								await replyNotRegistration({replyToken, userId})
 							}
-						}else if(events.message.text ===  "ข้อมูลผู้ใช้งาน"){
+						}else if(events.message.text ===  "ดูข้อมูลผู้ใช้งาน"){
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
 								const encodedUsersId = encrypt(responseUser.users_id.toString());
@@ -151,7 +163,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 				}
 
 				if(events.source.type === "group" && events.type === "join"){
-				
+          console.log(`User joined the group with groupId: ${events.source.groupId}`);
 					const groupLine = await getGroupLine(events.source.groupId);
 					if(!groupLine){
 						await addGroupLine(events.source.groupId)
@@ -159,6 +171,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 				}
 
 				if(events.type === "postback" && events.postback?.data){
+          console.log(`Received postback data: ${events.postback.data}`);
 					const postback = parseQueryString(events.postback.data)
 				
 					if(postback.type === 'safezone'){
@@ -184,11 +197,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 						}
 					}
 				}
-				
-				
 			}
 	
 		} catch (error) {
+			console.error("Error processing the request:", error);
 			return await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ระบบขัดข้องกรุณาลองใหม่อีกครั้ง' })
 		}
 		return res.status(200).json({ message: 'success'})
