@@ -317,7 +317,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       if (userLineId && takecarepersonId && type) {
         // สามารถนำข้อมูลเหล่านี้ไปทำการส่งข้อความหรือทำการอื่นๆ ที่ต้องการ
         console.log(`Handling postback for user ${userLineId} with takecarepersonId ${takecarepersonId} and type ${type}`);
-        console.log("Group ID:", events.source.groupId);
         await replyMessage({
           replyToken,
           message: "ส่งคำขอความช่วยเหลือแล้ว",
