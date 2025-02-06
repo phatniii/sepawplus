@@ -91,7 +91,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
                 if (calculatedStatus === 3) {
                     // สถานะ: เข้าใกล้ Safezone 2
-                    const warningMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nเข้าใกล้ Safezone 2 แล้ว`;
+                    const warningMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nเข้าใกล้ Safezone ชั้นที่ 2 แล้ว`;
                     if (replyToken) {
                         await replyNotification({
                             replyToken,
