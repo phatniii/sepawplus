@@ -25,7 +25,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   console.log("Request body:", JSON.stringify(req.body, null, 2)); // Debugging: ดูข้อมูลทั้งหมดในคำขอ
 
   const events = req.body?.events;
-  console.log("event",events)
+  console.log("event",events) 
 
   // กรณี events ไม่มีข้อมูล (เช่น การ Verify Webhook)
   if (!events || events.length === 0) {
@@ -44,7 +44,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(200).json({ message: "Missing replyToken or userId" });
     }
     //trst
-
+    console.log("type",type)
     if (type === "message" && message?.type === "text") {
       const userMessage = message.text.trim();
       console.log(`Received message: "${userMessage}" from user: ${userId}`);
