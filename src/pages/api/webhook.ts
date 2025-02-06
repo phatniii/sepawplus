@@ -49,6 +49,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (type === "message" && message?.type === "text") {
       const userMessage = message.text.trim();
       console.log(`Received message: "${userMessage}" from user: ${userId}`);
+      console.log("Received postback data:",postback);
 
       // Handle คำสั่งต่าง ๆ
       switch (userMessage) {
@@ -311,19 +312,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const params = new URLSearchParams(postbackData);
       const userLineId = params.get("userLineId");
       const takecarepersonId = params.get("takecarepersonId");
-      const actionType = params.get("type");
+      const type = params.get("type");
 
-      // ตรวจสอบว่าเป็นการกดปุ่ม "ส่งความช่วยเหลือเพิ่มเติม"
-      if (userLineId && takecarepersonId) {
-        console.log(`Handling postback for user ${userLineId} with takecarepersonId ${takecarepersonId}`);
-      
-        // ส่งข้อความตอบกลับ
-        await replyNotification({
+      if (userLineId && takecarepersonId && type) {
+        // สามารถนำข้อมูลเหล่านี้ไปทำการส่งข้อความหรือทำการอื่นๆ ที่ต้องการ
+        console.log(`Handling postback for user ${userLineId} with takecarepersonId ${takecarepersonId} and type ${type}`);
+        await replyMessage({
           replyToken,
-          message: "ส่งคำขอความช่วยเหลือแล้ว"
+          message: "ส่งคำขอความช่วยเหลือแล้ว",
         });
       }
-      
     } else {
       console.warn("Unsupported message type:", type);
       await replyMessage({ replyToken, message: "ประเภทข้อความนี้ยังไม่รองรับ" });
