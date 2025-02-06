@@ -35,7 +35,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   try {
     const event = events[0];
-    const { replyToken, source, type, message, postback } = event;
+    const { replyToken, source, type, message } = event;
     const userId = source?.userId;
 
     // ตรวจสอบ replyToken และ userId
@@ -43,7 +43,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       console.error("Missing replyToken or userId", { replyToken, userId });
       return res.status(200).json({ message: "Missing replyToken or userId" });
     }
-  
+    //trst
     console.log("type",type)
     if (type === "message" && message?.type === "text") {
       const userMessage = message.text.trim();
@@ -301,32 +301,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           });
           break;
         }
-      }
-    } else if (type === "postback" && postback) {
-      const { data } = postback;
-      console.log("Received postback data:", data);
-
-      const params = new URLSearchParams(data);
-      const userLineId = params.get("userLineId");
-      const takecarepersonId = params.get("takecarepersonId");
-      const type = params.get("type");
-
-      // Handle postback (กรณีปุ่ม postback)
-      if (type === "accept") {
-        // ดำเนินการเมื่อผู้ใช้กดปุ่ม "ตอบรับเคสช่วยเหลือ"
-        console.log(`Accepted case for user: ${userLineId}, takecarepersonId: ${takecarepersonId}`);
-        await replyMessage({
-          replyToken,
-          message: "ส่งขอความช่วยเหลือแล้ว",
-        });
-        // ส่งข้อมูลไปยังไลน์กลุ่มหรือตอบกลับตามที่ต้องการ
-      } else if (type === "close") {
-        // ดำเนินการเมื่อผู้ใช้กดปุ่ม "ปิดเคสช่วยเหลือ"
-        console.log(`Closed case for user: ${userLineId}, takecarepersonId: ${takecarepersonId}`);
-        await replyMessage({
-          replyToken,
-          message: "เคสถูกปิดแล้ว",
-        });
       }
     } else {
       console.warn("Unsupported message type:", type);
