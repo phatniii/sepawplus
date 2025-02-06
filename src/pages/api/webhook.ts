@@ -42,6 +42,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       console.error("Missing replyToken or userId", { replyToken, userId });
       return res.status(200).json({ message: "Missing replyToken or userId" });
     }
+    //trst
 
     if (type === "message" && message?.type === "text") {
       const userMessage = message.text.trim();
