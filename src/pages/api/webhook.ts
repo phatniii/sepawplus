@@ -311,14 +311,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const params = new URLSearchParams(postbackData);
       const userLineId = params.get("userLineId");
       const takecarepersonId = params.get("takecarepersonId");
-      const type = params.get("type");
+      const actionType = params.get("type");
 
-      if (userLineId && takecarepersonId && type) {
-        // สามารถนำข้อมูลเหล่านี้ไปทำการส่งข้อความหรือทำการอื่นๆ ที่ต้องการ
-        console.log(`Handling postback for user ${userLineId} with takecarepersonId ${takecarepersonId} and type ${type}`);
-        await replyMessage({
+      // ตรวจสอบว่าเป็นการกดปุ่ม "ส่งความช่วยเหลือเพิ่มเติม"
+      if (userLineId && takecarepersonId && actionType === "alert") {
+        console.log(`Handling postback for user ${userLineId} with takecarepersonId ${takecarepersonId} and type ${actionType}`);
+
+        // ส่งข้อความตอบกลับ
+        await replyNotification({
           replyToken,
-          message: "คุณได้ขอความช่วยเหลือเพิ่มเติมแล้ว ระบบกำลังประมวลผล",
+          message: "ส่งขอความช่วยเหลือแล้ว"
         });
       }
     } else {
