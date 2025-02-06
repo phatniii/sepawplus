@@ -284,7 +284,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           break;
         }
       
-        case "ส่งข้อความเพิ่มเติม": {
+        case "ส่งความช่วยเหลือเพิ่มเติม": {
           console.log("Handling emergency SOS");
           await replyNotificationSOS({
             replyToken,
@@ -292,7 +292,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           });
           break;
         }
-        
+
         default: {
           console.warn("Unknown command received:", userMessage);
           await replyMessage({
