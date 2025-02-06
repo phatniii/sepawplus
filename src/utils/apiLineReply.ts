@@ -1052,7 +1052,7 @@ export const replyNotificationPostback = async ({
                                     action: {
                                         type : "postback",
                                         label: "ส่งความช่วยเหลือเพิ่มเติม",
-                                        data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=postback`,
+                                        data : `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
                                 {
