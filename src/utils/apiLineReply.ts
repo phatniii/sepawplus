@@ -1050,10 +1050,10 @@ export const replyNotificationPostback = async ({
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "postback",
+                                        type: "postback",
                                         label: "ส่งความช่วยเหลือเพิ่มเติม",
-                                        data : `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
-                                    }
+                                        data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=safezone`,  // เปลี่ยนจาก 'alert' เป็น 'safezone'
+                                      }
                                 },
                                 {
                                     type  : "text",
