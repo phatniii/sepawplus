@@ -108,36 +108,39 @@ export const replyNotification = async ({
     locationData
 }: ReplyNotification) => {
     try {
-       const latitude = Number(locationData.locat_latitude)
-       const longitude = Number(locationData.locat_longitude)
+        const latitude = Number(locationData.locat_latitude);
+        const longitude = Number(locationData.locat_longitude);
+
+        // ตรวจสอบให้แน่ใจว่าใช้ groupLineId หรือ users_line_id ที่ถูกต้อง
+        const groupLineId = resUser.users_related_borrow || resUser.users_line_id;
 
         const requestData = {
-            to:resUser.users_related_borrow,
+            to: groupLineId,  // ใช้ groupLineId ในการส่งข้อความไปยังไลน์กลุ่ม
             messages: [
                 {
-                    type     : "location",
-                    title    : `ตำแหน่งปัจจุบันของผู้สูงอายุ ${resTakecareperson.takecare_fname} ${resTakecareperson.takecare_sname}`,
-                    address  : `สถานที่ตั้งปัจจุบันของผู้สูงอายุ`,
-                    latitude : latitude,
+                    type: "location",
+                    title: `ตำแหน่งปัจจุบันของผู้สูงอายุ ${resTakecareperson.takecare_fname} ${resTakecareperson.takecare_sname}`,
+                    address: `สถานที่ตั้งปัจจุบันของผู้สูงอายุ`,
+                    latitude: latitude,
                     longitude: longitude
                 },
                 {
-                    type    : "flex",
-                    altText : "แจ้งเตือน",
+                    type: "flex",
+                    altText: "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 header1()[0],
                                 header1()[1],
                                 {
-                                    type  : "text",
-                                    text  : `ข้อมูลผู้ดูแล`,
-                                    size  : "md",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `ข้อมูลผู้ดูแล`,
+                                    size: "md",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
@@ -149,18 +152,17 @@ export const replyNotification = async ({
                                         layoutBoxBaseline("ชื่อ-สกุล", `${resUser.users_fname} ${resUser.users_sname}`, 4, 5),
                                         layoutBoxBaseline("เบอร์โทร", `${resUser.users_tel1} `, 4, 5),
                                     ]
-
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "xxl"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `ข้อมูลผู้สูงอายุ`,
-                                    size  : "md",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `ข้อมูลผู้สูงอายุ`,
+                                    size: "md",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
@@ -172,30 +174,28 @@ export const replyNotification = async ({
                                         layoutBoxBaseline("ชื่อ-สกุล", `${resTakecareperson.takecare_fname} ${resTakecareperson.takecare_sname}`, 4, 5),
                                         layoutBoxBaseline("เบอร์โทร", `${resTakecareperson.takecare_tel1} `, 4, 5),
                                     ]
-
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "postback",
+                                        type: "postback",
                                         label: "ตอบรับเคสช่วยเหลือ",
-                                        data  : `type=accept&takecareId=${resTakecareperson.takecare_id}&extenId=${extendedHelpId}&userLineId=${resUser.users_line_id}`
+                                        data: `type=accept&takecareId=${resTakecareperson.takecare_id}&extenId=${extendedHelpId}&userLineId=${resUser.users_line_id}`
                                     },
-                                   
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
-                                    color : "#4477CE",
+                                    color: "#4477CE",
                                     action: {
-                                        type : "postback",
+                                        type: "postback",
                                         label: "ปิดเคสช่วยเหลือ",
-                                        data  : `type=close&takecareId=${resTakecareperson.takecare_id}&extenId=${extendedHelpId}&userLineId=${resUser.users_line_id}`
+                                        data: `type=close&takecareId=${resTakecareperson.takecare_id}&extenId=${extendedHelpId}&userLineId=${resUser.users_line_id}`
                                     }
                                 }
                             ]
@@ -204,14 +204,15 @@ export const replyNotification = async ({
                 }
             ],
         };
-       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
+
+        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
-        // console.log("🚀 ~ error:", error)
         if (error instanceof Error) {
             console.log(error.message);
         }
     }
 }
+
 
 export const replyNoti = async ({
     replyToken,
