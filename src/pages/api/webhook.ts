@@ -317,19 +317,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       if (userLineId && takecarepersonId && type) {
         // สามารถนำข้อมูลเหล่านี้ไปทำการส่งข้อความหรือทำการอื่นๆ ที่ต้องการ
         console.log(`Handling postback for user ${userLineId} with takecarepersonId ${takecarepersonId} and type ${type}`);
-        
-        // เรียกใช้ replyNotification เมื่อผู้ใช้กดปุ่ม ส่งคำขอความช่วยเหลือเพิ่มเติม
-        const message = "ส่งคำขอความช่วยเหลือแล้ว";
-        
-        // ส่งการแจ้งเตือนกลับมา
-        await replyNotification({
-          replyToken, 
-          message, // ข้อความที่ต้องการแจ้งเตือน
+        await replyMessage({
+          replyToken,
+          message: "ส่งคำขอความช่วยเหลือแล้ว",
         });
-      
-        // ไม่ต้องส่งข้อความ replyMessage เพิ่มเติม
       }
-      
     } else {
       console.warn("Unsupported message type:", type);
       await replyMessage({ replyToken, message: "ประเภทข้อความนี้ยังไม่รองรับ" });
