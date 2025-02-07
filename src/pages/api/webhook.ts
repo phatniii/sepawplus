@@ -187,29 +187,14 @@ if (events.type === "postback" && events.postback?.data) {
 	const postback = parseQueryString(events.postback.data);
 	console.log("Parsed Postback: ", postback);  // เช็คผลลัพธ์จากการ parse postback
   
+	// เช็ค postback.type สำหรับกรณีทั้ง 'safezone' และ 'alert'
 	if (postback.type === 'safezone' || postback.type === 'alert') {
-    console.log("Postback Triggered: ", postback);  // เช็คกรณี safezone หรือ alert
-
-    let data = postback;
-    // เพิ่ม groupId และ userId จาก events ใน data
-    data.groupId = events.source.groupId;  // กำหนด groupId จาก event
-    data.userIdAccept = events.source.userId;  // กำหนด userId จาก event
-
-    console.log("Updated Data with groupId and userIdAccept: ", data);  // เช็คข้อมูลที่อัพเดต
-
-    // เรียก postbackSafezone พร้อม data ที่มีข้อมูลครบ
-    const replyToken = await postbackSafezone({ 
-        userLineId: postback.userLineId, 
-        takecarepersonId: Number(postback.takecarepersonId) 
-    });
-    console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
-
-    if (replyToken) {
-        // ส่งข้อความไปยังไลน์กลุ่มหรือผู้ใช้
-        await replyNotification({ 
-            replyToken: data.groupId || data.userIdAccept,  // ใช้ groupId ถ้ามี
-            message: 'ส่งคำขอความช่วยเหลือแล้ว' 
-        });
+	  console.log("Postback Triggered: ", postback);  // เช็คกรณี safezone หรือ alert
+	  const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) });
+	  console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
+  
+	  if (replyToken) {
+		await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
 	  }
 	} else if (postback.type === 'accept') {
 	  console.log("Accept Postback Triggered: ", postback);  // เช็คกรณี accept
