@@ -27,13 +27,11 @@ interface ReplyNotification {
     };
     resSafezone      : {};
     extendedHelpId   : number;
-    locationData     : {
+    locationData : {
         locat_latitude : number;
         locat_longitude: number;
     };
-    groupId?         : string;  // เพิ่มกลุ่ม ID ที่จะใช้ในการส่งข้อความ
 }
-
 interface ReplyNoti {
     replyToken : string;
     message    : string;
@@ -107,16 +105,17 @@ export const replyNotification = async ({
     resTakecareperson,
     resSafezone,
     extendedHelpId,
-    locationData,
-    groupId  // เพิ่ม groupId ที่ได้รับจาก event
+    locationData
 }: ReplyNotification) => {
     try {
         const latitude = Number(locationData.locat_latitude);
         const longitude = Number(locationData.locat_longitude);
 
-        // ใช้ groupId ที่ได้รับจาก event โดยตรง
+        // ตรวจสอบให้แน่ใจว่าใช้ groupLineId หรือ users_line_id ที่ถูกต้อง
+        const groupLineId = resUser.users_related_borrow || resUser.users_line_id;
+
         const requestData = {
-            to: groupId,  // ใช้ groupId ที่ได้รับจาก event
+            to: groupLineId,  // ใช้ groupLineId ในการส่งข้อความไปยังไลน์กลุ่ม
             messages: [
                 {
                     type: "location",
@@ -213,7 +212,6 @@ export const replyNotification = async ({
         }
     }
 }
-
 
 
 export const replyNoti = async ({
