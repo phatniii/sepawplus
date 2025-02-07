@@ -150,41 +150,53 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 					}
 				}
 
-				if(events.source.type === "group" && events.type === "join"){
-				
-					const groupLine = await getGroupLine(events.source.groupId);
-					if(!groupLine){
-						await addGroupLine(events.source.groupId)
-					}
-				}
-
-				if(events.type === "postback" && events.postback?.data){
-					const postback = parseQueryString(events.postback.data)
-				
-					if(postback.type === 'safezone'){
-						const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) })
-						if(replyToken){
-							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' })
-						}
-					}else if(postback.type === 'accept'){
-						let data = postback
-						data.groupId = events.source.groupId
-						data.userIdAccept = events.source.userId
-						const replyToken = await postbackAccept(data)
-						if(replyToken){
-							await replyNotification({ replyToken, message: 'ตอบรับเคสขอความช่วยเหลือแล้ว' })
-						}
-					}else if(postback.type === 'close'){
-						let data = postback
-						data.groupId = events.source.groupId
-						data.userIdAccept = events.source.userId
-						const replyToken = await postbackClose(data)
-						if(replyToken){
-							await replyNotification({ replyToken, message: 'ปิดเคสขอความช่วยเหลือแล้ว' })
-						}
-					}
-				}
-				
+        if (events.source.type === "group" && events.type === "join") {
+          console.log("Group ID: ", events.source.groupId);  // เช็คค่า groupId
+          const groupLine = await getGroupLine(events.source.groupId);
+          console.log("Group Line Data: ", groupLine);  // เช็คข้อมูล groupLine ที่ได้จาก getGroupLine
+          if (!groupLine) {
+              await addGroupLine(events.source.groupId);
+              console.log("New Group Added with ID: ", events.source.groupId);  // แจ้งเมื่อเพิ่มกลุ่มใหม่
+          }
+      }
+      
+      if (events.type === "postback" && events.postback?.data) {
+          console.log("Postback Data: ", events.postback.data);  // เช็คข้อมูล postback
+          const postback = parseQueryString(events.postback.data);
+          console.log("Parsed Postback: ", postback);  // เช็คผลลัพธ์จากการ parse
+      
+          if (postback.type === 'safezone') {
+              console.log("Safezone Postback Triggered: ", postback);  // เช็คกรณี safezone
+              const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) });
+              console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
+              if (replyToken) {
+                  await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
+              }
+          } else if (postback.type === 'accept') {
+              console.log("Accept Postback Triggered: ", postback);  // เช็คกรณี accept
+              let data = postback;
+              data.groupId = events.source.groupId;
+              data.userIdAccept = events.source.userId;
+              console.log("Data for Accept Postback: ", data);  // เช็คข้อมูลที่ส่งไปให้กับ postbackAccept
+              const replyToken = await postbackAccept(data);
+              console.log("Reply Token for Accept: ", replyToken);  // เช็ค replyToken สำหรับ accept
+              if (replyToken) {
+                  await replyNotification({ replyToken, message: 'ตอบรับเคสขอความช่วยเหลือแล้ว' });
+              }
+          } else if (postback.type === 'close') {
+              console.log("Close Postback Triggered: ", postback);  // เช็คกรณี close
+              let data = postback;
+              data.groupId = events.source.groupId;
+              data.userIdAccept = events.source.userId;
+              console.log("Data for Close Postback: ", data);  // เช็คข้อมูลที่ส่งไปให้กับ postbackClose
+              const replyToken = await postbackClose(data);
+              console.log("Reply Token for Close: ", replyToken);  // เช็ค replyToken สำหรับ close
+              if (replyToken) {
+                  await replyNotification({ replyToken, message: 'ปิดเคสขอความช่วยเหลือแล้ว' });
+              }
+          }
+      }
+      
 				
 			}
 	
