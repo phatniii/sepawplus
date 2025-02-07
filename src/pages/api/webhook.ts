@@ -175,7 +175,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 					const postback = parseQueryString(events.postback.data)
 					console.log("Postback Data: ", postback); // ตรวจสอบข้อมูลที่ได้รับจาก postback
 					
-					const groupIdFromPostback = events.source.groupId || postback.groupId;  // ใช้ groupId จาก events หรือจาก postback
+					const groupIdFromEvents = events.source.groupId;  // ดึง groupId จาก events
+					console.log("Group ID from Events: ", groupIdFromEvents);  // เช็คว่าได้ groupId จาก events หรือไม่
+
+					const groupIdFromPostback = postback.groupId || groupIdFromEvents; // ใช้ groupId จาก events หรือจาก postback
 					console.log("Group ID from Postback: ", groupIdFromPostback);
 
 					if(postback.type === 'safezone'){
@@ -213,4 +216,4 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 		res.setHeader('Allow', ['POST']);
 		res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
 	}
-}
+} 
