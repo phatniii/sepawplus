@@ -180,44 +180,47 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         }
 
         // ตรวจสอบ postback
-        if (events.type === "postback" && events.postback?.data) {
-          console.log("Postback Data: ", events.postback.data);  // เช็คข้อมูล postback ที่ได้รับ
-
-          // แปลงข้อมูลจาก postback
-          const postback = parseQueryString(events.postback.data);
-          console.log("Parsed Postback: ", postback);  // เช็คผลลัพธ์จากการ parse postback
-
-          if (postback.type === 'safezone') {
-            console.log("Safezone Postback Triggered: ", postback);  // เช็คกรณี safezone
-            const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) });
-            console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
-            if (replyToken) {
-              await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
-            }
-          } else if (postback.type === 'accept') {
-            console.log("Accept Postback Triggered: ", postback);  // เช็คกรณี accept
-            let data = postback;
-            data.groupId = events.source.groupId;
-            data.userIdAccept = events.source.userId;
-            console.log("Data for Accept Postback: ", data);  // เช็คข้อมูลที่ส่งไปให้กับ postbackAccept
-            const replyToken = await postbackAccept(data);
-            console.log("Reply Token for Accept: ", replyToken);  // เช็ค replyToken สำหรับ accept
-            if (replyToken) {
-              await replyNotification({ replyToken, message: 'ตอบรับเคสขอความช่วยเหลือแล้ว' });
-            }
-          } else if (postback.type === 'close') {
-            console.log("Close Postback Triggered: ", postback);  // เช็คกรณี close
-            let data = postback;
-            data.groupId = events.source.groupId;
-            data.userIdAccept = events.source.userId;
-            console.log("Data for Close Postback: ", data);  // เช็คข้อมูลที่ส่งไปให้กับ postbackClose
-            const replyToken = await postbackClose(data);
-            console.log("Reply Token for Close: ", replyToken);  // เช็ค replyToken สำหรับ close
-            if (replyToken) {
-              await replyNotification({ replyToken, message: 'ปิดเคสขอความช่วยเหลือแล้ว' });
-            }
-          }
-        }
+if (events.type === "postback" && events.postback?.data) {
+	console.log("Postback Data: ", events.postback.data);  // เช็คข้อมูล postback ที่ได้รับ
+  
+	// แปลงข้อมูลจาก postback
+	const postback = parseQueryString(events.postback.data);
+	console.log("Parsed Postback: ", postback);  // เช็คผลลัพธ์จากการ parse postback
+  
+	// เช็ค postback.type สำหรับกรณีทั้ง 'safezone' และ 'alert'
+	if (postback.type === 'safezone' || postback.type === 'alert') {
+	  console.log("Postback Triggered: ", postback);  // เช็คกรณี safezone หรือ alert
+	  const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) });
+	  console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
+  
+	  if (replyToken) {
+		await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
+	  }
+	} else if (postback.type === 'accept') {
+	  console.log("Accept Postback Triggered: ", postback);  // เช็คกรณี accept
+	  let data = postback;
+	  data.groupId = events.source.groupId;
+	  data.userIdAccept = events.source.userId;
+	  console.log("Data for Accept Postback: ", data);  // เช็คข้อมูลที่ส่งไปให้กับ postbackAccept
+	  const replyToken = await postbackAccept(data);
+	  console.log("Reply Token for Accept: ", replyToken);  // เช็ค replyToken สำหรับ accept
+	  if (replyToken) {
+		await replyNotification({ replyToken, message: 'ตอบรับเคสขอความช่วยเหลือแล้ว' });
+	  }
+	} else if (postback.type === 'close') {
+	  console.log("Close Postback Triggered: ", postback);  // เช็คกรณี close
+	  let data = postback;
+	  data.groupId = events.source.groupId;
+	  data.userIdAccept = events.source.userId;
+	  console.log("Data for Close Postback: ", data);  // เช็คข้อมูลที่ส่งไปให้กับ postbackClose
+	  const replyToken = await postbackClose(data);
+	  console.log("Reply Token for Close: ", replyToken);  // เช็ค replyToken สำหรับ close
+	  if (replyToken) {
+		await replyNotification({ replyToken, message: 'ปิดเคสขอความช่วยเหลือแล้ว' });
+	  }
+	}
+  }
+  
       }
     } catch (error) {
       console.error("Error handling request: ", error);

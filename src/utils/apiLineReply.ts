@@ -976,78 +976,121 @@ export const replyNotification = async ({
     }
 }
 
-export const replyNotificationPostback = async ({ 
+export const replyNotificationPostback = async ({
     userId,
     takecarepersonId,
     type,
     message,
     replyToken
-}: ReplyNotificationPostback) => {
+}: ReplyNotificationPostback ) => {
     try {
-        // ตรวจสอบค่าของ type ก่อนส่ง
         console.log("Type before sending postback: ", type);
-        
-        // แก้ไข type ให้เป็น 'safezone' ถ้าต้องการให้เป็น safezone
-        const correctedType = (type === 'alert') ? 'safezone' : type;
-        console.log("Corrected Type for Postback: ", correctedType); // ตรวจสอบว่า type ได้ถูกแก้ไขหรือไม่
-
         const requestData = {
-            to: replyToken,
+            to:replyToken,
             messages: [
                 {
-                    type: "flex",
-                    altText: "แจ้งเตือน",
+                    type    : "flex",
+                    altText : "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type: "box",
-                            layout: "vertical",
+                            type    : "box",
+                            layout  : "vertical",
                             contents: [
                                 {
-                                    type: "text",
-                                    text: "แจ้งเตือนเขตปลอดภัย",
-                                    color: "#FC0303",
-                                    size: "xl",
-                                    weight: "bold"
+                                    type    : "text",
+                                    text    : " ",
+                                    contents: [
+                                        {
+                                            type      : "span",
+                                            text      : "แจ้งเตือนเขตปลอดภัย",
+                                            color     : "#FC0303",
+                                            size      : "xl",
+                                            weight    : "bold",
+                                            decoration: "none"
+                                        },
+                                        {
+                                            type      : "span",
+                                            text      : " ",
+                                            size      : "xxl",
+                                            decoration: "none"
+                                        }
+                                    ]
                                 },
                                 {
-                                    type: "text",
-                                    text: message,
-                                    color: "#555555",
-                                    size: "md"
+                                    type  : "separator",
+                                    margin: "md"
                                 },
                                 {
-                                    type: "button",
-                                    style: "primary",
+                                    type  : "text",
+                                    text  : " ",
+                                    wrap : true,
+                                    lineSpacing: "5px",
+                                    margin: "md",
+                                    contents:[
+                                        {
+                                            type      : "span",
+                                            text      : message,
+                                            color     : "#555555",
+                                            size      : "md",
+                                            // decoration: "none",
+                                            // wrap      : true
+                                        },
+                                        {
+                                            type      : "span",
+                                            text      : " ",
+                                            size      : "xl",
+                                            decoration: "none"
+                                        }
+                                    ]
+                                },
+                                {
+                                    type  : "button",
+                                    style : "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type: "postback",
+                                        type : "postback",
                                         label: "ส่งความช่วยเหลือเพิ่มเติม",
-                                        data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${correctedType}`,  // ใช้ correctedType ที่ถูกแก้ไข
+                                        data : `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
                                 {
-                                    type: "text",
-                                    text: "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
-                                    color: "#FC0303",
-                                    size: "md"
-                                }
+                                    type  : "text",
+                                    text  : " ",
+                                    wrap : true,
+                                    lineSpacing: "5px",
+                                    margin: "md",
+                                    contents:[
+                                        {
+                                            type      : "span",
+                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
+                                            color     : "#FC0303",
+                                            size      : "md",
+                                            // decoration: "none",
+                                            // wrap      : true
+                                        },
+                                        {
+                                            type      : "span",
+                                            text      : " ",
+                                            size      : "xl",
+                                            decoration: "none"
+                                        }
+                                    ]
+                                },
                             ]
                         }
                     }
                 }
-            ]
+            ],
         };
-        
-        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
+       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
         }
     }
-};
-
+}
 
 export const replyNotificationSOS = async ({
     replyToken,
