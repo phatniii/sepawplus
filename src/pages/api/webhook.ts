@@ -180,21 +180,36 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         }
 
         // ตรวจสอบ postback
-if (events.type === "postback" && events.postback?.data) {
-	console.log("Postback Data: ", events.postback.data);  // เช็คข้อมูล postback ที่ได้รับ
-  
-	// แปลงข้อมูลจาก postback
-	const postback = parseQueryString(events.postback.data);
-	console.log("Parsed Postback: ", postback);  // เช็คผลลัพธ์จากการ parse postback
-  
-	// เช็ค postback.type สำหรับกรณีทั้ง 'safezone' และ 'alert'
-	if (postback.type === 'safezone' || postback.type === 'alert') {
-	  console.log("Postback Triggered: ", postback);  // เช็คกรณี safezone หรือ alert
-	  const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) });
-	  console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
-  
-	  if (replyToken) {
-		await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
+        if (events.type === "postback" && events.postback?.data) {
+          console.log("Postback Data: ", events.postback.data);  // เช็คข้อมูล postback ที่ได้รับ
+        
+          // แปลงข้อมูลจาก postback
+          const postback = parseQueryString(events.postback.data);
+          console.log("Parsed Postback: ", postback);  // เช็คผลลัพธ์จากการ parse postback
+        
+          // เช็ค postback.type สำหรับกรณีทั้ง 'safezone' และ 'alert'
+          if (postback.type === 'safezone' || postback.type === 'alert') {
+              console.log("Postback Triggered: ", postback);  // เช็คกรณี safezone หรือ alert
+              
+              // เช็คว่า postback มีข้อมูล group_line_id หรือไม่
+              const groupLineId = postback.groupLineId || postback.userLineId;
+              if (!groupLineId) {
+                  console.log("No groupLineId or userLineId found");
+                  return; // ถ้าไม่มี groupLineId หรือ userLineId ก็จะไม่ส่งข้อความ
+              }
+              
+              const replyToken = await postbackSafezone({ 
+                  userLineId: postback.userLineId, 
+                  takecarepersonId: Number(postback.takecarepersonId)
+              });
+              console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
+      
+              if (replyToken) {
+                  // ใช้ groupLineId ถ้ามีในการส่งข้อความไปยังกลุ่ม
+                  await replyNotification({ 
+                      replyToken: groupLineId, 
+                      message: 'ส่งคำขอความช่วยเหลือแล้ว' 
+                  });
 	  }
 	} else if (postback.type === 'accept') {
 	  console.log("Accept Postback Triggered: ", postback);  // เช็คกรณี accept
