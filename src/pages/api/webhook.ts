@@ -1,11 +1,11 @@
-import { NextApiRequest, NextApiResponse } from 'next'
-import { NextResponse } from 'next/server'
+import { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 import axios from "axios";
-import prisma from '@/lib/prisma'
+import prisma from '@/lib/prisma';
 import { replyMessage, replyRegistration, replyUserData, replyNotRegistration, replyMenuBorrowequipment, replyConnection, replyLocation, replySetting, replyUserInfo, replyNotification } from '@/utils/apiLineReply';
-import { encrypt, parseQueryString } from '@/utils/helpers'
-import { postbackSafezone, postbackAccept, postbackClose } from '@/lib/lineFunction'
-import * as api from '@/lib/listAPI'
+import { encrypt, parseQueryString } from '@/utils/helpers';
+import { postbackSafezone, postbackAccept, postbackClose } from '@/lib/lineFunction';
+import * as api from '@/lib/listAPI';
 
 type Data = {
   message: string;
@@ -30,14 +30,25 @@ const getGroupLine = async (groupId: string) => {
   }
 }
 
-const addGroupLine = async (groupId: string) => {
-  const response = await axios.post(`${process.env.WEB_DOMAIN}/api/master/getGroupLine`, { group_line_id: groupId, group_name: '' });
-  if (response.data?.id) {
-    return response.data.id;
-  } else {
+const addGroupLine = async (groupId: string, groupName: string) => {
+  if (!groupId) {
+    console.error('Error: Missing group_line_id');
     return null;
   }
-}
+
+  try {
+    const response = await axios.post(`${process.env.WEB_DOMAIN}/api/master/getGroupLine`, { group_line_id: groupId, group_name: groupName });
+    if (response.data?.id) {
+      return response.data.id;
+    } else {
+      console.error('Error: Failed to add group line');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error: Failed to add group line', error);
+    return null;
+  }
+};
 
 const getUserTakecareperson = async (userId: string) => {
   const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUserTakecareperson/${userId}`);
@@ -81,7 +92,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           const groupLine = await getGroupLine(events.source.groupId);
           console.log("Group Line Data: ", groupLine);  // เช็คข้อมูล groupLine ที่ได้จาก getGroupLine
           if (!groupLine) {
-            await addGroupLine(events.source.groupId);
+            await addGroupLine(events.source.groupId, '');  // เพิ่มกลุ่มในฐานข้อมูล
             console.log("New Group Added with ID: ", events.source.groupId);  // แจ้งเมื่อเพิ่มกลุ่มใหม่
           }
         }
@@ -180,47 +191,36 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         }
 
         // ตรวจสอบ postback
-if (events.type === "postback" && events.postback?.data) {
-	console.log("Postback Data: ", events.postback.data);  // เช็คข้อมูล postback ที่ได้รับ
-  
-	// แปลงข้อมูลจาก postback
-	const postback = parseQueryString(events.postback.data);
-	console.log("Parsed Postback: ", postback);  // เช็คผลลัพธ์จากการ parse postback
-  
-	// เช็ค postback.type สำหรับกรณีทั้ง 'safezone' และ 'alert'
-	if (postback.type === 'safezone' || postback.type === 'alert') {
-	  console.log("Postback Triggered: ", postback);  // เช็คกรณี safezone หรือ alert
-	  const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) });
-	  console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
-  
-	  if (replyToken) {
-		await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
-	  }
-	} else if (postback.type === 'accept') {
-	  console.log("Accept Postback Triggered: ", postback);  // เช็คกรณี accept
-	  let data = postback;
-	  data.groupId = events.source.groupId;
-	  data.userIdAccept = events.source.userId;
-	  console.log("Data for Accept Postback: ", data);  // เช็คข้อมูลที่ส่งไปให้กับ postbackAccept
-	  const replyToken = await postbackAccept(data);
-	  console.log("Reply Token for Accept: ", replyToken);  // เช็ค replyToken สำหรับ accept
-	  if (replyToken) {
-		await replyNotification({ replyToken, message: 'ตอบรับเคสขอความช่วยเหลือแล้ว' });
-	  }
-	} else if (postback.type === 'close') {
-	  console.log("Close Postback Triggered: ", postback);  // เช็คกรณี close
-	  let data = postback;
-	  data.groupId = events.source.groupId;
-	  data.userIdAccept = events.source.userId;
-	  console.log("Data for Close Postback: ", data);  // เช็คข้อมูลที่ส่งไปให้กับ postbackClose
-	  const replyToken = await postbackClose(data);
-	  console.log("Reply Token for Close: ", replyToken);  // เช็ค replyToken สำหรับ close
-	  if (replyToken) {
-		await replyNotification({ replyToken, message: 'ปิดเคสขอความช่วยเหลือแล้ว' });
-	  }
-	}
-  }
-  
+        if (events.type === "postback" && events.postback?.data) {
+          console.log("Postback Data: ", events.postback.data);  // เช็คข้อมูล postback ที่ได้รับ
+
+          // แปลงข้อมูลจาก postback
+          const postback = parseQueryString(events.postback.data);
+          console.log("Parsed Postback: ", postback);  // เช็คผลลัพธ์จากการ parse postback
+
+          // เช็ค postback.type สำหรับกรณีทั้ง 'safezone' และ 'alert'
+          if (postback.type === 'safezone' || postback.type === 'alert') {
+            console.log("Postback Triggered: ", postback);  // เช็คกรณี safezone หรือ alert
+            const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) });
+            console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
+
+            if (replyToken) {
+              await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
+            }
+          }
+          else if (postback.type === 'accept') {
+            console.log("Accept Postback Triggered: ", postback);  // เช็คกรณี accept
+            let data = postback;
+            data.groupId = events.source.groupId;
+            data.userIdAccept = events.source.userId;
+            console.log("Data for Accept Postback: ", data);  // เช็คข้อมูลที่ส่งไปให้กับ postbackAccept
+            const replyToken = await postbackAccept(data);
+            console.log("Reply Token for Accept: ", replyToken);  // เช็ค replyToken สำหรับ accept
+            if (replyToken) {
+              await replyNotification({ replyToken, message: 'ตอบรับเคสขอความช่วยเหลือแล้ว' });
+            }
+          }
+        }
       }
     } catch (error) {
       console.error("Error handling request: ", error);
@@ -229,6 +229,6 @@ if (events.type === "postback" && events.postback?.data) {
     return res.status(200).json({ message: 'success' });
   } else {
     res.setHeader('Allow', ['POST']);
-    res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
+    res.status(405).json({ message: `Method ${req.method} not allowed` });
   }
 }
