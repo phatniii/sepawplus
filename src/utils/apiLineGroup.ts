@@ -31,7 +31,9 @@ interface ReplyNotification {
         locat_latitude : number;
         locat_longitude: number;
     };
+    groupLineId?: string;  // เพิ่มฟิลด์นี้
 }
+
 interface ReplyNoti {
     replyToken : string;
     message    : string;
@@ -101,6 +103,7 @@ const header1 = () =>{
 }
 
 export const replyNotification = async ({
+    groupLineId, // ใช้ groupLineId แทน replyToken
     resUser,
     resTakecareperson,
     resSafezone,
@@ -111,11 +114,8 @@ export const replyNotification = async ({
         const latitude = Number(locationData.locat_latitude);
         const longitude = Number(locationData.locat_longitude);
 
-        // ตรวจสอบให้แน่ใจว่าใช้ groupLineId หรือ users_line_id ที่ถูกต้อง
-        const groupLineId = resUser.users_related_borrow || resUser.users_line_id;
-
         const requestData = {
-            to: groupLineId,  // ใช้ groupLineId ในการส่งข้อความไปยังไลน์กลุ่ม
+            to: groupLineId,  // ส่งข้อความไปยังไลน์กลุ่ม
             messages: [
                 {
                     type: "location",
@@ -212,6 +212,7 @@ export const replyNotification = async ({
         }
     }
 }
+
 
 
 export const replyNoti = async ({
