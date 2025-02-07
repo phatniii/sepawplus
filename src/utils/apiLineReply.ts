@@ -899,65 +899,68 @@ export const replyUserData = async ({
 
 export const replyNotification = async ({
     replyToken,
-    message
+    message,
+    groupLineId // พารามิเตอร์ groupLineId สำหรับส่งข้อความไปยังกลุ่ม
 }: ReplyNotification) => {
     try {
+        // ตรวจสอบว่ากำลังส่งข้อความไปที่กลุ่มหรือผู้ใช้
+        const targetId = groupLineId ? groupLineId : replyToken;  // ถ้ามี groupLineId ก็ส่งไปที่กลุ่ม, ถ้าไม่มีให้ส่งไปที่ผู้ใช้
+        console.log("Sending to: ", targetId);  // แสดงค่า targetId ที่จะส่งไป
 
+        // เตรียมข้อมูลข้อความที่จะส่ง
         const requestData = {
-            to:replyToken,
+            to: targetId,  // ส่งข้อความไปที่ targetId ที่กำหนด
             messages: [
                 {
-                    type    : "flex",
-                    altText : "แจ้งเตือน",
+                    type: "flex",
+                    altText: "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type    : "text",
-                                    text    : " ",
+                                    type: "text",
+                                    text: " ",
                                     contents: [
                                         {
-                                            type      : "span",
-                                            text      : "แจ้งเตือนเขตปลอดภัย",
-                                            color     : "#FC0303",
-                                            size      : "xl",
-                                            weight    : "bold",
+                                            type: "span",
+                                            text: "แจ้งเตือนเขตปลอดภัย",
+                                            color: "#FC0303",
+                                            size: "xl",
+                                            weight: "bold",
                                             decoration: "none"
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xxl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xxl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "md"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap : true,
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : message,
-                                            color     : "#555555",
-                                            size      : "md",
-                                            // decoration: "none",
-                                            // wrap      : true
+                                            type: "span",
+                                            text: message,
+                                            color: "#555555",
+                                            size: "md"
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
@@ -966,15 +969,20 @@ export const replyNotification = async ({
                         }
                     }
                 }
-            ],
+            ]
         };
-       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
+
+        // ส่งข้อมูลไปยัง LINE API
+        const response = await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
+        console.log("Message sent: ", response.data);  // แสดงผลลัพธ์การส่งข้อความจาก API
+
     } catch (error) {
         if (error instanceof Error) {
-            console.log(error.message);
+            console.log("Error in sending message: ", error.message);  // ถ้ามีข้อผิดพลาดแสดงข้อความที่เกิดขึ้น
         }
     }
 }
+
 
 export const replyNotificationPostback = async ({
     userId,
