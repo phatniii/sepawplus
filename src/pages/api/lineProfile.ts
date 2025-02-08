@@ -33,17 +33,19 @@ const getGroupLine = async (groupId: string) => {
 		return null
 	}
 }
-const addGroupLine = async (groupId: string) => {
-	console.log("Adding new group data for groupId:", groupId);  // เพิ่มการตรวจสอบการเพิ่มกลุ่ม
-	const response = await axios.post(`${process.env.WEB_DOMAIN}/api/master/getGroupLine`, { group_line_id: groupId, group_name: '' });
-	if(response.data?.id){
-		console.log("New group added with id:", response.data.id);  // แสดง ID ของกลุ่มใหม่ที่เพิ่ม
-		return response.data.id
-	}else{
-		console.log("Failed to add new group for groupId:", groupId);  // กรณีที่ไม่สามารถเพิ่มกลุ่มใหม่ได้
-		return null
-	}
+const addGroupLine = async (groupId: string, groupName: string) => {
+    console.log("Adding new group data for groupId:", groupId, "with groupName:", groupName);  // เพิ่มการตรวจสอบการเพิ่มกลุ่ม
+    const response = await axios.post(`${process.env.WEB_DOMAIN}/api/master/getGroupLine`, { group_line_id: groupId, group_name: groupName });
+    
+    if(response.data?.id){
+        console.log("New group added with id:", response.data.id);  // แสดง ID ของกลุ่มใหม่ที่เพิ่ม
+        return response.data.id
+    } else {
+        console.log("Failed to add new group for groupId:", groupId);  // กรณีที่ไม่สามารถเพิ่มกลุ่มใหม่ได้
+        return null
+    }
 }
+
 
 const getUserTakecareperson = async (userId: string) => {
 	console.log("Fetching user takecare person data for userId:", userId);  // ตรวจสอบการดึงข้อมูลผู้ดูแล
@@ -198,9 +200,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 					console.log("Joined a new group, groupId:", events.source.groupId);
 				
 					const groupLine = await getGroupLine(events.source.groupId);
+					const groupName = await getGroupLine(events.source.groupId);
 					if(!groupLine){
 						console.log("Group not found, adding new group:", events.source.groupId);
-						await addGroupLine(events.source.groupId)
+						await addGroupLine(events.source.groupId, groupName);
 					}
 				}
 
