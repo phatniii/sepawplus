@@ -82,7 +82,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 							}else{
 								await replyRegistration({replyToken, userId})
 							}
-						} else if (events.message.text === "การยืม การคืนครุภัณฑ์") {
+						} else if (events.message.text === "การยืม-คืนอุปกรณ์") {
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
 								await replyMenuBorrowequipment({replyToken, userData : responseUser})
@@ -137,7 +137,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 							}else{
 								await replyNotRegistration({replyToken, userId})
 							}
-						}else if(events.message.text ===  "ข้อมูลผู้ใช้งาน"){
+						}else if(events.message.text ===  "ดูข้อมูลผู้ใช้งาน"){
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
 								const encodedUsersId = encrypt(responseUser.users_id.toString());
