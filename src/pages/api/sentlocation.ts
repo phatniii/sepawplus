@@ -115,7 +115,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                         await replyNotificationPostback({
                             userId: Number(uId),
                             takecarepersonId: Number(takecare_id),
-                            type: 'alert',
+                            type: 'safezone',
                             message: postbackMessage,
                             replyToken,
                         });
