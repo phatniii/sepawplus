@@ -33,20 +33,16 @@ const getGroupLine = async (groupId: string) => {
 		return null
 	}
 }
-const addGroupLine = async (groupId: string, groupName: string) => {
-    console.log("Adding new group data for groupId:", groupId, "with groupName:", groupName);  // เพิ่มการตรวจสอบการเพิ่มกลุ่ม
-    const response = await axios.post(`${process.env.WEB_DOMAIN}/api/master/getGroupLine`, { 
-        group_line_id: groupId, 
-        group_name: groupName 
-    });
-    
-    if (response.data?.id) {
-        console.log("New group added with id:", response.data.id);  // แสดง ID ของกลุ่มใหม่ที่เพิ่ม
-        return response.data.id;
-    } else {
-        console.log("Failed to add new group for groupId:", groupId);  // กรณีที่ไม่สามารถเพิ่มกลุ่มใหม่ได้
-        return null;
-    }
+const addGroupLine = async (groupId: string) => {
+	console.log("Adding new group data for groupId:", groupId);  // เพิ่มการตรวจสอบการเพิ่มกลุ่ม
+	const response = await axios.post(`${process.env.WEB_DOMAIN}/api/master/getGroupLine`, { group_line_id: groupId, group_name: '' });
+	if(response.data?.id){
+		console.log("New group added with id:", response.data.id);  // แสดง ID ของกลุ่มใหม่ที่เพิ่ม
+		return response.data.id
+	}else{
+		console.log("Failed to add new group for groupId:", groupId);  // กรณีที่ไม่สามารถเพิ่มกลุ่มใหม่ได้
+		return null
+	}
 }
 
 const getUserTakecareperson = async (userId: string) => {
@@ -197,22 +193,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 					}
 				}
 
-				// ใช้ group_name ที่ได้จากเหตุการณ์หรือแหล่งข้อมูลอื่น
-if (events.source.type === "group" && events.type === "join") {
-    console.log("Joined a new group, groupId:", events.source.groupId);
-    
-    const groupLine = await getGroupLine(events.source.groupId);
-    
-    if (!groupLine) {
-        console.log("Group not found, adding new group:", events.source.groupId);
-
-        // ดึงชื่อกลุ่ม (สมมติว่าได้จากข้อมูลอื่น)
-        const groupName = events.source.groupName || 'Unknown Group Name';  // ใช้ชื่อกลุ่มจากข้อมูลอื่น หรือกำหนดค่าเริ่มต้น
-
-        // เพิ่มกลุ่มใหม่พร้อมกับชื่อกลุ่ม
-        await addGroupLine(events.source.groupId, groupName);
-    }
-}
+				// เพิ่มการตรวจสอบกรณีที่เป็นการเข้าร่วมกลุ่ม
+				if(events.source.type === "group" && events.type === "join"){
+					console.log("Joined a new group, groupId:", events.source.groupId);
+				
+					const groupLine = await getGroupLine(events.source.groupId);
+					if(!groupLine){
+						console.log("Group not found, adding new group:", events.source.groupId);
+						await addGroupLine(events.source.groupId)
+					}
+				}
 
 				// เพิ่มการตรวจสอบในกรณีที่เป็นการโพสต์
 				if(events.type === "postback" && events.postback?.data){
