@@ -6,8 +6,6 @@ import prisma from '@/lib/prisma'
 import _ from "lodash";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-    console.log('Request body gname:', req.body)  // เช็คดูว่าข้อมูลที่ส่งมามีอะไรบ้าง
-
     if (req.method === 'POST') {
         try {
             const group_line_id = req.body.group_line_id
