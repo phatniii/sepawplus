@@ -11,133 +11,114 @@ type Data = {
 	message: string;
 	data?: any;
 }
-
-// ฟังก์ชันดึงข้อมูลสรุปของกลุ่มจาก LINE Messaging API
-const getGroupSummary = async (groupId: string) => {
-  try {
-    const response = await axios.get(`https://api.line.me/v2/bot/group/${groupId}/summary`, {
-      headers: {
-        Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`  // ตรวจสอบให้แน่ใจว่า LINE_CHANNEL_ACCESS_TOKEN ถูกตั้งค่าใน .env
-      }
-    });
-    return response.data;  // response.data จะมีข้อมูล เช่น groupName, pictureUrl เป็นต้น
-  } catch (error) {
-    console.error("Error fetching group summary:", error);
-    return null;
-  }
-}
-
 const getUser = async (userId: string) => {
-	console.log("Fetching user data for userId:", userId);
+	console.log("Fetching user data for userId:", userId);  // เพิ่มการตรวจสอบว่าเราได้ userId ที่ถูกต้อง
 	const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${userId}`);
 	if(responseUser.data?.data){
-		console.log("User data retrieved:", responseUser.data.data);
-		return responseUser.data.data;
+		console.log("User data retrieved:", responseUser.data.data);  // แสดงข้อมูลที่ได้จาก API
+		return responseUser.data.data
 	}else{
-		console.log("User data not found for userId:", userId);
-		return null;
+		console.log("User data not found for userId:", userId);  // แสดงกรณีที่ไม่พบข้อมูล
+		return null
 	}
 }
-
 const getGroupLine = async (groupId: string) => {
-	console.log("Fetching group data for groupId:", groupId);
+	console.log("Fetching group data for groupId:", groupId);  // เพิ่มการตรวจสอบการค้นหากลุ่ม
 	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/master/getGroupLine?group_line_id=${groupId}`);
 	if(response.data?.data){
-		console.log("Group data retrieved:", response.data.data);
-		return response.data.data;
+		console.log("Group data retrieved:", response.data.data);  // แสดงข้อมูลกลุ่มที่ได้จาก API
+		return response.data.data
 	}else{
-		console.log("Group data not found for groupId:", groupId);
-		return null;
+		console.log("Group data not found for groupId:", groupId);  // กรณีที่ไม่พบข้อมูล
+		return null
 	}
 }
-
-// ปรับปรุงฟังก์ชัน addGroupLine ให้รับ groupName เป็นพารามิเตอร์
-const addGroupLine = async (groupId: string, groupName: string) => {
-	console.log("Adding new group data for groupId:", groupId, "with groupName:", groupName);
-	const response = await axios.post(`${process.env.WEB_DOMAIN}/api/master/getGroupLine`, { 
-      group_line_id: groupId, 
-      group_name: groupName 
-  });
+const addGroupLine = async (groupId: string) => {
+	console.log("Adding new group data for groupId:", groupId);  // เพิ่มการตรวจสอบการเพิ่มกลุ่ม
+	const response = await axios.post(`${process.env.WEB_DOMAIN}/api/master/getGroupLine`, { group_line_id: groupId, group_name: '' });
 	if(response.data?.id){
-		console.log("New group added with id:", response.data.id);
-		return response.data.id;
+		console.log("New group added with id:", response.data.id);  // แสดง ID ของกลุ่มใหม่ที่เพิ่ม
+		return response.data.id
 	}else{
-		console.log("Failed to add new group for groupId:", groupId);
-		return null;
+		console.log("Failed to add new group for groupId:", groupId);  // กรณีที่ไม่สามารถเพิ่มกลุ่มใหม่ได้
+		return null
 	}
 }
 
 const getUserTakecareperson = async (userId: string) => {
-	console.log("Fetching user takecare person data for userId:", userId);
+	console.log("Fetching user takecare person data for userId:", userId);  // ตรวจสอบการดึงข้อมูลผู้ดูแล
 	const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUserTakecareperson/${userId}`);
 	if(responseUser.data?.data){
-		console.log("User takecare person data retrieved:", responseUser.data.data);
-		return responseUser.data.data;
+		console.log("User takecare person data retrieved:", responseUser.data.data);  // แสดงข้อมูลผู้ดูแลที่ได้จาก API
+		return responseUser.data.data
 	}else{
-		console.log("User takecare person data not found for userId:", userId);
-		return null;
+		console.log("User takecare person data not found for userId:", userId);  // กรณีที่ไม่พบข้อมูลผู้ดูแล
+		return null
 	}
 }
 
 const getSafezone = async (takecare_id: number, users_id: number) => {
-	console.log(`Fetching safezone data for takecare_id: ${takecare_id}, users_id: ${users_id}`);
+	console.log(`Fetching safezone data for takecare_id: ${takecare_id}, users_id: ${users_id}`);  // ตรวจสอบการดึงข้อมูลเขตปลอดภัย
 	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/setting/getSafezone?takecare_id=${takecare_id}&users_id=${users_id}`);
 	if(response.data?.data){
-		console.log("Safezone data retrieved:", response.data.data);
-		return response.data.data;
+		console.log("Safezone data retrieved:", response.data.data);  // แสดงข้อมูลเขตปลอดภัย
+		return response.data.data
 	}else{
-		console.log("Safezone data not found for takecare_id:", takecare_id, "users_id:", users_id);
-		return null;
+		console.log("Safezone data not found for takecare_id:", takecare_id, "users_id:", users_id);  // กรณีที่ไม่พบข้อมูลเขตปลอดภัย
+		return null
 	}
 }
 
 const getLocation = async (takecare_id: number, users_id: number, safezone_id:number) => {
-	console.log(`Fetching location data for takecare_id: ${takecare_id}, users_id: ${users_id}, safezone_id: ${safezone_id}`);
+	console.log(`Fetching location data for takecare_id: ${takecare_id}, users_id: ${users_id}, safezone_id: ${safezone_id}`);  // ตรวจสอบการดึงข้อมูลตำแหน่ง
 	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/location/getLocation?takecare_id=${takecare_id}&users_id=${users_id}&safezone_id=${safezone_id}`);
 	if(response.data?.data){
-		console.log("Location data retrieved:", response.data.data);
-		return response.data.data;
+		console.log("Location data retrieved:", response.data.data);  // แสดงข้อมูลตำแหน่ง
+		return response.data.data
 	}else{
-		console.log("Location data not found for takecare_id:", takecare_id, "users_id:", users_id, "safezone_id:", safezone_id);
-		return null;
+		console.log("Location data not found for takecare_id:", takecare_id, "users_id:", users_id, "safezone_id:", safezone_id);  // กรณีที่ไม่พบข้อมูลตำแหน่ง
+		return null
 	}
 }
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
 	if (req.method === 'POST') {
 		try {
-			console.log("Received request body:", req.body);
+			console.log("Received request body:", req.body);  // แสดงข้อมูลที่ได้รับจากคำขอ
 
 			if(req.body.events[0]){
-				const events = req.body.events[0];
-				const replyToken = events.replyToken;
-				const userId = events.source.userId;
+				const events = req.body.events[0]
 
-				console.log("Processing event for userId:", userId);
+				const replyToken = events.replyToken
+				const userId = events.source.userId
+
+				console.log("Processing event for userId:", userId);  // แสดงว่าเริ่มการประมวลผลสำหรับผู้ใช้
 
 				if(events.type === "message" && events.source.type === "user"){
+					
 					if(events.message.type === "text"){
-						console.log("Received text message:", events.message.text);
+						console.log("Received text message:", events.message.text);  // แสดงข้อความที่ได้รับจากผู้ใช้
+
 						if(events.message.text === "ลงทะเบียน"){
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
 								console.log("User is already registered, replying with user data.");
-								await replyUserData({replyToken, userData : responseUser});
+								await replyUserData({replyToken, userData : responseUser})
 							}else{
 								console.log("User not registered, sending registration reply.");
-								await replyRegistration({replyToken, userId});
+								await replyRegistration({replyToken, userId})
 							}
 						} else if (events.message.text === "การยืม-คืนอุปกรณ์") {
 							console.log("User selected 'การยืม-คืนอุปกรณ์'");
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
 								console.log("User is registered, replying with menu borrow equipment.");
-								await replyMenuBorrowequipment({replyToken, userData : responseUser});
+								await replyMenuBorrowequipment({replyToken, userData : responseUser})
 							}else{
 								console.log("User not registered, sending not registration reply.");
-								await replyNotRegistration({replyToken, userId});
+								await replyNotRegistration({replyToken, userId})
 							}
-						}else if(events.message.text === "การเชื่อมต่อนาฬิกา"){
+						}else if(events.message.text ===  "การเชื่อมต่อนาฬิกา"){
 							console.log("User selected 'การเชื่อมต่อนาฬิกา'");
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
@@ -145,16 +126,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								const responseUserTakecareperson = await getUserTakecareperson(encodedUsersId);
 								if(responseUserTakecareperson){
 									console.log("Replying with connection information.");
-									await replyConnection({replyToken, userData : responseUser, userTakecarepersonData: responseUserTakecareperson});
+									await replyConnection({replyToken, userData : responseUser, userTakecarepersonData: responseUserTakecareperson})
 								}else{
 									console.log("No takecare person added, replying with error message.");
-									await replyMessage({ replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถเชื่อมต่อนาฬิกาได้' });
+									await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถเชื่อมต่อนาฬิกาได้' })
 								}
 							}else{
 								console.log("User not registered, sending not registration reply.");
-								await replyNotRegistration({replyToken, userId});
+								await replyNotRegistration({replyToken, userId})
 							}
-						}else if(events.message.text === "ดูตำแหน่งปัจจุบัน"){
+						}else if(events.message.text ===  "ดูตำแหน่งปัจจุบัน"){
 							console.log("User selected 'ดูตำแหน่งปัจจุบัน'");
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
@@ -163,22 +144,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								if(responseUserTakecareperson){
 									const responeSafezone = await getSafezone(responseUserTakecareperson.takecare_id, responseUser.users_id);
 									if(responeSafezone){
-										const responeLocation = await getLocation(responseUserTakecareperson.takecare_id, responseUser.users_id, responeSafezone.safezone_id);
+										const responeLocation = await getLocation(responseUserTakecareperson.takecare_id, responseUser.users_id, responeSafezone.safezone_id)
 										console.log("Replying with location information.");
-										await replyLocation({replyToken, userData : responseUser, userTakecarepersonData : responseUserTakecareperson, safezoneData : responeSafezone, locationData : responeLocation});
+										await replyLocation({replyToken, userData : responseUser, userTakecarepersonData : responseUserTakecareperson, safezoneData : responeSafezone, locationData : responeLocation})
 									}else{
 										console.log("Safezone not set, replying with error message.");
-										await replyMessage({ replyToken, message: 'ยังไม่ได้ตั้งค่าเขตปลอดภัยไม่สามารถดูตำแหน่งปัจจุบันได้' });
+										await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้ตั้งค่าเขตปลอดภัยไม่สามารถดูตำแหน่งปัจจุบันได้' })
 									}
 								}else{
 									console.log("No takecare person added, replying with error message.");
-									await replyMessage({ replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถดูตำแหน่งปัจจุบันได้' });
+									await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถดูตำแหน่งปัจจุบันได้' })
 								}
 							}else{
 								console.log("User not registered, sending not registration reply.");
-								await replyNotRegistration({replyToken, userId});
+								await replyNotRegistration({replyToken, userId})
 							}
-						}else if(events.message.text === "ตั้งค่าเขตปลอดภัย"){
+						}else if(events.message.text ===  "ตั้งค่าเขตปลอดภัย"){
 							console.log("User selected 'ตั้งค่าเขตปลอดภัย'");
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
@@ -187,93 +168,85 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								if(responseUserTakecareperson){
 									const responeSafezone = await getSafezone(responseUserTakecareperson.takecare_id, responseUser.users_id);
 									console.log("Replying with safezone setting information.");
-									await replySetting({replyToken, userData : responseUser, userTakecarepersonData : responseUserTakecareperson, safezoneData : responeSafezone});
+									await replySetting({replyToken, userData : responseUser, userTakecarepersonData : responseUserTakecareperson, safezoneData : responeSafezone})
 								}else{
 									console.log("No takecare person added, replying with error message.");
-									await replyMessage({ replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถตั้งค่าเขตปลอดภัยได้' });
+									await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถตั้งค่าเขตปลอดภัยได้' })
 								}
 							}else{
 								console.log("User not registered, sending not registration reply.");
-								await replyNotRegistration({replyToken, userId});
+								await replyNotRegistration({replyToken, userId})
 							}
-						}else if(events.message.text === "ดูข้อมูลผู้ใช้งาน"){
+						}else if(events.message.text ===  "ดูข้อมูลผู้ใช้งาน"){
 							console.log("User selected 'ดูข้อมูลผู้ใช้งาน'");
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
 								const encodedUsersId = encrypt(responseUser.users_id.toString());
 								const responseUserTakecareperson = await getUserTakecareperson(encodedUsersId);
 								console.log("Replying with user information.");
-								await replyUserInfo({replyToken, userData : responseUser, userTakecarepersonData : responseUserTakecareperson});
+								await replyUserInfo({replyToken, userData : responseUser, userTakecarepersonData : responseUserTakecareperson})
 							}else{
 								console.log("User not registered, sending not registration reply.");
-								await replyNotRegistration({replyToken, userId});
+								await replyNotRegistration({replyToken, userId})
 							}
 						}
 					}
 				}
 
-				// ส่วนจัดการ event เมื่อ bot เข้าร่วมกลุ่ม (join)
+				// เพิ่มการตรวจสอบกรณีที่เป็นการเข้าร่วมกลุ่ม
 				if(events.source.type === "group" && events.type === "join"){
 					console.log("Joined a new group, groupId:", events.source.groupId);
 				
 					const groupLine = await getGroupLine(events.source.groupId);
 					if(!groupLine){
-						console.log("Group not found in DB, fetching group summary from LINE API...");
-            const groupSummary = await getGroupSummary(events.source.groupId);
-            let groupName = "";
-            if(groupSummary && groupSummary.groupName){
-              groupName = groupSummary.groupName;
-            } else {
-              groupName = "Group " + events.source.groupId;
-            }
-						console.log("Adding new group with name:", groupName);
-						await addGroupLine(events.source.groupId, groupName);
+						console.log("Group not found, adding new group:", events.source.groupId);
+						await addGroupLine(events.source.groupId)
 					}
 				}
 
-				// ส่วนจัดการ event แบบ postback
+				// เพิ่มการตรวจสอบในกรณีที่เป็นการโพสต์
 				if(events.type === "postback" && events.postback?.data){
-					const postback = parseQueryString(events.postback.data);
+					const postback = parseQueryString(events.postback.data)
 					console.log("Received postback data:", postback);
 
 					if(postback.type === 'safezone'){
 						console.log("Handling safezone postback data.");
-						const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) });
+						const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) })
 						if(replyToken){
 							console.log("Safezone request sent, replying with notification.");
-							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
+							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' })
 						}
 					}else if(postback.type === 'accept'){
 						console.log("Handling accept postback data.");
-						let data = postback;
-						data.groupId = events.source.groupId;
-						data.userIdAccept = events.source.userId;
-						const replyToken = await postbackAccept(data);
+						let data = postback
+						data.groupId = events.source.groupId
+						data.userIdAccept = events.source.userId
+						const replyToken = await postbackAccept(data)
 						if(replyToken){
 							console.log("Accept request handled, replying with notification.");
-							await replyNotification({ replyToken, message: 'ตอบรับเคสขอความช่วยเหลือแล้ว' });
+							await replyNotification({ replyToken, message: 'ตอบรับเคสขอความช่วยเหลือแล้ว' })
 						}
 					}else if(postback.type === 'close'){
 						console.log("Handling close postback data.");
-						let data = postback;
-						data.groupId = events.source.groupId;
-						data.userIdAccept = events.source.userId;
-						const replyToken = await postbackClose(data);
+						let data = postback
+						data.groupId = events.source.groupId
+						data.userIdAccept = events.source.userId
+						const replyToken = await postbackClose(data)
 						if(replyToken){
 							console.log("Close request handled, replying with notification.");
-							await replyNotification({ replyToken, message: 'ปิดเคสขอความช่วยเหลือแล้ว' });
+							await replyNotification({ replyToken, message: 'ปิดเคสขอความช่วยเหลือแล้ว' })
 						}
 					}
 				}
 			}
 	
 		} catch (error) {
-			console.error("Error occurred:", error);
-			return await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ระบบขัดข้องกรุณาลองใหม่อีกครั้ง' });
+			console.error("Error occurred:", error);  // แสดงข้อผิดพลาด
+			return await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ระบบขัดข้องกรุณาลองใหม่อีกครั้ง' })
 		}
-		return res.status(200).json({ message: 'success'});
+		return res.status(200).json({ message: 'success'})
 	}else{
-		res.setHeader('Allow', ['POST']);
-		res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
+		res.setHeader('Allow', ['POST'])
+		res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` })
 	}
 }
