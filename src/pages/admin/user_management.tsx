@@ -145,6 +145,7 @@ const UserManagement = () => {
                                 <option value={''}>{'เลือกสถานะ'}</option>
                                 <option value={1}>{'ผู้ดูแลผู้สูงอายุ'}</option>
                                 <option value={2}>{'เจ้าหน้าที่ อบต.'}</option>
+                                <option value={3}>{'admin'}</option>
                             </Form.Select>
 
                         </Form.Group>
