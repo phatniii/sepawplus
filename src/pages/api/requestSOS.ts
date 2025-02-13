@@ -14,7 +14,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         }
 
         const body = req.body;
-        
+        const { uid } = req.body;
+        console.log("📥 Received Request Body:", req.body);
+        console.log("🔍 Checking UID:", uid);
         if (!body.uid) {
             return res.status(400).json({ message: 'error', data: 'ไม่พบพารามิเตอร์ uid' });
         }
