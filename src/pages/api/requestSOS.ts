@@ -39,13 +39,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
             if (user && takecareperson) {
                 const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname}  \nขอความช่วยเหลือ ฉุกเฉิน`;
+                
+                // ตรวจสอบว่า users_line_id ไม่เป็น null
+                const replyToken = user.users_line_id || '';
 
-                // ตรวจสอบว่า users_line_id ไม่เป็น null หรือว่างเปล่า
-                if (!user.users_line_id) {
-                    return res.status(400).json({ message: 'error', data: 'ไม่พบ replyToken' });
-                }
-
-                await replyNotificationSOS({ replyToken: user.users_line_id, message });
+                await replyNotificationSOS({ replyToken, message });
 
                 return res.status(200).json({ message: 'success', data: user });
             } else {
