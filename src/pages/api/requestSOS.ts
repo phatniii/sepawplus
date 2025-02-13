@@ -24,12 +24,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         }
         
         try {
+            // ค้นหาผู้ใช้โดยใช้ UID
             const user = await prisma.users.findFirst({
                 where: {
                     users_id: Number(body.uid)
                 }
             });
 
+            // ตรวจสอบว่ามีการดูแลจากบุคคลอื่นที่เกี่ยวข้องหรือไม่
             const takecareperson = await prisma.takecareperson.findFirst({
                 where: {
                     users_id: user?.users_id,
@@ -41,16 +43,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname}  \nขอความช่วยเหลือ ฉุกเฉิน`;
                 
                 // ตรวจสอบว่า users_line_id ไม่เป็น null
-                const replyToken = user.users_line_id || '';
+                if (!user.users_line_id) {
+                    return res.status(400).json({ message: 'error', data: 'ไม่พบ replyToken' });
+                }
 
-                await replyNotificationSOS({ replyToken, message });
+                console.log(`🔍 ส่งแจ้งเตือนไปยัง: ${user.users_line_id}`);
+
+                await replyNotificationSOS({ replyToken: user.users_line_id, message });
 
                 return res.status(200).json({ message: 'success', data: user });
             } else {
-                return res.status(400).json({ message: 'error', data: 'ไม่พบข้อมูล' });
+                return res.status(400).json({ message: 'error', data: 'ไม่พบข้อมูล หรือไม่มีผู้ดูแล' });
             }
         } catch (error) {
-            console.error("Error:", error);
+            console.error("❌ Error:", error);
             return res.status(500).json({ message: 'error', data: 'เกิดข้อผิดพลาดในการประมวลผล' });
         }
 	} else {
