@@ -12,6 +12,26 @@ function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// ฟังก์ชัน retry เมื่อเจอ 429
+async function retryRequest(fn: Function, maxRetries = 5, delayMs = 2000) {
+    let attempt = 0;
+    while (attempt < maxRetries) {
+        try {
+            return await fn();
+        } catch (error: any) {
+            if (error.response?.status === 429) {
+                attempt++;
+                const waitTime = delayMs * Math.pow(2, attempt); // Exponential Backoff
+                console.log(`🕒 429 Too Many Requests, retrying in ${waitTime / 1000}s...`);
+                await delay(waitTime);
+            } else {
+                throw error; // ถ้าไม่ใช่ 429 ให้โยน error ปกติ
+            }
+        }
+    }
+    throw new Error("429 Too Many Requests - Max retries reached");
+}
+
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
 	if (req.method === 'POST') {
         if (req.headers['content-type'] !== 'application/json') {
@@ -51,9 +71,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 // ตรวจสอบว่า users_line_id ไม่เป็น null
                 const replyToken = user.users_line_id || '';
 
-                // หน่วงเวลาก่อนส่ง LINE API (2 วินาที)
-                await delay(2000);
-                await replyNotificationSOS({ replyToken, message });
+                // ใช้ retryRequest เพื่อแก้ปัญหา 429
+                await retryRequest(() => replyNotificationSOS({ replyToken, message }));
 
                 return res.status(200).json({ message: 'success', data: user });
             } else {
