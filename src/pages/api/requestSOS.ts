@@ -10,6 +10,32 @@ const LINE_HEADER = {
     Authorization: `Bearer ${LINE_ACCESS_TOKEN}`,
 };
 
+// ✅ ฟังก์ชันดึงค่าจำนวนข้อความสูงสุดที่ส่งได้
+async function getQuota() {
+    try {
+        const response = await axios.get('https://api.line.me/v2/bot/message/quota', {
+            headers: LINE_HEADER
+        });
+        return response.data?.value ?? -1; // ถ้าไม่มีค่า ให้ส่ง -1
+    } catch (error) {
+        console.error("❌ Failed to fetch quota:", error);
+        return -1;
+    }
+}
+
+// ✅ ฟังก์ชันดึงค่าจำนวนข้อความที่ใช้ไปแล้ว
+async function getUsedQuota() {
+    try {
+        const response = await axios.get('https://api.line.me/v2/bot/message/quota/consumption', {
+            headers: LINE_HEADER
+        });
+        return response.data?.totalUsage ?? -1; // ถ้าไม่มีค่า ให้ส่ง -1
+    } catch (error) {
+        console.error("❌ Failed to fetch used quota:", error);
+        return -1;
+    }
+}
+
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
         res.setHeader('Allow', ['POST']);
@@ -49,26 +75,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
         const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nขอความช่วยเหลือ ฉุกเฉิน`;
 
-        // ✅ ตรวจสอบ Rate Limit ก่อนส่งข้อความ
-        try {
-            const rateLimitResponse = await axios.get('https://api.line.me/v2/bot/info', {
-                headers: LINE_HEADER
+        // ✅ ตรวจสอบ Quota ก่อนส่งข้อความ
+        const quota = await getQuota();
+        const usedQuota = await getUsedQuota();
+        console.log(`📊 Total Quota: ${quota}`);
+        console.log(`📊 Used Quota: ${usedQuota}`);
+
+        if (quota !== -1 && usedQuota !== -1 && usedQuota >= quota) {
+            return res.status(429).json({
+                message: 'error',
+                data: `Rate Limit Exceeded. Usage: ${usedQuota}/${quota}`
             });
-
-            const remainingRequests = Number(rateLimitResponse.headers['x-ratelimit-remaining']);
-            const resetTime = Number(rateLimitResponse.headers['x-ratelimit-reset']);
-
-            console.log(`🚦 Remaining Requests: ${remainingRequests}`);
-            console.log(`⏳ Reset Time: ${new Date(resetTime * 1000)}`);
-
-            if (remainingRequests <= 0) {
-                return res.status(429).json({
-                    message: 'error',
-                    data: `Rate Limit Exceeded. Try again after ${new Date(resetTime * 1000)}`
-                });
-            }
-        } catch (rateError) {
-            console.error("❌ Failed to check Rate Limit:", rateError);
         }
 
         // ✅ ถ้ายังส่งข้อความได้ ให้เรียก LINE API
