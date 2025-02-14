@@ -3,81 +3,82 @@ import prisma from '@/lib/prisma';
 import { replyNotificationSOS } from '@/utils/apiLineReply';
 import axios from 'axios';
 
-type Data = {
-	message: string;
-	data?: any;
-}
+const LINE_ACCESS_TOKEN = process.env.CHANNEL_ACCESS_TOKEN_LINE || '';
+
+const LINE_HEADER = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${LINE_ACCESS_TOKEN}`,
+};
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-	if (req.method === 'POST') {
-        if (req.headers['content-type'] !== 'application/json') {
-            return res.status(400).json({ message: 'error', error: "Content-Type must be application/json" });
+    if (req.method !== 'POST') {
+        res.setHeader('Allow', ['POST']);
+        return res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
+    }
+
+    if (req.headers['content-type'] !== 'application/json') {
+        return res.status(400).json({ message: 'error', error: "Content-Type must be application/json" });
+    }
+
+    const body = req.body;
+    const { uid } = req.body;
+
+    console.log("📥 Received Request Body:", req.body);
+    console.log("🔍 Checking UID:", uid);
+
+    if (!uid) {
+        return res.status(400).json({ message: 'error', data: 'ไม่พบพารามิเตอร์ uid' });
+    }
+
+    if (isNaN(Number(uid))) {
+        return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ uid ไม่ใช่ตัวเลข' });
+    }
+
+    try {
+        const user = await prisma.users.findFirst({
+            where: { users_id: Number(uid) }
+        });
+
+        const takecareperson = await prisma.takecareperson.findFirst({
+            where: { users_id: user?.users_id, takecare_status: 1 }
+        });
+
+        if (!user || !takecareperson) {
+            return res.status(400).json({ message: 'error', data: 'ไม่พบข้อมูล' });
         }
 
-        const body = req.body;
-        const { uid } = req.body;
-        console.log("📥 Received Request Body:", req.body);
-        console.log("🔍 Checking UID:", uid);
+        const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nขอความช่วยเหลือ ฉุกเฉิน`;
 
-        if (!body.uid) {
-            return res.status(400).json({ message: 'error', data: 'ไม่พบพารามิเตอร์ uid' });
-        }
-        
-        if (isNaN(Number(body.uid))) {
-            return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ uid ไม่ใช่ตัวเลข' });
-        }
-        
+        // ✅ ตรวจสอบ Rate Limit ก่อนส่งข้อความ
         try {
-            const user = await prisma.users.findFirst({
-                where: {
-                    users_id: Number(body.uid)
-                }
+            const rateLimitResponse = await axios.get('https://api.line.me/v2/bot/info', {
+                headers: LINE_HEADER
             });
 
-            const takecareperson = await prisma.takecareperson.findFirst({
-                where: {
-                    users_id: user?.users_id,
-                    takecare_status: 1
-                }
-            });
+            const remainingRequests = Number(rateLimitResponse.headers['x-ratelimit-remaining']);
+            const resetTime = Number(rateLimitResponse.headers['x-ratelimit-reset']);
 
-            if (user && takecareperson) {
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname}  \nขอความช่วยเหลือ ฉุกเฉิน`;
-                
-                // ตรวจสอบว่า users_line_id ไม่เป็น null
-                const replyToken = user.users_line_id || '';
+            console.log(`🚦 Remaining Requests: ${remainingRequests}`);
+            console.log(`⏳ Reset Time: ${new Date(resetTime * 1000)}`);
 
-                // ✅ ตรวจสอบ Rate Limit ของ LINE API
-                const rateLimitResponse = await axios.get('https://api.line.me/v2/bot/info', {
-                    headers: { 'Authorization': `Bearer YOUR_CHANNEL_ACCESS_TOKEN` }
+            if (remainingRequests <= 0) {
+                return res.status(429).json({
+                    message: 'error',
+                    data: `Rate Limit Exceeded. Try again after ${new Date(resetTime * 1000)}`
                 });
-
-                const remainingRequests = rateLimitResponse.headers['x-ratelimit-remaining'];
-                const resetTime = rateLimitResponse.headers['x-ratelimit-reset'];
-
-                console.log(`🚦 Remaining Requests: ${remainingRequests}`);
-                console.log(`⏳ Reset Time: ${new Date(parseInt(resetTime) * 1000)}`);
-
-                if (Number(remainingRequests) <= 0) {
-                    return res.status(429).json({
-                        message: 'error',
-                        data: `Rate Limit Exceeded. Try again after ${new Date(parseInt(resetTime) * 1000)}`
-                    });
-                }
-
-                // ✅ ถ้ายังส่งข้อความได้ ให้เรียก LINE API
-                await replyNotificationSOS({ replyToken, message });
-
-                return res.status(200).json({ message: 'success', data: user });
-            } else {
-                return res.status(400).json({ message: 'error', data: 'ไม่พบข้อมูล' });
             }
-        } catch (error) {
-            console.error("Error:", error);
-            return res.status(500).json({ message: 'error', data: 'เกิดข้อผิดพลาดในการประมวลผล' });
+        } catch (rateError) {
+            console.error("❌ Failed to check Rate Limit:", rateError);
         }
-	} else {
-		res.setHeader('Allow', ['POST']);
-		res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
-	}
+
+        // ✅ ถ้ายังส่งข้อความได้ ให้เรียก LINE API
+        const replyToken = user.users_line_id || '';
+        await replyNotificationSOS({ replyToken, message });
+
+        return res.status(200).json({ message: 'success', data: user });
+
+    } catch (error) {
+        console.error("❌ Error:", error);
+        return res.status(500).json({ message: 'error', data: 'เกิดข้อผิดพลาดในการประมวลผล' });
+    }
 }
