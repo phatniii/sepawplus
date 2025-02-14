@@ -276,7 +276,7 @@ export const replyNotRegistration = async ({
                                 },
                                 {
                                     type  : "text",
-                                    text  : `คุณ ${profile.displayName} ยังไม่ได้ลงทะเบียน กรูณาลงทะเบียนก่อนเข้าใช้งาน`,
+                                    text  : `คุณ ${profile.displayName} ยังไม่ได้ลงทะเบียน กรุณาลงทะเบียนก่อนเข้าใช้งาน`,
                                     size  : "sm",
                                     color : "#555555",
                                     wrap  : true,
