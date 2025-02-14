@@ -7,6 +7,11 @@ type Data = {
 	data?: any;
 }
 
+// ฟังก์ชันหน่วงเวลา
+function delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
 	if (req.method === 'POST') {
         if (req.headers['content-type'] !== 'application/json') {
@@ -17,6 +22,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         const { uid } = req.body;
         console.log("📥 Received Request Body:", req.body);
         console.log("🔍 Checking UID:", uid);
+
         if (!body.uid) {
             return res.status(400).json({ message: 'error', data: 'ไม่พบพารามิเตอร์ uid' });
         }
@@ -40,11 +46,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             });
 
             if (user && takecareperson) {
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname}  \nขอความช่วยเหลือ ฉุกเฉิน`;
+                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nขอความช่วยเหลือ ฉุกเฉิน`;
                 
                 // ตรวจสอบว่า users_line_id ไม่เป็น null
                 const replyToken = user.users_line_id || '';
 
+                // หน่วงเวลาก่อนส่ง LINE API (2 วินาที)
+                await delay(2000);
                 await replyNotificationSOS({ replyToken, message });
 
                 return res.status(200).json({ message: 'success', data: user });
