@@ -1,35 +1,11 @@
-import { NextApiRequest, NextApiResponse } from 'next' 
-import prisma from '@/lib/prisma'
-import { replyNotificationSOS } from '@/utils/apiLineReply'
+import { NextApiRequest, NextApiResponse } from 'next';
+import prisma from '@/lib/prisma';
+import { replyNotificationSOS } from '@/utils/apiLineReply';
+import axios from 'axios';
 
 type Data = {
 	message: string;
 	data?: any;
-}
-
-// ฟังก์ชันหน่วงเวลา
-function delay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// ฟังก์ชัน retry เมื่อเจอ 429
-async function retryRequest(fn: Function, maxRetries = 5, delayMs = 2000) {
-    let attempt = 0;
-    while (attempt < maxRetries) {
-        try {
-            return await fn();
-        } catch (error: any) {
-            if (error.response?.status === 429) {
-                attempt++;
-                const waitTime = delayMs * Math.pow(2, attempt); // Exponential Backoff
-                console.log(`🕒 429 Too Many Requests, retrying in ${waitTime / 1000}s...`);
-                await delay(waitTime);
-            } else {
-                throw error; // ถ้าไม่ใช่ 429 ให้โยน error ปกติ
-            }
-        }
-    }
-    throw new Error("429 Too Many Requests - Max retries reached");
 }
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -66,13 +42,31 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             });
 
             if (user && takecareperson) {
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nขอความช่วยเหลือ ฉุกเฉิน`;
+                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname}  \nขอความช่วยเหลือ ฉุกเฉิน`;
                 
                 // ตรวจสอบว่า users_line_id ไม่เป็น null
                 const replyToken = user.users_line_id || '';
 
-                // ใช้ retryRequest เพื่อแก้ปัญหา 429
-                await retryRequest(() => replyNotificationSOS({ replyToken, message }));
+                // ✅ ตรวจสอบ Rate Limit ของ LINE API
+                const rateLimitResponse = await axios.get('https://api.line.me/v2/bot/info', {
+                    headers: { 'Authorization': `Bearer YOUR_CHANNEL_ACCESS_TOKEN` }
+                });
+
+                const remainingRequests = rateLimitResponse.headers['x-ratelimit-remaining'];
+                const resetTime = rateLimitResponse.headers['x-ratelimit-reset'];
+
+                console.log(`🚦 Remaining Requests: ${remainingRequests}`);
+                console.log(`⏳ Reset Time: ${new Date(parseInt(resetTime) * 1000)}`);
+
+                if (Number(remainingRequests) <= 0) {
+                    return res.status(429).json({
+                        message: 'error',
+                        data: `Rate Limit Exceeded. Try again after ${new Date(parseInt(resetTime) * 1000)}`
+                    });
+                }
+
+                // ✅ ถ้ายังส่งข้อความได้ ให้เรียก LINE API
+                await replyNotificationSOS({ replyToken, message });
 
                 return res.status(200).json({ message: 'success', data: user });
             } else {
