@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+
 import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
 import Toast from 'react-bootstrap/Toast';
@@ -11,73 +11,54 @@ import ButtonState from '@/components/Button/ButtonState';
 import styles from '@/styles/page.module.css';
 
 interface ListItemType {
-  id: number;
-  listName: string;
-  numberCard: string;
-  startDate: string;
-  endDate: string;
+  borrow_equipment_id: number;
+  borrow_equipment: string;
+  borrow_equipment_number: string;
+  borrow_date: string;
+  borrow_return: string;
 }
 
 const ReturnOf = () => {
-  const router = useRouter();
+  const inputRef = useRef<HTMLFormElement>(null);
+
   const [validated, setValidated] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: '' });
   const [isLoading, setLoading] = useState(false);
   const [listItem, setListItem] = useState<ListItemType[]>([]);
-  const [returnName, setReturnName] = useState('');
-  const [returnNote, setReturnNote] = useState('');
 
   useEffect(() => {
-    if (router.query.auToken) {
-      fetchApprovedItems(router.query.auToken as string);
-    }
-  }, [router.query.auToken]);
+    fetchEquipmentList();
+  }, []);
 
-  const fetchApprovedItems = async (auToken: string) => {
+  // ✅ ดึงข้อมูลชุดอุปกรณ์จากฐานข้อมูลผ่าน API
+  const fetchEquipmentList = async () => {
     try {
-      const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/approved`, {
-        params: { auToken }
-      });
+      const response = await axios.get(`${process.env.WEB_DOMAIN}/api/admin/getBorrowEquipmentListReturn`);
       if (response.data.success) {
         setListItem(response.data.data);
       } else {
-        setAlert({ show: true, message: 'ไม่พบข้อมูลอุปกรณ์ที่ได้รับอนุมัติให้คืน' });
+        setAlert({ show: true, message: 'ไม่พบข้อมูลอุปกรณ์ที่ต้องคืน' });
       }
     } catch (error) {
       setAlert({ show: true, message: 'เกิดข้อผิดพลาดในการโหลดข้อมูล' });
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
 
-    try {
-      if (listItem.length > 0) {
-        const data = {
-          return_name: returnName,
-          return_note: returnNote,
-          return_list: listItem.map(item => ({
-            id: item.id,
-            listName: item.listName,
-            numberCard: item.numberCard,
-          })),
-        };
-
-        await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, data);
-        setAlert({ show: true, message: 'คืนอุปกรณ์สำเร็จ' });
-        setListItem([]);
-        setReturnName('');
-        setReturnNote('');
-      } else {
-        setAlert({ show: true, message: 'ไม่มีอุปกรณ์ให้คืน' });
-      }
-    } catch (error) {
-      setAlert({ show: true, message: 'เกิดข้อผิดพลาดในการคืนอุปกรณ์' });
-    } finally {
+    setTimeout(() => {
       setLoading(false);
       setValidated(true);
-    }
+    }, 2000);
+
+    setAlert({ show: true, message: 'ระบบยังอยู่ในช่วงพัฒนา' });
+  };
+
+  const removeListener = (index: number) => {
+    const newList = listItem.filter((_, i) => i !== index);
+    setListItem(newList);
   };
 
   return (
@@ -86,33 +67,29 @@ const ReturnOf = () => {
         <h1 className="py-2">คืนอุปกรณ์ครุภัณฑ์</h1>
       </div>
       <div className="px-5">
-        <Form noValidate validated={validated} onSubmit={handleSubmit}>
-          
-
-          {/* แสดงรายการอุปกรณ์ที่ได้รับอนุมัติให้คืน */}
+        <Form noValidate validated={validated} onSubmit={(e) => handleSubmit(e)}>
           <Form.Group className="py-2">
             {listItem.length > 0 ? (
               listItem.map((item, index) => (
-                <Toast key={index} className="mb-2">
+                <Toast key={index} onClose={() => removeListener(index)} className="mb-2">
                   <Toast.Header>
-                    <strong className="me-auto">{item.listName}</strong>
+                    <strong className="me-auto">{item.borrow_equipment}</strong>
                   </Toast.Header>
                   <Toast.Body>
-                    {item.numberCard}
+                    {item.borrow_equipment_number}
                     <div className={styles.toastDate}>
-                      <span>ยืมเมื่อ {item.startDate}</span>
-                      <span>กำหนดคืน {item.endDate}</span>
+                      <span>เริ่ม {item.borrow_date}</span>
+                      <span>สิ้นสุด {item.borrow_return}</span>
                     </div>
                   </Toast.Body>
                 </Toast>
               ))
             ) : (
-              <p>ไม่มีรายการอุปกรณ์ที่ได้รับอนุมัติให้คืน</p>
+              <p>ไม่มีรายการอุปกรณ์ที่ต้องคืน</p>
             )}
           </Form.Group>
-
           <Form.Group className="d-flex justify-content-center py-3">
-            <ButtonState type="submit" className={styles.button} text={'บันทึกการคืน'} icon="fas fa-save" isLoading={isLoading} />
+            <ButtonState type="submit" className={styles.button} text={'บันทึก'} icon="fas fa-save" isLoading={isLoading} />
           </Form.Group>
         </Form>
       </div>
