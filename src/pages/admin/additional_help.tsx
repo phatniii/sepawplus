@@ -55,7 +55,7 @@ const AdditionalHelp = () => {
                    return moment(item.exten_date).format('M')
                 })
                 const exted_closed = _.groupBy(response.data, (item) => {
-                    return moment(item.exted_closed).format('M') && item.exted_closed_date
+                    return moment(item.exted_closed_date).format('M') 
                 })
                 const labels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
                 const data = {
