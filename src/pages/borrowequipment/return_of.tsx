@@ -36,7 +36,7 @@ const ReturnOf = () => {
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/return_of`);
       if (response.data.success) {
         // กรองเฉพาะอุปกรณ์ที่ได้รับอนุมัติให้ยืมแล้ว (status = 2)
-        const approvedItems = response.data.data.filter((item: any) => item.borrow_equipment_status === 2);
+        const approvedItems = response.data.data.filter((item: any) => item.borrow_status === 1);
         setListItem(approvedItems);
       } else {
         setAlert({ show: true, message: 'ไม่พบข้อมูลอุปกรณ์ที่ได้รับอนุมัติให้คืน' });
