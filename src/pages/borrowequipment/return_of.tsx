@@ -28,10 +28,10 @@ const ReturnOf = () => {
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`);
       if (response.data && response.data.data) {
         const borrowedData = response.data.data.map((item: any) => ({
-          listName: item.borrowequipment.borrow_name, // ✅ ใช้ชื่อของอุปกรณ์ที่ยืมจาก borrowequipment
-          numberCard: item.borrow_equipment_number, // ✅ ใช้หมายเลขอุปกรณ์
-          startDate: item.borrowequipment.borrow_date, // ✅ วันที่เริ่มยืม
-          endDate: item.borrowequipment.borrow_return, // ✅ วันที่ต้องคืน
+          listName: item.borrow_name, // ✅ ใช้ชื่ออุปกรณ์จากฐานข้อมูล
+          numberCard: item.borrowequipment_list.map((eq: any) => eq.borrow_equipment_number).join(", "), // ✅ รวมเลขอุปกรณ์
+          startDate: item.borrow_date, // ✅ วันที่เริ่มยืม
+          endDate: item.borrow_return, // ✅ วันที่ต้องคืน
         }));
         setListItem(borrowedData);
       }
