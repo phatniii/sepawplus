@@ -19,25 +19,28 @@ const ReturnOf = () => {
 
   const [validated, setValidated] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: '' });
-  const [isLoading, setLoading] = useState(false);
+  const [isLoading, setLoading] = useState(true); // ✅ เริ่มต้นเป็น `true` เพราะต้องโหลดข้อมูลก่อน
   const [listItem, setListItem] = useState<ListItemType[]>([]);
 
   // 🔹 ฟังก์ชันดึงข้อมูลจาก API
   const fetchBorrowedItems = async () => {
     try {
+      setLoading(true); // ✅ ตั้งค่าสถานะเป็น "กำลังโหลด"
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`);
       if (response.data && response.data.data) {
         const borrowedData = response.data.data.map((item: any) => ({
-          listName: item.borrow_name, // ✅ ใช้ชื่ออุปกรณ์จากฐานข้อมูล
-          numberCard: item.borrowequipment_list.map((eq: any) => eq.borrow_equipment_number).join(", "), // ✅ รวมเลขอุปกรณ์
-          startDate: item.borrow_date ? new Date(item.borrow_date).toLocaleDateString('th-TH') : "ไม่ระบุ", // ✅ แปลงวันที่
-          endDate: item.borrow_return ? new Date(item.borrow_return).toLocaleDateString('th-TH') : "ไม่ระบุ", // ✅ แปลงวันที่
+          listName: item.borrow_name,
+          numberCard: item.borrowequipment_list.map((eq: any) => eq.borrow_equipment_number).join(", "),
+          startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
+          endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
         }));
         setListItem(borrowedData);
       }
     } catch (error) {
       console.error('Error fetching borrowed equipment:', error);
       setAlert({ show: true, message: 'ไม่สามารถดึงข้อมูลได้' });
+    } finally {
+      setLoading(false); // ✅ โหลดเสร็จแล้วเปลี่ยนเป็น `false`
     }
   };
 
@@ -78,7 +81,10 @@ const ReturnOf = () => {
       <div className="px-5">
         <Form noValidate validated={validated} onSubmit={(e) => handleSubmit(e)}>
           <Form.Group className="py-2">
-            {listItem.length > 0 ? (
+            {/* 🔹 แสดงสถานะกำลังโหลด */}
+            {isLoading ? (
+              <p></p>
+            ) : listItem.length > 0 ? (
               listItem.map((item, index) => (
                 <Toast key={index} onClose={() => removeListener(index)} className="mb-2">
                   <Toast.Header>
