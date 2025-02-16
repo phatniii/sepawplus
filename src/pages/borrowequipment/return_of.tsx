@@ -1,20 +1,11 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 
 import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
-import Table from 'react-bootstrap/Table';
-import Col from 'react-bootstrap/Col';
 import Toast from 'react-bootstrap/Toast';
 
-import InputLabel from '@/components/Form/InputLabel'
-import TextareaLabel from '@/components/Form/TextareaLabel'
-import ModalAlert from '@/components/Modals/ModalAlert'
-import ModalActions from '@/components/Modals/ModalActions'
-import ButtonState from '@/components/Button/ButtonState';
-import ButtonAdd from '@/components/Button/ButtonAdd';
-import DatePickerX from '@/components/DatePicker/DatePickerX';
-
-import styles from '@/styles/page.module.css'
+import styles from '@/styles/page.module.css';
 
 interface ListItemType {
   listName: string;
@@ -22,63 +13,62 @@ interface ListItemType {
   startDate: string;
   endDate: string;
 }
+
 const ReturnOf = () => {
-  const inputRef = useRef<HTMLFormElement>(null)
+  const inputRef = useRef<HTMLFormElement>(null);
 
   const [validated, setValidated] = useState(false);
-  const [validatedModal, setValidatedModal] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: '' });
   const [isLoading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
-  const [endDate, setEndDate] = useState<Date | null>(new Date());
-  const [modalSave, setModalSave] = useState(false);
+  const [listItem, setListItem] = useState<ListItemType[]>([]);
 
-  const [listItem, setListItem] = useState<ListItemType[]>([
-    { listName: 'ชุดนาฬิกาติดตาม 1', numberCard: 'SW-123456789', startDate: '1/1/2023', endDate: '31/1/2023' },
-    { listName: 'ชุดนาฬิกาติดตาม 2', numberCard: 'SW-123456789', startDate: '2/1/2023', endDate: '31/1/2023' },
-    { listName: 'ชุดนาฬิกาติดตาม 3', numberCard: 'SW-123456789', startDate: '3/1/2023', endDate: '31/1/2023' },
-  ]);
+  // 🔹 ฟังก์ชันดึงข้อมูลจาก API
+  const fetchBorrowedItems = async () => {
+    try {
+      const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`);
+      if (response.data && response.data.data) {
+        const borrowedData = response.data.data.map((item: any) => ({
+          listName: item.borrow_name, // ✅ ใช้ชื่ออุปกรณ์จากฐานข้อมูล
+          numberCard: item.borrowequipment_list.map((eq: any) => eq.borrow_equipment_number).join(", "), // ✅ รวมเลขอุปกรณ์
+          startDate: item.borrow_date, // ✅ วันที่เริ่มยืม
+          endDate: item.borrow_return, // ✅ วันที่ต้องคืน
+        }));
+        setListItem(borrowedData);
+      }
+    } catch (error) {
+      console.error('Error fetching borrowed equipment:', error);
+      setAlert({ show: true, message: 'ไม่สามารถดึงข้อมูลได้' });
+    }
+  };
+
+  // 🔹 ใช้ useEffect เพื่อดึงข้อมูลเมื่อ component โหลด
+  useEffect(() => {
+    fetchBorrowedItems();
+  }, []);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     const form = event.currentTarget;
-    setLoading(true)
+    setLoading(true);
     if (form.checkValidity() === false) {
-      setAlert({ show: true, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' })
+      setAlert({ show: true, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
       event.preventDefault();
       event.stopPropagation();
-
     } else {
-      setAlert({ show: true, message: 'ระบบยังอยู่ในช่วงพัฒนา' })
+      setAlert({ show: true, message: 'ระบบยังอยู่ในช่วงพัฒนา' });
       event.preventDefault();
       event.stopPropagation();
     }
     setTimeout(() => {
-      setLoading(false)
+      setLoading(false);
     }, 2000);
     setValidated(true);
   };
 
-  // const handleSave = async () => {
-  //     try {
-  //         const formInput = inputRef.current
-  //         if (formInput) {
-  //             if (formInput.checkValidity()) {
-  //                 setListItem([...listItem, { listName: formInput['listName'].value, numberCard: formInput['numberCard'].value }])
-  //                 setModalSave(false)
-  //                 setValidatedModal(false);
-  //             }else{
-  //                 setValidatedModal(true);
-  //             }
-  //         }
-
-  //     } catch (error) {
-
-  //     }
-  // }
+  // 🔹 ฟังก์ชันลบรายการ (เฉพาะ UI)
   const removeListener = (index: number) => {
-    const newList = listItem.filter((item, i) => i !== index)
-    setListItem(newList)
-  }
+    const newList = listItem.filter((_, i) => i !== index);
+    setListItem(newList);
+  };
 
   return (
     <Container>
@@ -87,44 +77,30 @@ const ReturnOf = () => {
       </div>
       <div className="px-5">
         <Form noValidate validated={validated} onSubmit={(e) => handleSubmit(e)}>
-
           <Form.Group className="py-2">
-            {
-              listItem.length > 0 && listItem.map((item, index) => (
+            {listItem.length > 0 ? (
+              listItem.map((item, index) => (
                 <Toast key={index} onClose={() => removeListener(index)} className="mb-2">
                   <Toast.Header>
                     <strong className="me-auto">{item.listName}</strong>
                   </Toast.Header>
                   <Toast.Body>
-                    {item.numberCard}
+                    <span style={{ color: 'red', fontWeight: 'bold' }}>{item.numberCard}</span>
                     <div className={styles.toastDate}>
-                    <span>เริ่ม {item.startDate}</span>
-                    <span>สิ้นสุด {item.endDate}</span>
+                      <span>เริ่ม {item.startDate}</span>
+                      <span>สิ้นสุด {item.endDate}</span>
                     </div>
                   </Toast.Body>
                 </Toast>
               ))
-            }
-
-          </Form.Group>
-          <Form.Group className="d-flex justify-content-center py-3">
-            <ButtonState type="submit" className={styles.button} text={'บันทึก'} icon="fas fa-save" isLoading={isLoading} />
+            ) : (
+              <p>ไม่มีข้อมูลอุปกรณ์ที่ถูกยืม</p>
+            )}
           </Form.Group>
         </Form>
       </div>
-      <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
-      {/* <ModalActions show={modalSave} title='เพิ่มข้อมูลอุปกรณ์' onClick={() => handleSave()} onHide={() => setModalSave(false)}>
-              <Form noValidate validated={validatedModal} ref={inputRef}>
-                  <Form.Group>
-                      <InputLabel label='รายการ' id='listName' placeholder="กรอกรายการ" required />
-                  </Form.Group>
-                  <Form.Group>
-                      <InputLabel label='หมายเลขชุดอุปกรณ์' id='numberCard' placeholder="กรอกหมายเลขชุดอุปกรณ์" required />
-                  </Form.Group>
-              </Form>
-          </ModalActions> */}
     </Container>
-  )
-}
+  );
+};
 
-export default ReturnOf
+export default ReturnOf;
