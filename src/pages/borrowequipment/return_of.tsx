@@ -22,32 +22,26 @@ const ReturnOf = () => {
   const [isLoading, setLoading] = useState(false);
   const [listItem, setListItem] = useState<ListItemType[]>([]);
 
-  // 🔹 ดึงข้อมูลจาก API
+  // 🔹 ฟังก์ชันดึงข้อมูลจาก API
   const fetchBorrowedItems = async () => {
     try {
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`);
-      console.log("📌 API Response:", response.data); // Debug เช็คข้อมูลจาก API
-
       if (response.data && response.data.data) {
-        const borrowedData = response.data.data.flatMap((item: any) =>
-          item.borrowequipment_list.map((eq: any) => ({
-            listName: eq.borrow_equipment, // ✅ ดึงชื่ออุปกรณ์จาก `borrowequipment_list`
-            numberCard: eq.borrow_equipment_number, // ✅ หมายเลขอุปกรณ์
-            startDate: item.borrow_date ?? "ไม่ระบุ", // ✅ กัน null
-            endDate: item.borrow_return ?? "ไม่ระบุ", // ✅ กัน null
-          }))
-        );
-
-        console.log("✅ Processed Data:", borrowedData); // Debug เช็คข้อมูลที่ประมวลผลแล้ว
+        const borrowedData = response.data.data.map((item: any) => ({
+          listName: item.borrowequipment.borrow_name, // ✅ ใช้ชื่อของอุปกรณ์ที่ยืมจาก borrowequipment
+          numberCard: item.borrow_equipment_number, // ✅ ใช้หมายเลขอุปกรณ์
+          startDate: item.borrowequipment.borrow_date, // ✅ วันที่เริ่มยืม
+          endDate: item.borrowequipment.borrow_return, // ✅ วันที่ต้องคืน
+        }));
         setListItem(borrowedData);
       }
     } catch (error) {
-      console.error('❌ Error fetching borrowed equipment:', error);
+      console.error('Error fetching borrowed equipment:', error);
       setAlert({ show: true, message: 'ไม่สามารถดึงข้อมูลได้' });
     }
   };
 
-  // 🔹 ใช้ useEffect ดึงข้อมูลเมื่อ Component โหลด
+  // 🔹 ใช้ useEffect เพื่อดึงข้อมูลเมื่อ component โหลด
   useEffect(() => {
     fetchBorrowedItems();
   }, []);
@@ -70,7 +64,7 @@ const ReturnOf = () => {
     setValidated(true);
   };
 
-  // 🔹 ฟังก์ชันลบรายการ
+  // 🔹 ฟังก์ชันลบรายการ (เฉพาะ UI)
   const removeListener = (index: number) => {
     const newList = listItem.filter((_, i) => i !== index);
     setListItem(newList);
@@ -99,7 +93,9 @@ const ReturnOf = () => {
                   </Toast.Body>
                 </Toast>
               ))
-            ) : null} {/* ❌ ซ่อน "ไม่มีข้อมูลอุปกรณ์ที่ถูกยืม" ออกไป */}
+            ) : (
+              <p>ไม่มีข้อมูลอุปกรณ์ที่ถูกยืม</p>
+            )}
           </Form.Group>
         </Form>
       </div>
