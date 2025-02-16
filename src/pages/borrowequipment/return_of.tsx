@@ -8,7 +8,6 @@ import Toast from 'react-bootstrap/Toast';
 import styles from '@/styles/page.module.css';
 
 interface ListItemType {
-  borrowEquipmentId: number;
   listName: string;
   numberCard: string;
   startDate: string;
@@ -22,64 +21,59 @@ const ReturnOf = () => {
   const [alert, setAlert] = useState({ show: false, message: '' });
   const [isLoading, setLoading] = useState(false);
   const [listItem, setListItem] = useState<ListItemType[]>([]);
-  const [removedItems, setRemovedItems] = useState<number[]>([]); // เก็บ ID ของอุปกรณ์ที่ถูกลบ
 
-  // 🔹 ดึงข้อมูลจาก API เมื่อหน้าโหลด
-  useEffect(() => {
-    fetchBorrowedItems();
-  }, []);
-
+  // 🔹 ดึงข้อมูลจาก API
   const fetchBorrowedItems = async () => {
     try {
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`);
+      console.log("📌 API Response:", response.data); // Debug เช็คข้อมูลจาก API
+
       if (response.data && response.data.data) {
-        const borrowedData = response.data.data.map((item: any) => ({
-          borrowEquipmentId: item.borrow_equipment_id, // ✅ เก็บ ID ของอุปกรณ์เพื่อใช้คืน
-          listName: item.borrowequipment.borrow_name, // ✅ ชื่อของอุปกรณ์ที่ยืม
-          numberCard: item.borrow_equipment_number, // ✅ หมายเลขอุปกรณ์
-          startDate: item.borrowequipment.borrow_date, // ✅ วันที่เริ่มยืม
-          endDate: item.borrowequipment.borrow_return, // ✅ วันที่ต้องคืน
-        }));
+        const borrowedData = response.data.data.flatMap((item: any) =>
+          item.borrowequipment_list.map((eq: any) => ({
+            listName: eq.borrow_equipment, // ✅ ดึงชื่ออุปกรณ์จาก `borrowequipment_list`
+            numberCard: eq.borrow_equipment_number, // ✅ หมายเลขอุปกรณ์
+            startDate: item.borrow_date ?? "ไม่ระบุ", // ✅ กัน null
+            endDate: item.borrow_return ?? "ไม่ระบุ", // ✅ กัน null
+          }))
+        );
+
+        console.log("✅ Processed Data:", borrowedData); // Debug เช็คข้อมูลที่ประมวลผลแล้ว
         setListItem(borrowedData);
       }
     } catch (error) {
-      console.error('Error fetching borrowed equipment:', error);
+      console.error('❌ Error fetching borrowed equipment:', error);
       setAlert({ show: true, message: 'ไม่สามารถดึงข้อมูลได้' });
     }
   };
 
-  // 🔹 ฟังก์ชันลบอุปกรณ์ออกจากรายการ
-  const removeItem = (borrowEquipmentId: number) => {
-    setListItem((prevList) => prevList.filter(item => item.borrowEquipmentId !== borrowEquipmentId));
-    setRemovedItems((prevRemoved) => [...prevRemoved, borrowEquipmentId]); // เก็บ ID ที่ถูกลบไว้
+  // 🔹 ใช้ useEffect ดึงข้อมูลเมื่อ Component โหลด
+  useEffect(() => {
+    fetchBorrowedItems();
+  }, []);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    setLoading(true);
+    if (form.checkValidity() === false) {
+      setAlert({ show: true, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+      event.preventDefault();
+      event.stopPropagation();
+    } else {
+      setAlert({ show: true, message: 'ระบบยังอยู่ในช่วงพัฒนา' });
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+    setValidated(true);
   };
 
-  // 🔹 ฟังก์ชันส่งคืนอุปกรณ์ (กด "บันทึก")
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    if (listItem.length === 0) {
-      setAlert({ show: true, message: 'กรุณาเลือกอุปกรณ์ที่ต้องการคืน' });
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      const data = { removedItems };
-      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, data); // 🔹 API คืนอุปกรณ์
-      setAlert({ show: true, message: 'บันทึกการคืนอุปกรณ์สำเร็จ' });
-      
-      // รีเซ็ตรายการหลังจากคืนอุปกรณ์แล้ว
-      setRemovedItems([]);
-      fetchBorrowedItems(); // โหลดข้อมูลใหม่
-    } catch (error) {
-      setAlert({ show: true, message: 'เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่' });
-    } finally {
-      setLoading(false);
-      setValidated(true);
-    }
+  // 🔹 ฟังก์ชันลบรายการ
+  const removeListener = (index: number) => {
+    const newList = listItem.filter((_, i) => i !== index);
+    setListItem(newList);
   };
 
   return (
@@ -88,13 +82,11 @@ const ReturnOf = () => {
         <h1 className="py-2">คืนอุปกรณ์ครุภัณฑ์</h1>
       </div>
       <div className="px-5">
-        <Form noValidate validated={validated} onSubmit={handleSubmit}>
-          
-          {/* 🔹 ซ่อนรายการทั้งหมด ถ้าไม่มีข้อมูล */}
-          {listItem.length > 0 && (
-            <Form.Group className="py-2">
-              {listItem.map((item, index) => (
-                <Toast key={index} onClose={() => removeItem(item.borrowEquipmentId)} className="mb-2">
+        <Form noValidate validated={validated} onSubmit={(e) => handleSubmit(e)}>
+          <Form.Group className="py-2">
+            {listItem.length > 0 ? (
+              listItem.map((item, index) => (
+                <Toast key={index} onClose={() => removeListener(index)} className="mb-2">
                   <Toast.Header>
                     <strong className="me-auto">{item.listName}</strong>
                   </Toast.Header>
@@ -106,19 +98,9 @@ const ReturnOf = () => {
                     </div>
                   </Toast.Body>
                 </Toast>
-              ))}
-            </Form.Group>
-          )}
-
-          {/* 🔹 ซ่อนปุ่มบันทึก ถ้าไม่มีข้อมูล */}
-          {listItem.length > 0 && (
-            <Form.Group className="d-flex justify-content-center py-3">
-              <button type="submit" className={styles.button} disabled={isLoading}>
-                {isLoading ? 'กำลังบันทึก...' : 'บันทึกการคืนอุปกรณ์'}
-              </button>
-            </Form.Group>
-          )}
-
+              ))
+            ) : null} {/* ❌ ซ่อน "ไม่มีข้อมูลอุปกรณ์ที่ถูกยืม" ออกไป */}
+          </Form.Group>
         </Form>
       </div>
     </Container>
