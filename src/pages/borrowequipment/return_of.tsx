@@ -4,10 +4,12 @@ import axios from 'axios';
 import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
 import Toast from 'react-bootstrap/Toast';
+import Button from 'react-bootstrap/Button';
 
 import styles from '@/styles/page.module.css';
 
 interface ListItemType {
+  borrowEquipmentId: number;
   listName: string;
   numberCard: string;
   startDate: string;
@@ -21,53 +23,67 @@ const ReturnOf = () => {
   const [alert, setAlert] = useState({ show: false, message: '' });
   const [isLoading, setLoading] = useState(false);
   const [listItem, setListItem] = useState<ListItemType[]>([]);
+  const [removedItems, setRemovedItems] = useState<number[]>([]); // เก็บ ID ของอุปกรณ์ที่ถูกลบ
 
-  // 🔹 ฟังก์ชันดึงข้อมูลจาก API
+  // 🔹 ดึงข้อมูลจาก API
   const fetchBorrowedItems = async () => {
     try {
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`);
       if (response.data && response.data.data) {
-        const borrowedData = response.data.data.map((item: any) => ({
-          listName: item.borrow_name, // ✅ ใช้ชื่ออุปกรณ์จากฐานข้อมูล
-          numberCard: item.borrowequipment_list.map((eq: any) => eq.borrow_equipment_number).join(", "), // ✅ รวมเลขอุปกรณ์
-          startDate: item.borrow_date, // ✅ วันที่เริ่มยืม
-          endDate: item.borrow_return, // ✅ วันที่ต้องคืน
-        }));
+        const borrowedData = response.data.data.flatMap((item: any) =>
+          item.borrowequipment_list.map((eq: any) => ({
+            borrowEquipmentId: eq.borrow_equipment_id, // ✅ ใช้ ID ของอุปกรณ์ที่ถูกยืม
+            listName: eq.borrow_equipment, // ✅ ใช้ชื่ออุปกรณ์
+            numberCard: eq.borrow_equipment_number, // ✅ หมายเลขอุปกรณ์
+            startDate: eq.borrow_date ? new Date(eq.borrow_date).toLocaleDateString('th-TH') : "ไม่ระบุ", // ✅ แปลงวันที่
+            endDate: eq.borrow_return ? new Date(eq.borrow_return).toLocaleDateString('th-TH') : "ไม่ระบุ", // ✅ แปลงวันที่
+          }))
+        );
         setListItem(borrowedData);
       }
     } catch (error) {
-      console.error('Error fetching borrowed equipment:', error);
+      console.error('❌ Error fetching borrowed equipment:', error);
       setAlert({ show: true, message: 'ไม่สามารถดึงข้อมูลได้' });
     }
   };
 
-  // 🔹 ใช้ useEffect เพื่อดึงข้อมูลเมื่อ component โหลด
+  // 🔹 ใช้ useEffect ดึงข้อมูลเมื่อ Component โหลด
   useEffect(() => {
     fetchBorrowedItems();
   }, []);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    const form = event.currentTarget;
-    setLoading(true);
-    if (form.checkValidity() === false) {
-      setAlert({ show: true, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
-      event.preventDefault();
-      event.stopPropagation();
-    } else {
-      setAlert({ show: true, message: 'ระบบยังอยู่ในช่วงพัฒนา' });
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    setTimeout(() => {
-      setLoading(false);
-    }, 2000);
-    setValidated(true);
+  // 🔹 ฟังก์ชันลบอุปกรณ์ออกจากรายการ (เฉพาะ UI ก่อนกดบันทึก)
+  const removeListener = (borrowEquipmentId: number) => {
+    setListItem((prevList) => prevList.filter(item => item.borrowEquipmentId !== borrowEquipmentId));
+    setRemovedItems((prevRemoved) => [...prevRemoved, borrowEquipmentId]); // ✅ เก็บรายการที่ถูกลบไว้
   };
 
-  // 🔹 ฟังก์ชันลบรายการ (เฉพาะ UI)
-  const removeListener = (index: number) => {
-    const newList = listItem.filter((_, i) => i !== index);
-    setListItem(newList);
+  // 🔹 ฟังก์ชันกด "บันทึกการคืนอุปกรณ์"
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (removedItems.length === 0) {
+      setAlert({ show: true, message: 'กรุณาลบอุปกรณ์ก่อนกดบันทึก' });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const data = { removedItems };
+      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, data); // 🔹 API คืนอุปกรณ์
+      setAlert({ show: true, message: 'บันทึกการคืนอุปกรณ์สำเร็จ' });
+
+      // 🔹 รีเซ็ตรายการหลังจากคืนอุปกรณ์แล้ว
+      setRemovedItems([]);
+      fetchBorrowedItems(); // โหลดข้อมูลใหม่
+    } catch (error) {
+      setAlert({ show: true, message: 'เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่' });
+    } finally {
+      setLoading(false);
+      setValidated(true);
+    }
   };
 
   return (
@@ -76,11 +92,12 @@ const ReturnOf = () => {
         <h1 className="py-2">คืนอุปกรณ์ครุภัณฑ์</h1>
       </div>
       <div className="px-5">
-        <Form noValidate validated={validated} onSubmit={(e) => handleSubmit(e)}>
-          <Form.Group className="py-2">
-            {listItem.length > 0 ? (
-              listItem.map((item, index) => (
-                <Toast key={index} onClose={() => removeListener(index)} className="mb-2">
+        <Form noValidate validated={validated} onSubmit={handleSubmit}>
+          {/* 🔹 แสดงรายการอุปกรณ์ที่ถูกยืม */}
+          {listItem.length > 0 && (
+            <Form.Group className="py-2">
+              {listItem.map((item, index) => (
+                <Toast key={index} onClose={() => removeListener(item.borrowEquipmentId)} className="mb-2">
                   <Toast.Header>
                     <strong className="me-auto">{item.listName}</strong>
                   </Toast.Header>
@@ -92,11 +109,18 @@ const ReturnOf = () => {
                     </div>
                   </Toast.Body>
                 </Toast>
-              ))
-            ) : (
-              <p>ไม่มีข้อมูลอุปกรณ์ที่ถูกยืม</p>
-            )}
-          </Form.Group>
+              ))}
+            </Form.Group>
+          )}
+
+          {/* 🔹 ปุ่มบันทึก */}
+          {removedItems.length > 0 && (
+            <Form.Group className="d-flex justify-content-center py-3">
+              <Button type="submit" variant="danger" disabled={isLoading}>
+                {isLoading ? 'กำลังบันทึก...' : 'บันทึกการคืนอุปกรณ์'}
+              </Button>
+            </Form.Group>
+          )}
         </Form>
       </div>
     </Container>
