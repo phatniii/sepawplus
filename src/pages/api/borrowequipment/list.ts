@@ -10,7 +10,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 return res.status(400).json({ message: 'กรุณาระบุ user_id' });
             }
 
-            // ✅ ดึงเฉพาะอุปกรณ์ที่ได้รับการอนุมัติจากแอดมิน, ยังถูกยืมอยู่ และเป็นของ user_id ที่ส่งมา
+            // ✅ ดึงเฉพาะอุปกรณ์ที่ได้รับการอนุมัติจากแอดมิน และเป็นของ user_id ที่ส่งมา
             const borrowedItems = await prisma.borrowequipment.findMany({
                 where: {
                     borrow_equipment_status: 2, // ✅ อนุมัติจากแอดมินแล้ว
