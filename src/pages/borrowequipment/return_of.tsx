@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import axios from 'axios';
 
 import Container from 'react-bootstrap/Container';
@@ -11,7 +10,6 @@ import styles from '@/styles/page.module.css';
 
 interface BorrowedItemType {
   borrow_equipment_id: number;
-  equipment_id: number;
   equipment_name: string;
   equipment_code: string;
   startDate: string;
@@ -19,53 +17,35 @@ interface BorrowedItemType {
 }
 
 const ReturnOf = () => {
-  const router = useRouter();
   const [isLoading, setLoading] = useState(true);
   const [borrowedItems, setBorrowedItems] = useState<BorrowedItemType[]>([]);
   const [returnList, setReturnList] = useState<number[]>([]);
   const [alert, setAlert] = useState({ show: false, message: '' });
-  const [user, setUser] = useState<any>(null); // 🆕 เก็บข้อมูลผู้ใช้
 
-  // 🔹 ดึงข้อมูลผู้ใช้ที่เข้าสู่ระบบ
-  const fetchUserData = async () => {
-    try {
-      const auToken = router.query.auToken; // 🆕 รับ `auToken` จาก URL
-      if (auToken) {
-        const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
-        if (responseUser.data?.data) {
-          setUser(responseUser.data.data); // ✅ เก็บข้อมูลผู้ใช้ใน state
-        } else {
-          setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
-    }
-  };
+  // สมมติว่าข้อมูล user id ถูกเก็บไว้ใน localStorage
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
 
-  // 🔹 ดึงเฉพาะอุปกรณ์ที่ผู้ใช้คนนั้นยืม
+  // ดึงข้อมูลอุปกรณ์ที่ถูกยืม โดยส่ง userId ไปให้ API กรองเฉพาะรายการของ user ปัจจุบัน
   const fetchBorrowedItems = async () => {
-    if (!user?.users_id) return; // 🆕 ถ้าไม่มี user_id ไม่ต้อง fetch
-
     try {
       setLoading(true);
+      if (!userId) {
+        setAlert({ show: true, message: 'ไม่พบข้อมูลผู้ใช้' });
+        return;
+      }
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`, {
-        params: { borrow_user_id: user.users_id } // ✅ ส่ง borrow_user_id ไปกับ API
+        params: { userId: userId },
       });
-
       if (response.data?.data) {
-        const borrowedData: BorrowedItemType[] = response.data.data.flatMap((item: any) =>
+        const borrowedData = response.data.data.flatMap((item: any) =>
           item.borrowequipment_list.map((eq: any) => ({
             borrow_equipment_id: eq.borrow_equipment_id,
-            equipment_id: eq.equipment?.equipment_id,
             equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
             equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
             startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
             endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
           }))
         );
-
         setBorrowedItems(borrowedData);
       }
     } catch (error) {
@@ -77,22 +57,16 @@ const ReturnOf = () => {
   };
 
   useEffect(() => {
-    fetchUserData(); // ✅ โหลดข้อมูลผู้ใช้ก่อน
+    fetchBorrowedItems();
   }, []);
 
-  useEffect(() => {
-    if (user?.users_id) {
-      fetchBorrowedItems(); // ✅ โหลดข้อมูลอุปกรณ์หลังจากที่ได้ข้อมูลผู้ใช้
-    }
-  }, [user]);
-
-  // 🔹 ฟังก์ชันลบอุปกรณ์ออกจาก UI (ถือว่าอุปกรณ์ถูกคืน)
+  // เมื่อทำการ "ปิด" toast ให้ถือว่าอุปกรณ์ถูกคืนไปแล้ว
   const removeItem = (index: number, id: number) => {
-    setReturnList([...returnList, id]); // 🆕 เก็บ ID ไว้สำหรับคืน
+    setReturnList([...returnList, id]);
     setBorrowedItems(borrowedItems.filter((_, i) => i !== index));
   };
 
-  // 🔹 ฟังก์ชันบันทึกการคืนอุปกรณ์
+  // บันทึกการคืนอุปกรณ์
   const handleReturnSubmit = async () => {
     if (returnList.length === 0) {
       setAlert({ show: true, message: 'กรุณาเลือกรายการที่ต้องการคืน' });
@@ -103,12 +77,11 @@ const ReturnOf = () => {
       setLoading(true);
       await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, {
         returnList,
-        borrow_user_id: user.users_id // ✅ ส่ง borrow_user_id ไปกับ API
       });
 
       setAlert({ show: true, message: 'คืนอุปกรณ์สำเร็จแล้ว' });
       setReturnList([]);
-      fetchBorrowedItems(); // 🔹 โหลดข้อมูลใหม่
+      fetchBorrowedItems(); // โหลดข้อมูลใหม่หลังคืน
     } catch (error) {
       console.error('Error returning equipment:', error);
       setAlert({ show: true, message: 'เกิดข้อผิดพลาดในการคืนอุปกรณ์' });
@@ -129,13 +102,19 @@ const ReturnOf = () => {
               <p>กำลังโหลด...</p>
             ) : borrowedItems.length > 0 ? (
               borrowedItems.map((item, index) => (
-                <Toast key={index} onClose={() => removeItem(index, item.borrow_equipment_id)} className="mb-2">
+                <Toast
+                  key={index}
+                  onClose={() => removeItem(index, item.borrow_equipment_id)}
+                  className="mb-2"
+                >
                   <Toast.Header>
                     <strong className="me-auto">{item.equipment_name}</strong>
                   </Toast.Header>
                   <Toast.Body>
                     <div>
-                      <span style={{ fontWeight: 'bold' }}>หมายเลขอุปกรณ์: {item.equipment_code}</span>
+                      <span style={{ fontWeight: 'bold' }}>
+                        หมายเลขอุปกรณ์: {item.equipment_code}
+                      </span>
                     </div>
                     <div className={styles.toastDate}>
                       <span>เริ่ม {item.startDate}</span>
@@ -149,7 +128,12 @@ const ReturnOf = () => {
             )}
           </Form.Group>
 
-          <Button variant="primary" onClick={handleReturnSubmit} disabled={returnList.length === 0}>
+          {/* ปุ่มบันทึกการคืนอุปกรณ์ */}
+          <Button
+            variant="primary"
+            onClick={handleReturnSubmit}
+            disabled={returnList.length === 0}
+          >
             {isLoading ? 'กำลังบันทึก...' : 'บันทึกการคืน'}
           </Button>
         </Form>
