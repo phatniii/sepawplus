@@ -177,9 +177,19 @@ model borrowequipment {
 model borrowequipment_list {
   borrow_id               Int
   borrow_equipment_id     Int             @id @default(autoincrement())
-  borrow_equipment        String          @db.VarChar(255)
-  borrow_equipment_number String          @db.VarChar(255)
   borrow_equipment_status Int             @default(1)
   borrow_equipment_delete DateTime?
+  equipment_id            Int
   borrow_id_ref           borrowequipment @relation(fields: [borrow_id], references: [borrow_id])
+  equipment               equipment       @relation(fields: [equipment_id], references: [equipment_id])
+}
+
+model equipment {
+  equipment_id          Int                    @id @default(autoincrement())
+  equipment_name        String                 @db.VarChar(255)
+  equipment_code        String                 @unique @db.VarChar(100)
+  equipment_status      Int                    @default(1)
+  equipment_create_date DateTime?              @default(now()) @db.Timestamp(6)
+  equipment_update_date DateTime?              @db.Timestamp(6)
+  borrowequipment_list  borrowequipment_list[]
 }

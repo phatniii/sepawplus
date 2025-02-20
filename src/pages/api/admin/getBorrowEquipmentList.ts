@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import authMiddleware from '@/lib/authMiddleware';
-import prisma from '@/lib/prisma'
+import prisma from '@/lib/prisma';
 
-const handler = async (req: NextApiRequest, res: NextApiResponse ) => {
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (req.method === 'GET') {
         try {
             const { name, name_borrow, status } = req.query;
@@ -28,9 +28,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse ) => {
                     },
                 ],
             };
+
             if (status) {
                 filters.borrow_equipment_status = parseInt(status as string);
             }
+
+            // ✅ คิวรี่ข้อมูลการยืมอุปกรณ์
             const borrowequipment = await prisma.borrowequipment.findMany({
                 where: filters,
                 select: {
@@ -43,7 +46,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse ) => {
                         select: {
                             users_fname: true,
                             users_sname: true,
-                        }
+                        },
                     },
                     borrow_address: true,
                     borrow_tel: true,
@@ -54,35 +57,40 @@ const handler = async (req: NextApiRequest, res: NextApiResponse ) => {
                     borrowequipment_list: {
                         select: {
                             borrow_equipment_id: true,
-                            borrow_equipment: true,
-                            borrow_equipment_number: true,
                             borrow_equipment_status: true,
-                        }
+                            equipment_id: true, // ✅ ดึง equipment_id แทน borrow_equipment
+                            equipment: { // ✅ ดึงข้อมูลอุปกรณ์ที่ถูกยืม
+                                select: {
+                                    equipment_name: true,
+                                    equipment_code: true,
+                                },
+                            },
+                        },
                     },
                     borrow_approver_ref: {
-                        select:{
+                        select: {
                             users_fname: true,
                             users_sname: true,
-                        }
+                        },
                     },
                     borrow_approver_date: true,
-                    borrow_send_status  : true,
-                    borrow_send_date    : true,
-                    borrow_send_return  : true,
+                    borrow_send_status: true,
+                    borrow_send_date: true,
+                    borrow_send_return: true,
                 },
                 orderBy: {
-                    borrow_id: 'desc'
-                }
-            })
-            let items:any = borrowequipment;
-            return res.status(200).json({ message: 'Success', data:items});
-            
+                    borrow_id: 'desc',
+                },
+            });
+
+            return res.status(200).json({ message: 'Success', data: borrowequipment });
+
         } catch (error) {
-            console.log("🚀 ~ handler ~ error:", error)
-            return res.status(401).json({ message: 'ไม่สามารถดึงข้อมูลได้' });
+            console.error("🚀 ~ handler ~ error:", error);
+            return res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลได้' });
         }
-    }else{
-       return res.status(405).json({ message: 'Method not allowed' });
+    } else {
+        return res.status(405).json({ message: 'Method not allowed' });
     }
 };
 
