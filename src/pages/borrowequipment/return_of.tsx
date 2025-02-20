@@ -27,17 +27,21 @@ const ReturnOf = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`);
+      
       if (response.data?.data) {
-        const borrowedData = response.data.data.flatMap((item: any) =>
+        // ✅ กำหนดประเภทของ borrowedData ให้ TypeScript เข้าใจ
+        const borrowedData: BorrowedItemType[] = response.data.data.flatMap((item: any) =>
           item.borrowequipment_list.map((eq: any) => ({
-            borrow_equipment_id: eq.borrow_equipment_id, // 🆕 ใช้ ID เพื่อลบ
-            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล", // 🆕 แสดงชื่ออุปกรณ์
-            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล", // 🆕 แสดงหมายเลขอุปกรณ์
+            borrow_equipment_id: eq.borrow_equipment_id,
+            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
+            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
             startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
             endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
           }))
         );
-        setBorrowedItems(borrowedData);
+
+        // ✅ กรองอุปกรณ์ที่กดคืนออกจากรายการที่โหลดใหม่
+        setBorrowedItems(borrowedData.filter((item: BorrowedItemType) => !returnList.includes(item.borrow_equipment_id)));
       }
     } catch (error) {
       console.error('Error fetching borrowed equipment:', error);
@@ -53,8 +57,8 @@ const ReturnOf = () => {
 
   // 🔹 ฟังก์ชันลบอุปกรณ์ออกจาก UI (ถือว่าอุปกรณ์ถูกคืน)
   const removeItem = (index: number, id: number) => {
-    setReturnList([...returnList, id]); // 🆕 เก็บ ID ไว้สำหรับคืน
-    setBorrowedItems(borrowedItems.filter((_, i) => i !== index));
+    setReturnList(prev => [...prev, id]); // 🆕 เพิ่ม ID ไว้สำหรับคืน
+    setBorrowedItems(prev => prev.filter((_, i) => i !== index));
   };
 
   // 🔹 ฟังก์ชันบันทึกการคืนอุปกรณ์
@@ -71,8 +75,8 @@ const ReturnOf = () => {
       });
 
       setAlert({ show: true, message: 'คืนอุปกรณ์สำเร็จแล้ว' });
-      setReturnList([]);
-      fetchBorrowedItems(); // 🔹 โหลดข้อมูลใหม่
+      setReturnList([]); // 🆕 ล้างรายการที่คืนแล้ว
+      setBorrowedItems(prev => prev.filter((item: BorrowedItemType) => !returnList.includes(item.borrow_equipment_id))); // 🆕 ลบออกจาก UI ถาวร
     } catch (error) {
       console.error('Error returning equipment:', error);
       setAlert({ show: true, message: 'เกิดข้อผิดพลาดในการคืนอุปกรณ์' });
