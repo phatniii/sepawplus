@@ -4,8 +4,12 @@ import prisma from '@/lib/prisma';
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'GET') {
         try {
-            // ดึงข้อมูลการยืมทั้งหมด และรวมข้อมูลจาก borrowequipment_list และ equipment
+            // ✅ ดึงเฉพาะรายการที่ถูกอนุมัติจากแอดมิน (borrow_equipment_status = 2) และยังไม่ได้คืน (borrow_status = 1)
             const borrowedItems = await prisma.borrowequipment.findMany({
+                where: {
+                    borrow_equipment_status: 2, // ✅ เฉพาะรายการที่ได้รับการอนุมัติจากแอดมิน
+                    borrow_status: 1, // ✅ เฉพาะรายการที่ยังไม่ได้คืน
+                },
                 include: {
                     borrowequipment_list: {
                         include: {
@@ -13,7 +17,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                         }
                     }
                 },
-                orderBy: { borrow_create_date: 'desc' } // เรียงจากล่าสุด
+                orderBy: { borrow_create_date: 'desc' } // เรียงจากรายการล่าสุด
             });
 
             return res.status(200).json({ message: 'success', data: borrowedItems });
