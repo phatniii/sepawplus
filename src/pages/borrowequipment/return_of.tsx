@@ -28,13 +28,15 @@ const ReturnOf = () => {
       setLoading(true);
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`);
       if (response.data?.data) {
-        const borrowedData = response.data.data.map((item: any) => ({
-          borrow_equipment_id: item.borrow_equipment_id, // 🆕 ใช้ ID เพื่อลบ
-          equipment_name: item.equipment_name, // 🆕 แสดงชื่ออุปกรณ์
-          equipment_code: item.equipment_code, // 🆕 แสดงหมายเลขอุปกรณ์
-          startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
-          endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
-        }));
+        const borrowedData = response.data.data.flatMap((item: any) =>
+          item.borrowequipment_list.map((eq: any) => ({
+            borrow_equipment_id: eq.borrow_equipment_id, // 🆕 ใช้ ID เพื่อลบ
+            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล", // 🆕 แสดงชื่ออุปกรณ์
+            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล", // 🆕 แสดงหมายเลขอุปกรณ์
+            startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
+            endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
+          }))
+        );
         setBorrowedItems(borrowedData);
       }
     } catch (error) {

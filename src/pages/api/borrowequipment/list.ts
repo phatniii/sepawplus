@@ -1,13 +1,17 @@
-import { NextApiRequest, NextApiResponse } from 'next'
-import prisma from '@/lib/prisma'
+import { NextApiRequest, NextApiResponse } from 'next';
+import prisma from '@/lib/prisma';
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'GET') {
         try {
-            // ดึงข้อมูลทั้งหมดจากตาราง borrowequipment พร้อมข้อมูล borrowequipment_list ที่เกี่ยวข้อง
+            // ดึงข้อมูลการยืมทั้งหมด และรวมข้อมูลจาก borrowequipment_list และ equipment
             const borrowedItems = await prisma.borrowequipment.findMany({
                 include: {
-                    borrowequipment_list: true, // ดึงข้อมูลรายการอุปกรณ์ที่ยืมมาด้วย
+                    borrowequipment_list: {
+                        include: {
+                            equipment: true, // ✅ ดึงข้อมูลอุปกรณ์ที่เกี่ยวข้อง
+                        }
+                    }
                 },
                 orderBy: { borrow_create_date: 'desc' } // เรียงจากล่าสุด
             });
