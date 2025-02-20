@@ -4,10 +4,17 @@ import prisma from '@/lib/prisma';
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'GET') {
         try {
-            // ✅ ดึงเฉพาะอุปกรณ์ที่ได้รับการอนุมัติจากแอดมิน และยังถูกยืมอยู่ (equipment_status = 0)
+            const { user_id } = req.query; // 🆕 รับ user_id จาก query parameters
+
+            if (!user_id) {
+                return res.status(400).json({ message: 'กรุณาระบุ user_id' });
+            }
+
+            // ✅ ดึงเฉพาะอุปกรณ์ที่ได้รับการอนุมัติจากแอดมิน, ยังถูกยืมอยู่ และเป็นของ user_id ที่ส่งมา
             const borrowedItems = await prisma.borrowequipment.findMany({
                 where: {
                     borrow_equipment_status: 2, // ✅ อนุมัติจากแอดมินแล้ว
+                    borrow_user_id: Number(user_id), // ✅ เฉพาะอุปกรณ์ที่ผู้ใช้คนนี้ยืม
                 },
                 include: {
                     borrowequipment_list: {
