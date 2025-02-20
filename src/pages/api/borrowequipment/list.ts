@@ -4,10 +4,18 @@ import prisma from '@/lib/prisma';
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'GET') {
         try {
-            // ✅ ดึงเฉพาะอุปกรณ์ที่ได้รับการอนุมัติจากแอดมิน และยังถูกยืมอยู่ (equipment_status = 0)
+            const { user_id } = req.query; // 🆕 รับ user_id จาก query parameters
+
+            if (!user_id) {
+                return res.status(400).json({ message: 'กรุณาระบุ user_id' });
+            }
+
+            // ✅ ดึงเฉพาะอุปกรณ์ที่ได้รับการอนุมัติจากแอดมิน (`borrow_equipment_status = 2`)
+            // ✅ และเป็นของ user_id ที่ล็อกอินอยู่
             const borrowedItems = await prisma.borrowequipment.findMany({
                 where: {
                     borrow_equipment_status: 2, // ✅ อนุมัติจากแอดมินแล้ว
+                    borrow_user_id: Number(user_id), // ✅ เฉพาะอุปกรณ์ที่ผู้ใช้คนนี้ยืม
                 },
                 include: {
                     borrowequipment_list: {
@@ -16,10 +24,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                         }
                     }
                 },
-                orderBy: { borrow_create_date: 'desc' } // เรียงจากรายการล่าสุด
+                orderBy: { borrow_create_date: 'desc' } // ✅ เรียงจากรายการล่าสุด
             });
 
-            // ✅ กรองเฉพาะอุปกรณ์ที่ยังถูกยืมอยู่ (equipment_status = 0)
+            // ✅ กรองเฉพาะอุปกรณ์ที่ยังไม่ได้คืน (equipment_status = 0)
             const filteredItems = borrowedItems.map(item => ({
                 ...item,
                 borrowequipment_list: item.borrowequipment_list.filter(eq => eq.equipment?.equipment_status === 0)
