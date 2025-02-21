@@ -231,10 +231,10 @@ const ReturnEquipment = () => {
                                         show.body.borrowequipment_list.map((item: any, index: number) => {
                                             return (
                                                 <tr key={index}>
-                                                    <td className="px-2">{index + 1}</td>
-                                                    <td className="px-2">{item.borrow_equipment}</td>
-                                                    <td className="px-2">{item.borrow_equipment_number}</td>
-                                                </tr>
+                <td className="px-2">{index + 1}</td>
+                <td className="px-2">{item.equipment?.equipment_name || '-'}</td> {/* ✅ ดึงชื่ออุปกรณ์ */}
+                <td className="px-2">{item.equipment?.equipment_code || '-'}</td> {/* ✅ ดึง ID อุปกรณ์ */}
+            </tr>
                                             )
                                         })
                                     }
