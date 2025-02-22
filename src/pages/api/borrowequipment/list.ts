@@ -12,7 +12,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const borrowedItems = await prisma.borrowequipment.findMany({
         where: {
           borrow_equipment_status: 2, // อนุมัติจากแอดมินแล้ว
-          ...(userId && { borrow_user_id: userId }), // กรองตาม userId
+          ...(userId && { borrow_user_id: userId }),
         },
         include: {
           borrowequipment_list: {
