@@ -54,15 +54,17 @@ const ReturnOf = () => {
       setLoading(true);
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
       if (response.data?.data) {
-        // สมมุติว่า API ส่งกลับข้อมูลเป็น array ของ record
+        // กรองเฉพาะรายการที่มีสถานะเป็น "อนุมัติ" (สถานะ = 2)
         const borrowedData = response.data.data.flatMap((item: any) =>
-          item.borrowequipment_list.map((eq: any) => ({
-            borrow_equipment_id: eq.borrow_equipment_id, // ใช้ ID สำหรับการคืน
-            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
-            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
-            startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
-            endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
-          }))
+          item.borrowequipment_list
+            .filter((eq: any) => eq.borrow_equipment_status === 2) // กรองเฉพาะอุปกรณ์ที่ได้รับการอนุมัติ
+            .map((eq: any) => ({
+              borrow_equipment_id: eq.borrow_equipment_id, // ใช้ ID สำหรับการคืน
+              equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
+              equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
+              startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
+              endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
+            }))
         );
         setBorrowedItems(borrowedData);
       }
@@ -153,7 +155,7 @@ const ReturnOf = () => {
                 </Toast>
               ))
             ) : (
-              <p>ไม่มีอุปกรณ์ที่ถูกยืม</p>
+              <p>ไม่มีอุปกรณ์ให้คืน</p>
             )}
           </Form.Group>
           <Button variant="primary" onClick={handleReturnSubmit} disabled={returnList.length === 0}>
@@ -166,7 +168,3 @@ const ReturnOf = () => {
 };
 
 export default ReturnOf;
-
-//git add .
-//git commit -m "return of"
-//git push origin main
