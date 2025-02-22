@@ -81,10 +81,16 @@ const BorrowEquipment = () => {
             if (!borrow_equipment_status_value || !show.body.borrow_id || !user.userId) {
                 return
             }
+
+            // ส่งคำขอการอัปเดตสถานะจากแอดมิน
             await updateBorrowEquipmentStatus(parseInt(borrow_equipment_status_value), user.userId, show.body.borrow_id)
+
             handleClose()
             dispatch(openModalAlert({ show: true, message: 'บันทึกสำเร็จ' }));
+
+            // รีเฟรชข้อมูลการยืมอุปกรณ์หลังการอัปเดตสถานะ
             await getBorrowEquipmentListData('', '', '')
+
         } catch (error) {
             console.log("🚀 ~ handleSaveBorrow ~ error", error)
             dispatch(openModalAlert({ show: true, message: 'บันทึกไม่สำเร็จ' }));
@@ -113,7 +119,6 @@ const BorrowEquipment = () => {
                                     <Form.Label>สถานะ</Form.Label>
                                     <Form.Select
                                         name={'status'}
-
                                     >
                                         <option value={''}>{'เลือกสถานะ'}</option>
                                         <option value={'1'}>{'รออนุมัติ'}</option>
@@ -174,7 +179,6 @@ const BorrowEquipment = () => {
                                             )
                                         })
                                     }
-
                                 </tbody>
                             </Table>
                         </Card.Body>
@@ -216,10 +220,6 @@ const BorrowEquipment = () => {
                                     <td className="px-2">{'ผู้อนุมัติวันที่'}</td>
                                     <td className="px-2">{show.body.borrow_approver_date ? moment(show.body.borrow_approver_date).format('DD-MM-YYYY') : ''}</td>
                                 </tr>
-                                {/* <tr>
-                                    <td className="px-2">{'ID เครื่อง'}</td>
-                                    <td className="px-2">{'AASO00019238'}</td>
-                                </tr> */}
                             </tbody>
                         </Table>
                         <Form.Group >
@@ -233,14 +233,14 @@ const BorrowEquipment = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-        {show.body.borrowequipment_list.map((item: any, index: number) => (
-            <tr key={index}>
-                <td className="px-2">{index + 1}</td>
-                <td className="px-2">{item.equipment?.equipment_name || '-'}</td> {/* ✅ ดึงชื่ออุปกรณ์ */}
-                <td className="px-2">{item.equipment?.equipment_code || '-'}</td> {/* ✅ ดึง ID อุปกรณ์ */}
-            </tr>
-        ))}
-    </tbody>
+                                    {show.body.borrowequipment_list.map((item: any, index: number) => (
+                                        <tr key={index}>
+                                            <td className="px-2">{index + 1}</td>
+                                            <td className="px-2">{item.equipment?.equipment_name || '-'}</td> {/* ✅ ดึงชื่ออุปกรณ์ */}
+                                            <td className="px-2">{item.equipment?.equipment_code || '-'}</td> {/* ✅ ดึง ID อุปกรณ์ */}
+                                        </tr>
+                                    ))}
+                                </tbody>
                             </Table>
                         </Form.Group>
                         <Form.Group >
@@ -254,7 +254,6 @@ const BorrowEquipment = () => {
                                 <option value={'2'}>{'อนุมัติ'}</option>
                                 <option value={'3'}>{'ไม่อนุมัติ'}</option>
                             </Form.Select>
-
                         </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
