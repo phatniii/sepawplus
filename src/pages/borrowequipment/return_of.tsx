@@ -19,7 +19,6 @@ interface BorrowedItemType {
 
 interface UserType {
   users_id: number;
-  // สามารถเพิ่มฟิลด์อื่น ๆ ได้ตามที่ต้องการ
 }
 
 const ReturnOf = () => {
@@ -27,10 +26,9 @@ const ReturnOf = () => {
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setLoading] = useState(true);
   const [borrowedItems, setBorrowedItems] = useState<BorrowedItemType[]>([]);
-  const [returnList, setReturnList] = useState<number[]>([]); // เก็บ ID ของอุปกรณ์ที่ต้องการคืน
+  const [returnList, setReturnList] = useState<number[]>([]);
   const [alert, setAlert] = useState({ show: false, message: '' });
 
-  // ฟังก์ชันดึงข้อมูลผู้ใช้โดยใช้ auToken
   const fetchUserData = async () => {
     try {
       const auToken = router.query.auToken;
@@ -48,7 +46,6 @@ const ReturnOf = () => {
     }
   };
 
-  // ฟังก์ชันดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ที่ล็อกอินอยู่ โดยใช้ userId เป็นเงื่อนไข
   const fetchBorrowedItems = async (userId: number) => {
     try {
       setLoading(true);
@@ -57,7 +54,7 @@ const ReturnOf = () => {
         // กรองเฉพาะรายการที่มีสถานะเป็น "อนุมัติ" (สถานะ = 2)
         const borrowedData = response.data.data.flatMap((item: any) =>
           item.borrowequipment_list.map((eq: any) => ({
-            borrow_equipment_id: eq.borrow_equipment_id, 
+            borrow_equipment_id: eq.borrow_equipment_id,
             equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
             equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
             startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
@@ -74,27 +71,23 @@ const ReturnOf = () => {
     }
   };
 
-  // ดึงข้อมูลผู้ใช้เมื่อค่า auToken พร้อมใช้งาน
   useEffect(() => {
     if (router.query.auToken) {
       fetchUserData();
     }
   }, [router.query.auToken]);
 
-  // เมื่อผู้ใช้ถูกโหลดแล้ว ให้นำ userId ไปดึงรายการอุปกรณ์ที่ยืมไป
   useEffect(() => {
     if (user) {
       fetchBorrowedItems(user.users_id);
     }
   }, [user]);
 
-  // ฟังก์ชันลบรายการอุปกรณ์ออกจาก UI (ถือว่าอุปกรณ์ถูกคืน)
   const removeItem = (index: number, id: number) => {
     setReturnList([...returnList, id]);
     setBorrowedItems(borrowedItems.filter((_, i) => i !== index));
   };
 
-  // ฟังก์ชันบันทึกการคืนอุปกรณ์
   const handleReturnSubmit = async () => {
     if (returnList.length === 0) {
       setAlert({ show: true, message: 'กรุณาเลือกรายการที่ต้องการคืน' });
@@ -103,13 +96,11 @@ const ReturnOf = () => {
 
     try {
       setLoading(true);
-      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, {
-        returnList,
-      });
+      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, { returnList });
       setAlert({ show: true, message: 'คืนอุปกรณ์สำเร็จแล้ว' });
       setReturnList([]);
       if (user) {
-        fetchBorrowedItems(user.users_id); // โหลดข้อมูลใหม่หลังคืนอุปกรณ์
+        fetchBorrowedItems(user.users_id);
       }
     } catch (error) {
       console.error('Error returning equipment:', error);
@@ -131,11 +122,7 @@ const ReturnOf = () => {
               <p>กำลังโหลด...</p>
             ) : borrowedItems.length > 0 ? (
               borrowedItems.map((item, index) => (
-                <Toast
-                  key={index}
-                  onClose={() => removeItem(index, item.borrow_equipment_id)}
-                  className="mb-2"
-                >
+                <Toast key={index} onClose={() => removeItem(index, item.borrow_equipment_id)} className="mb-2">
                   <Toast.Header>
                     <strong className="me-auto">{item.equipment_name}</strong>
                   </Toast.Header>
