@@ -4,15 +4,17 @@ import prisma from '@/lib/prisma';
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
-      // อ่าน userId จาก query parameter (ถ้ามีส่งมาด้วย)
       const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : null;
 
-      // ดึงเฉพาะรายการการยืมที่ได้รับการอนุมัติจากแอดมิน (borrow_equipment_status = 2)
-      // ถ้ามี userId จะเพิ่มเงื่อนไขกรองด้วย borrow_user_id: userId
+      if (!userId) {
+        return res.status(400).json({ message: 'ต้องมี userId ใน query parameter' });
+      }
+
+      // ดึงรายการการยืมที่ได้รับการอนุมัติจากแอดมิน และกรองตาม borrow_user_id
       const borrowedItems = await prisma.borrowequipment.findMany({
         where: {
           borrow_equipment_status: 2, // อนุมัติจากแอดมินแล้ว
-          ...(userId && { borrow_user_id: userId }),
+          borrow_user_id: userId, // กรองตาม userId ที่ส่งมา
         },
         include: {
           borrowequipment_list: {
@@ -44,3 +46,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(405).json({ message: `Method ${req.method} not allowed` });
   }
 }
+
+//git add .
+//git commit -m "edit list"
+//git push origin main
