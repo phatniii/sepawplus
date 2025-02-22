@@ -51,28 +51,30 @@ const ReturnOf = () => {
   // ฟังก์ชันดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ที่ล็อกอินอยู่ โดยใช้ userId เป็นเงื่อนไข
   const fetchBorrowedItems = async (userId: number) => {
     try {
-      setLoading(true);
-      const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
-      if (response.data?.data) {
-        // กรองเฉพาะรายการที่มีสถานะเป็น "อนุมัติ" (สถานะ = 2)
-        const borrowedData = response.data.data.flatMap((item: any) =>
-          item.borrowequipment_list.map((eq: any) => ({
-            borrow_equipment_id: eq.borrow_equipment_id, 
-            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
-            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
-            startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
-            endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
-          }))
-        );
-        setBorrowedItems(borrowedData);
-      }
+        setLoading(true);
+        const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
+        if (response.data?.data) {
+            // กรองเฉพาะรายการที่มีสถานะเป็น "อนุมัติ" (สถานะ = 2)
+            const borrowedData = response.data.data.flatMap((item: any) =>
+                item.borrowequipment_list
+                    .filter((eq: any) => eq.borrow_equipment_status === 2) // กรองเฉพาะที่อนุมัติ
+                    .map((eq: any) => ({
+                        borrow_equipment_id: eq.borrow_equipment_id,
+                        equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
+                        equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
+                        startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
+                        endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
+                    }))
+            );
+            setBorrowedItems(borrowedData);
+        }
     } catch (error) {
-      console.error('Error fetching borrowed equipment:', error);
-      setAlert({ show: true, message: 'ไม่สามารถโหลดรายการอุปกรณ์ที่ถูกยืมได้' });
+        console.error('Error fetching borrowed equipment:', error);
+        setAlert({ show: true, message: 'ไม่สามารถโหลดรายการอุปกรณ์ที่ถูกยืมได้' });
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   // ดึงข้อมูลผู้ใช้เมื่อค่า auToken พร้อมใช้งาน
   useEffect(() => {
