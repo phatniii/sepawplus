@@ -4,27 +4,29 @@ import prisma from '@/lib/prisma';
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
-      // อ่าน userId จาก query parameter (ถ้ามีส่งมาด้วย)
       const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : null;
 
-      // ดึงเฉพาะรายการการยืมที่ได้รับการอนุมัติจากแอดมิน (borrow_equipment_status = 2)
-      // ถ้ามี userId จะเพิ่มเงื่อนไขกรองด้วย borrow_user_id: userId
+      if (!userId) {
+        return res.status(400).json({ message: 'userId is required' });
+      }
+
+      // ดึงเฉพาะรายการที่แอดมินอนุมัติแล้ว และเป็นของ userId ที่ล็อกอิน
       const borrowedItems = await prisma.borrowequipment.findMany({
         where: {
-          borrow_equipment_status: 2, // อนุมัติจากแอดมินแล้ว
-          ...(userId && { borrow_user_id: userId }),
+          borrow_equipment_status: 2, // ✅ ต้องเป็นรายการที่แอดมินอนุมัติแล้ว
+          borrow_user_id: userId, // ✅ ต้องเป็นของผู้ใช้ที่ล็อกอิน
         },
         include: {
           borrowequipment_list: {
             include: {
-              equipment: true, // ดึงข้อมูลอุปกรณ์ที่เกี่ยวข้อง
+              equipment: true, // ✅ ดึงข้อมูลอุปกรณ์
             },
           },
         },
-        orderBy: { borrow_create_date: 'desc' }, // เรียงจากรายการล่าสุด
+        orderBy: { borrow_create_date: 'desc' },
       });
 
-      // กรองเฉพาะอุปกรณ์ที่ยังถูกยืมอยู่ (equipment_status = 0)
+      // ✅ กรองเฉพาะอุปกรณ์ที่ยังถูกยืมอยู่ (`equipment_status = 0`)
       const filteredItems = borrowedItems
         .map(item => ({
           ...item,
@@ -32,7 +34,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             eq => eq.equipment?.equipment_status === 0
           ),
         }))
-        .filter(item => item.borrowequipment_list.length > 0); // กรองเฉพาะที่มีอุปกรณ์เหลืออยู่
+        .filter(item => item.borrowequipment_list.length > 0); // ✅ กรองเฉพาะที่มีอุปกรณ์เหลืออยู่
 
       return res.status(200).json({ message: 'success', data: filteredItems });
     } catch (error) {
