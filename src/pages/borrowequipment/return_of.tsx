@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { Button, Toast, Container, Alert, Form } from 'react-bootstrap';
+
+import Container from 'react-bootstrap/Container';
+import Form from 'react-bootstrap/Form';
+import Toast from 'react-bootstrap/Toast';
+import Button from 'react-bootstrap/Button';
+
 import styles from '@/styles/page.module.css';
 
 interface BorrowedItemType {
@@ -14,6 +19,7 @@ interface BorrowedItemType {
 
 interface UserType {
   users_id: number;
+  // สามารถเพิ่มฟิลด์อื่น ๆ ได้ตามที่ต้องการ
 }
 
 const ReturnOf = () => {
@@ -26,33 +32,19 @@ const ReturnOf = () => {
 
   // ฟังก์ชันดึงข้อมูลผู้ใช้โดยใช้ auToken
   const fetchUserData = async () => {
-    const auToken = router.query.auToken;
-    if (auToken) {
-      const userData = await getUser(auToken as string);
-      if (userData) {
-        setUser(userData);
-      } else {
-        setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
-      }
-    }
-  };
-
-  // ฟังก์ชันดึงข้อมูลผู้ใช้จาก API
-  const getUser = async (userId: string) => {
-    console.log("Fetching user data for userId:", userId);
     try {
-      const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${userId}`);
-      if (responseUser.data?.data) {
-        console.log("User data retrieved:", responseUser.data.data);
-        return responseUser.data.data;
-      } else {
-        console.log("User data not found for userId:", userId);
-        return null;
+      const auToken = router.query.auToken;
+      if (auToken) {
+        const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
+        if (responseUser.data?.data) {
+          setUser(responseUser.data.data);
+        } else {
+          setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
+        }
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
-      setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้' });
-      return null;
+      setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
     }
   };
 
@@ -60,9 +52,9 @@ const ReturnOf = () => {
   const fetchBorrowedItems = async (userId: number) => {
     try {
       setLoading(true);
-      // กรองข้อมูลการยืมของผู้ใช้ที่ล็อกอินโดยใช้ borrow_user_id และสถานะการยืมที่อนุมัติ
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
       if (response.data?.data) {
+        // สมมุติว่า API ส่งกลับข้อมูลเป็น array ของ record
         const borrowedData = response.data.data.flatMap((item: any) =>
           item.borrowequipment_list.map((eq: any) => ({
             borrow_equipment_id: eq.borrow_equipment_id, // ใช้ ID สำหรับการคืน
@@ -133,7 +125,6 @@ const ReturnOf = () => {
         <h1 className="py-2">คืนอุปกรณ์ครุภัณฑ์</h1>
       </div>
       <div className="px-5">
-        {alert.show && <Alert variant="danger">{alert.message}</Alert>}
         <Form noValidate>
           <Form.Group className="py-2">
             {isLoading ? (
