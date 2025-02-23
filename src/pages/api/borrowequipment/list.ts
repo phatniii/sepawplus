@@ -8,11 +8,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : null;
 
       // ดึงเฉพาะรายการการยืมที่ได้รับการอนุมัติจากแอดมิน (borrow_equipment_status = 2)
-      // ถ้ามี userId จะเพิ่มเงื่อนไขกรองด้วย borrow_user_id: userId
+      // กรองตาม borrow_user_id โดยตรง
       const borrowedItems = await prisma.borrowequipment.findMany({
         where: {
           borrow_equipment_status: 2, // อนุมัติจากแอดมินแล้ว
-          ...(userId && { borrow_user_id: userId }),
+          ...(userId && { borrow_user_id: userId }), // กรองตาม userId ที่ได้รับ
         },
         include: {
           borrowequipment_list: {
@@ -29,7 +29,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         .map(item => ({
           ...item,
           borrowequipment_list: item.borrowequipment_list.filter(
-            eq => eq.equipment?.equipment_status === 0
+            eq => eq.equipment?.equipment_status === 0 // กรองเฉพาะอุปกรณ์ที่ยังไม่ได้ถูกส่งคืน
           ),
         }))
         .filter(item => item.borrowequipment_list.length > 0); // กรองเฉพาะที่มีอุปกรณ์เหลืออยู่
@@ -44,6 +44,3 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(405).json({ message: `Method ${req.method} not allowed` });
   }
 }
-//git add .
-//git commit -m "edit list"
-//git push origin main
