@@ -4,9 +4,10 @@ import prisma from '@/lib/prisma';
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
-      const { users_id, takecare_id } = req.query;
+      const { users_id } = req.query;
 
-      if (!users_id || !takecare_id || isNaN(Number(users_id)) || isNaN(Number(takecare_id))) {
+      // ตรวจสอบว่า users_id ถูกต้อง
+      if (!users_id || isNaN(Number(users_id))) {
         return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ถูกต้อง' });
       }
 
