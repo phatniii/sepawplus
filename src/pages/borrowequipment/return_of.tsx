@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useRouter } from 'next/router';
 
 import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
 import Toast from 'react-bootstrap/Toast';
-import Button from 'react-bootstrap/Button';
+import ButtonState from '@/components/Button/ButtonState';
+import ModalAlert from '@/components/Modals/ModalAlert';
 
 import styles from '@/styles/page.module.css';
 
-interface BorrowedItemType {
+interface BorrowedItem {
   borrow_equipment_id: number;
   equipment_name: string;
   equipment_code: string;
@@ -17,99 +17,62 @@ interface BorrowedItemType {
   endDate: string;
 }
 
-interface UserType {
-  users_id: number;
-}
-
 const ReturnOf = () => {
-  const router = useRouter();
-  const [user, setUser] = useState<UserType | null>(null);
-  const [isLoading, setLoading] = useState(true);
-  const [borrowedItems, setBorrowedItems] = useState<BorrowedItemType[]>([]);
+  const [borrowedItems, setBorrowedItems] = useState<BorrowedItem[]>([]);
   const [returnList, setReturnList] = useState<number[]>([]);
+  const [isLoading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: '' });
 
-  // ดึงข้อมูลผู้ใช้โดยใช้ auToken
-  const fetchUserData = async () => {
-    try {
-      const auToken = router.query.auToken;
-      if (auToken) {
-        const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
-        if (responseUser.data?.data) {
-          setUser(responseUser.data.data);
-        } else {
-          setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
-    }
-  };
-
-  // ดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ที่ล็อกอินอยู่ โดยใช้ borrow_user_id
-  const fetchBorrowedItems = async (userId: number) => {
-    try {
+  // ดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ (เฉพาะรายการที่ได้รับการอนุมัติจากแอดมิน)
+  useEffect(() => {
+    const fetchBorrowedItems = async () => {
       setLoading(true);
-      // เปลี่ยน query parameter จาก userId เป็น borrow_user_id
-      const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?borrow_user_id=${userId}`);
-      if (response.data?.data) {
-        const borrowedData = response.data.data.flatMap((item: any) =>
-          item.borrowequipment_list.map((eq: any) => ({
-            borrow_equipment_id: eq.borrow_equipment_id,
-            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
-            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
-            startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
-            endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
-          }))
-        );
-        setBorrowedItems(borrowedData);
+      try {
+        const res = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list`);
+        if (res.data?.data) {
+          // สมมติว่า API ส่งกลับข้อมูลในรูปแบบของชุดอุปกรณ์พร้อมรายการอุปกรณ์ในแต่ละชุด
+          const data: BorrowedItem[] = res.data.data.flatMap((item: any) =>
+            item.borrowequipment_list.map((eq: any) => ({
+              borrow_equipment_id: eq.borrow_equipment_id,
+              equipment_name: eq.equipment?.equipment_name || 'ไม่พบข้อมูล',
+              equipment_code: eq.equipment?.equipment_code || 'ไม่พบข้อมูล',
+              startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : '',
+              endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : '',
+            }))
+          );
+          setBorrowedItems(data);
+        }
+      } catch (error) {
+        console.error('Error fetching borrowed equipment:', error);
+        setAlert({ show: true, message: 'ไม่สามารถโหลดรายการอุปกรณ์ที่ถูกยืมได้' });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching borrowed equipment:', error);
-      setAlert({ show: true, message: 'ไม่สามารถโหลดรายการอุปกรณ์ที่ถูกยืมได้' });
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  // ดึงข้อมูลผู้ใช้เมื่อค่า auToken พร้อมใช้งาน
-  useEffect(() => {
-    if (router.query.auToken) {
-      fetchUserData();
-    }
-  }, [router.query.auToken]);
+    fetchBorrowedItems();
+  }, []);
 
-  // เมื่อผู้ใช้ถูกโหลดแล้ว ให้นำ users_id ไปดึงรายการอุปกรณ์ที่ยืมไป
-  useEffect(() => {
-    if (user) {
-      fetchBorrowedItems(user.users_id);
-    }
-  }, [user]);
-
-  // ฟังก์ชันลบรายการอุปกรณ์ออกจาก UI (ถือว่าอุปกรณ์ถูกคืน)
-  const removeItem = (index: number, id: number) => {
+  // เมื่อผู้ใช้คลิกปุ่มปิดของ Toast ให้ถือว่าต้องการคืนอุปกรณ์ชิ้นนั้น
+  const handleReturnItem = (id: number, index: number) => {
     setReturnList([...returnList, id]);
     setBorrowedItems(borrowedItems.filter((_, i) => i !== index));
   };
 
-  // ฟังก์ชันบันทึกการคืนอุปกรณ์
-  const handleReturnSubmit = async () => {
+  // เมื่อผู้ใช้กดปุ่ม "บันทึก" เพื่อคืนอุปกรณ์
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (returnList.length === 0) {
       setAlert({ show: true, message: 'กรุณาเลือกรายการที่ต้องการคืน' });
       return;
     }
-
+    setLoading(true);
     try {
-      setLoading(true);
-      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, {
-        returnList,
-      });
+      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, { returnList });
       setAlert({ show: true, message: 'คืนอุปกรณ์สำเร็จแล้ว' });
       setReturnList([]);
-      if (user) {
-        fetchBorrowedItems(user.users_id); // โหลดข้อมูลใหม่หลังคืนอุปกรณ์
-      }
+      // โหลดข้อมูลใหม่เพื่ออัปเดตรายการที่ยังคงค้างอยู่ (ถ้ามี)
+      // หรือคุณอาจเลือกให้หน้าจอยังคงเป็นรายการที่เหลืออยู่แล้วก็ได้
     } catch (error) {
       console.error('Error returning equipment:', error);
       setAlert({ show: true, message: 'เกิดข้อผิดพลาดในการคืนอุปกรณ์' });
@@ -124,26 +87,16 @@ const ReturnOf = () => {
         <h1 className="py-2">คืนอุปกรณ์ครุภัณฑ์</h1>
       </div>
       <div className="px-5">
-        <Form noValidate>
+        <Form noValidate onSubmit={handleSubmit}>
           <Form.Group className="py-2">
-            {isLoading ? (
-              <p>กำลังโหลด...</p>
-            ) : borrowedItems.length > 0 ? (
+            {borrowedItems.length > 0 ? (
               borrowedItems.map((item, index) => (
-                <Toast
-                  key={index}
-                  onClose={() => removeItem(index, item.borrow_equipment_id)}
-                  className="mb-2"
-                >
+                <Toast key={index} onClose={() => handleReturnItem(item.borrow_equipment_id, index)} className="mb-2">
                   <Toast.Header>
                     <strong className="me-auto">{item.equipment_name}</strong>
                   </Toast.Header>
                   <Toast.Body>
-                    <div>
-                      <span style={{ fontWeight: 'bold' }}>
-                        หมายเลขอุปกรณ์: {item.equipment_code}
-                      </span>
-                    </div>
+                    <div style={{ fontWeight: 'bold' }}>หมายเลขอุปกรณ์: {item.equipment_code}</div>
                     <div className={styles.toastDate}>
                       <span>เริ่ม {item.startDate}</span>
                       <span>สิ้นสุด {item.endDate}</span>
@@ -155,11 +108,12 @@ const ReturnOf = () => {
               <p>ไม่มีอุปกรณ์ที่ถูกยืม</p>
             )}
           </Form.Group>
-          <Button variant="primary" onClick={handleReturnSubmit} disabled={returnList.length === 0}>
-            {isLoading ? 'กำลังบันทึก...' : 'บันทึกการคืน'}
-          </Button>
+          <Form.Group className="d-flex justify-content-center py-3">
+            <ButtonState type="submit" className={styles.button} text={isLoading ? 'กำลังบันทึก...' : 'บันทึก'} icon="fas fa-save" isLoading={isLoading} />
+          </Form.Group>
         </Form>
       </div>
+      <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
     </Container>
   );
 };

@@ -2,48 +2,50 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'GET') {
-    try {
-      const { borrow_user_id } = req.query;
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
+    return res.status(405).json({ message: `Method ${req.method} not allowed` });
+  }
 
-      if (!borrow_user_id || isNaN(Number(borrow_user_id))) {
-        return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ borrow_user_id ไม่ถูกต้อง' });
-      }
+  try {
+    // รับ userId จาก query parameter
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ message: 'Missing userId' });
+    }
 
-      // ดึงเฉพาะรายการการยืมที่ได้รับการอนุมัติจากแอดมิน
-      // และเป็นของผู้ใช้ที่ระบุใน borrow_user_id
-      const borrowedItems = await prisma.borrowequipment.findMany({
-        where: {
-          borrow_equipment_status: 2,  // เฉพาะรายการที่แอดมินอนุมัติแล้ว
-          borrow_user_id: Number(borrow_user_id),
-        },
-        include: {
-          borrowequipment_list: {
-            include: {
-              equipment: true, // ดึงข้อมูลอุปกรณ์ที่เกี่ยวข้อง
+    // ดึงข้อมูลชุดอุปกรณ์ที่ได้รับการอนุมัติจากแอดมิน (borrow_equipment_status: 2)
+    // และกรองให้เป็นของผู้ใช้ที่ระบุ (borrow_user_id เท่ากับ userId ที่ส่งมา)
+    const approvedBorrowEquipment = await prisma.borrowequipment.findMany({
+      where: {
+        borrow_equipment_status: 2, // เฉพาะชุดที่ได้รับการอนุมัติจากแอดมิน
+        borrow_user_id: Number(userId), // กรองเฉพาะของผู้ใช้ที่ส่งมา
+      },
+      select: {
+        borrow_id: true,
+        borrow_date: true,
+        borrow_return: true,
+        borrowequipment_list: {
+          select: {
+            borrow_equipment_id: true,
+            equipment_id: true,
+            equipment: {
+              select: {
+                equipment_name: true,
+                equipment_code: true,
+              },
             },
           },
         },
-        orderBy: { borrow_create_date: 'desc' },
-      });
+      },
+      orderBy: {
+        borrow_id: 'desc',
+      },
+    });
 
-      // กรองเฉพาะอุปกรณ์ที่ยังถูกยืมอยู่ (equipment_status = 0)
-      const filteredItems = borrowedItems
-        .map(item => ({
-          ...item,
-          borrowequipment_list: item.borrowequipment_list.filter(
-            eq => eq.equipment?.equipment_status === 0
-          ),
-        }))
-        .filter(item => item.borrowequipment_list.length > 0);
-
-      return res.status(200).json({ message: 'success', data: filteredItems });
-    } catch (error) {
-      console.error("Error:", error);
-      return res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงข้อมูล', data: error });
-    }
-  } else {
-    res.setHeader('Allow', ['GET']);
-    return res.status(405).json({ message: `Method ${req.method} not allowed` });
+    return res.status(200).json({ message: 'success', data: approvedBorrowEquipment });
+  } catch (error) {
+    console.error("🚀 ~ GET /api/borrowequipment/list ~ error:", error);
+    return res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงข้อมูล', data: error });
   }
 }
