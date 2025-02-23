@@ -7,12 +7,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       // อ่าน userId จาก query parameter (ถ้ามีส่งมาด้วย)
       const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : null;
 
+      // ตรวจสอบว่า userId ถูกส่งมาหรือไม่
+      if (!userId) {
+        return res.status(400).json({ message: 'userId is required' });
+      }
+
       // ดึงเฉพาะรายการการยืมที่ได้รับการอนุมัติจากแอดมิน (borrow_equipment_status = 2)
-      // กรองตาม borrow_user_id และ borrow_equipment_status
+      // และกรองตาม borrow_user_id
       const borrowedItems = await prisma.borrowequipment.findMany({
         where: {
-          borrow_equipment_status: 2, // ต้องการแสดงเฉพาะรายการที่แอดมินอนุมัติแล้ว
-          ...(userId && { borrow_user_id: userId }), // กรองตาม userId ที่ส่งมา
+          borrow_equipment_status: 2, // อนุมัติจากแอดมินแล้ว
+          borrow_user_id: userId, // กรองตาม userId ที่ได้รับ
         },
         include: {
           borrowequipment_list: {
