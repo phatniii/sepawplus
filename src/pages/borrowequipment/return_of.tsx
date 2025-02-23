@@ -30,7 +30,7 @@ const ReturnOf = () => {
   const [returnList, setReturnList] = useState<number[]>([]); // เก็บ ID ของอุปกรณ์ที่ต้องการคืน
   const [alert, setAlert] = useState({ show: false, message: '' });
 
-  // ดึงข้อมูลผู้ใช้โดยใช้ auToken (จาก query parameter)
+  // ฟังก์ชันดึงข้อมูลผู้ใช้โดยใช้ auToken
   const fetchUserData = async () => {
     try {
       const auToken = router.query.auToken;
@@ -48,16 +48,14 @@ const ReturnOf = () => {
     }
   };
 
-  // ดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ที่ล็อกอินอยู่ โดยใช้ userId เป็นเงื่อนไข
+  // ฟังก์ชันดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ที่ล็อกอินอยู่ โดยใช้ userId เป็นเงื่อนไข
   const fetchBorrowedItems = async (userId: number) => {
     try {
       setLoading(true);
-      // ส่ง userId ไปใน query parameter เพื่อให้ API ส่งคืนเฉพาะรายการของผู้ใช้คนนั้น
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
       if (response.data?.data) {
-        // API ส่งกลับข้อมูลเป็น array ของ record แต่ละ recordมี field borrowequipment_list
-        // เราจะทำการ flatten ข้อมูลใน borrowequipment_list เพื่อใช้งานใน UI
-        const borrowedData: BorrowedItemType[] = response.data.data.flatMap((item: any) =>
+        // สมมุติว่า API ส่งกลับข้อมูลเป็น array ของ record
+        const borrowedData = response.data.data.flatMap((item: any) =>
           item.borrowequipment_list.map((eq: any) => ({
             borrow_equipment_id: eq.borrow_equipment_id, // ใช้ ID สำหรับการคืน
             equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
@@ -105,7 +103,9 @@ const ReturnOf = () => {
 
     try {
       setLoading(true);
-      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, { returnList });
+      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, {
+        returnList,
+      });
       setAlert({ show: true, message: 'คืนอุปกรณ์สำเร็จแล้ว' });
       setReturnList([]);
       if (user) {

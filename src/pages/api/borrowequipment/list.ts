@@ -7,23 +7,24 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       // อ่าน userId จาก query parameter (ถ้ามีส่งมาด้วย)
       const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : null;
 
+      // ดึงเฉพาะรายการการยืมที่ได้รับการอนุมัติจากแอดมิน (borrow_equipment_status = 2)
+      // ถ้ามี userId จะเพิ่มเงื่อนไขกรองด้วย borrow_user_id: userId
       const borrowedItems = await prisma.borrowequipment.findMany({
         where: {
-          borrow_equipment_status: 2, // เฉพาะรายการที่ได้รับการอนุมัติจากแอดมิน
+          borrow_equipment_status: 2, // อนุมัติจากแอดมินแล้ว
           ...(userId && { borrow_user_id: userId }),
         },
         include: {
-          users_id_ref: true, // ดึงข้อมูลผู้ยืม
           borrowequipment_list: {
             include: {
               equipment: true, // ดึงข้อมูลอุปกรณ์ที่เกี่ยวข้อง
             },
           },
         },
-        orderBy: { borrow_create_date: 'desc' },
+        orderBy: { borrow_create_date: 'desc' }, // เรียงจากรายการล่าสุด
       });
 
-      // กรองเฉพาะอุปกรณ์ที่ยังคงอยู่ในสถานะ "ยืมอยู่" (equipment_status = 0)
+      // กรองเฉพาะอุปกรณ์ที่ยังถูกยืมอยู่ (equipment_status = 0)
       const filteredItems = borrowedItems
         .map(item => ({
           ...item,
@@ -31,7 +32,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             eq => eq.equipment?.equipment_status === 0
           ),
         }))
-        .filter(item => item.borrowequipment_list.length > 0);
+        .filter(item => item.borrowequipment_list.length > 0); // กรองเฉพาะที่มีอุปกรณ์เหลืออยู่
 
       return res.status(200).json({ message: 'success', data: filteredItems });
     } catch (error) {
