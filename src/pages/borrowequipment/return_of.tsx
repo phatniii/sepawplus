@@ -26,7 +26,7 @@ const ReturnOf = () => {
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setLoading] = useState(true);
   const [borrowedItems, setBorrowedItems] = useState<BorrowedItemType[]>([]);
-  const [returnList, setReturnList] = useState<number[]>([]); // เก็บ ID ของอุปกรณ์ที่ต้องการคืน
+  const [returnList, setReturnList] = useState<number[]>([]);
   const [alert, setAlert] = useState({ show: false, message: '' });
 
   // ดึงข้อมูลผู้ใช้โดยใช้ auToken
@@ -47,11 +47,12 @@ const ReturnOf = () => {
     }
   };
 
-  // ดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ที่ล็อกอินอยู่ โดยใช้ userId เป็นเงื่อนไข
+  // ดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ที่ล็อกอินอยู่ โดยใช้ borrow_user_id
   const fetchBorrowedItems = async (userId: number) => {
     try {
       setLoading(true);
-      const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
+      // เปลี่ยน query parameter จาก userId เป็น borrow_user_id
+      const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?borrow_user_id=${userId}`);
       if (response.data?.data) {
         const borrowedData = response.data.data.flatMap((item: any) =>
           item.borrowequipment_list.map((eq: any) => ({
@@ -79,7 +80,7 @@ const ReturnOf = () => {
     }
   }, [router.query.auToken]);
 
-  // เมื่อผู้ใช้ถูกโหลดแล้ว ให้นำ userId ไปดึงรายการอุปกรณ์ที่ยืมไป
+  // เมื่อผู้ใช้ถูกโหลดแล้ว ให้นำ users_id ไปดึงรายการอุปกรณ์ที่ยืมไป
   useEffect(() => {
     if (user) {
       fetchBorrowedItems(user.users_id);
@@ -101,7 +102,9 @@ const ReturnOf = () => {
 
     try {
       setLoading(true);
-      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, { returnList });
+      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, {
+        returnList,
+      });
       setAlert({ show: true, message: 'คืนอุปกรณ์สำเร็จแล้ว' });
       setReturnList([]);
       if (user) {
