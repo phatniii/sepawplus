@@ -19,6 +19,7 @@ interface BorrowedItemType {
 
 interface UserType {
   users_id: number;
+  // สามารถเพิ่มฟิลด์อื่น ๆ ได้ตามที่ต้องการ
 }
 
 const ReturnOf = () => {
