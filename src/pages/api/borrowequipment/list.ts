@@ -8,11 +8,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : null;
 
       // ดึงเฉพาะรายการการยืมที่ได้รับการอนุมัติจากแอดมิน (borrow_equipment_status = 2)
-      // กรองตาม borrow_user_id โดยตรง
+      // กรองตาม borrow_user_id และ borrow_equipment_status
       const borrowedItems = await prisma.borrowequipment.findMany({
         where: {
-          borrow_equipment_status: 2, // อนุมัติจากแอดมินแล้ว
-          ...(userId && { borrow_user_id: userId }), // กรองตาม userId ที่ได้รับ
+          borrow_equipment_status: 2, // ต้องการแสดงเฉพาะรายการที่แอดมินอนุมัติแล้ว
+          ...(userId && { borrow_user_id: userId }), // กรองตาม userId ที่ส่งมา
         },
         include: {
           borrowequipment_list: {
