@@ -19,7 +19,6 @@ interface BorrowedItemType {
 
 interface UserType {
   users_id: number;
-  isApproved: boolean; // เพิ่มฟิลด์ isApproved เพื่อตรวจสอบการอนุมัติ
   // สามารถเพิ่มฟิลด์อื่น ๆ ได้ตามที่ต้องการ
 }
 
@@ -38,12 +37,7 @@ const ReturnOf = () => {
       if (auToken) {
         const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
         if (responseUser.data?.data) {
-          const userData = responseUser.data.data;
-          if (userData.isApproved) {
-            setUser(userData);
-          } else {
-            setAlert({ show: true, message: 'ผู้ใช้ยังไม่ได้รับการอนุมัติ' });
-          }
+          setUser(responseUser.data.data);
         } else {
           setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
         }
@@ -62,14 +56,13 @@ const ReturnOf = () => {
       if (response.data?.data) {
         // สมมุติว่า API ส่งกลับข้อมูลเป็น array ของ record
         const borrowedData = response.data.data.flatMap((item: any) =>
-          item.borrowequipment_list.filter((eq: any) => eq.borrow_user_id === userId) // กรองข้อมูลตามผู้ใช้
-            .map((eq: any) => ({
-              borrow_equipment_id: eq.borrow_equipment_id, // ใช้ ID สำหรับการคืน
-              equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
-              equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
-              startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
-              endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
-            }))
+          item.borrowequipment_list.map((eq: any) => ({
+            borrow_equipment_id: eq.borrow_equipment_id, // ใช้ ID สำหรับการคืน
+            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
+            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
+            startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
+            endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
+          }))
         );
         setBorrowedItems(borrowedData);
       }
