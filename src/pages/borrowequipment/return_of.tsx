@@ -14,7 +14,6 @@ interface BorrowedItemType {
 
 interface UserType {
   users_id: number;
-  // สามารถเพิ่มฟิลด์อื่น ๆ ได้ตามที่ต้องการ
 }
 
 const ReturnOf = () => {
@@ -40,14 +39,11 @@ const ReturnOf = () => {
 
   // ฟังก์ชันดึงข้อมูลผู้ใช้จาก API
   const getUser = async (userId: string) => {
-    console.log("Fetching user data for userId:", userId);
     try {
       const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${userId}`);
       if (responseUser.data?.data) {
-        console.log("User data retrieved:", responseUser.data.data);
         return responseUser.data.data;
       } else {
-        console.log("User data not found for userId:", userId);
         return null;
       }
     } catch (error) {
@@ -61,18 +57,10 @@ const ReturnOf = () => {
   const fetchBorrowedItems = async (userId: number) => {
     try {
       setLoading(true);
+      // กรองข้อมูลที่ยืมโดยผู้ใช้ที่ล็อกอิน (ใช้ borrow_user_id) และตรวจสอบสถานะการอนุมัติ
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
       if (response.data?.data) {
-        const borrowedData = response.data.data.flatMap((item: any) =>
-          item.borrowequipment_list.map((eq: any) => ({
-            borrow_equipment_id: eq.borrow_equipment_id, // ใช้ ID สำหรับการคืน
-            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
-            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
-            startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
-            endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
-          }))
-        );
-        setBorrowedItems(borrowedData);
+        setBorrowedItems(response.data.data); // แสดงเฉพาะอุปกรณ์ที่ยืมของผู้ใช้นี้
       }
     } catch (error) {
       console.error('Error fetching borrowed equipment:', error);
