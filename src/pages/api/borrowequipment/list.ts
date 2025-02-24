@@ -12,7 +12,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const borrowedItems = await prisma.borrowequipment.findMany({
         where: {
           borrow_equipment_status: 2, // อนุมัติจากแอดมินแล้ว
-          ...(userId && { borrow_user_id: userId }),
+          ...(userId && { borrow_user_id: userId }), // ถ้ามี userId จะกรองเฉพาะของ user นั้น
         },
         include: {
           borrowequipment_list: {
@@ -24,16 +24,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         orderBy: { borrow_create_date: 'desc' }, // เรียงจากรายการล่าสุด
       });
 
-      // กรองเฉพาะอุปกรณ์ที่ยังถูกยืมอยู่ (equipment_status = 0)
+      // กรองเฉพาะอุปกรณ์ที่ยังถูกยืมอยู่ (equipment_status = 0) และที่ได้รับการอนุมัติ
       const filteredItems = borrowedItems
         .map(item => ({
           ...item,
           borrowequipment_list: item.borrowequipment_list.filter(
-            eq => eq.equipment?.equipment_status === 0
+            eq => eq.equipment?.equipment_status === 0 // เฉพาะอุปกรณ์ที่ยังยืมอยู่
           ),
         }))
         .filter(item => item.borrowequipment_list.length > 0); // กรองเฉพาะที่มีอุปกรณ์เหลืออยู่
 
+      // ส่งข้อมูลกลับไป
       return res.status(200).json({ message: 'success', data: filteredItems });
     } catch (error) {
       console.error("🚀 ~ GET /api/borrowequipment/list ~ error:", error);

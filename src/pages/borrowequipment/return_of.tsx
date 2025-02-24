@@ -141,7 +141,7 @@ const ReturnOf = () => {
                   </Toast.Header>
                   <Toast.Body>
                     <div>
-                      <span style={{ fontWeight: 'bold' }}>
+                      <span style={{ fontWeight: 'bold' }} >
                         หมายเลขอุปกรณ์: {item.equipment_code}
                       </span>
                     </div>
