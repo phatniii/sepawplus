@@ -1,124 +1,120 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import axios from 'axios';
+import { useRouter } from 'next/router';
 
 import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
 import Toast from 'react-bootstrap/Toast';
-import ButtonState from '@/components/Button/ButtonState';
-import ModalAlert from '@/components/Modals/ModalAlert';
+import Button from 'react-bootstrap/Button';
+
 import styles from '@/styles/page.module.css';
 
-interface BorrowEquipmentItem {
+interface BorrowedItemType {
   borrow_equipment_id: number;
-  borrow_name: string;
-  borrow_date: Date;
-  borrow_return: Date;
-  equipment: {
-    equipment_id: number;
-    equipment_name: string;
-    equipment_code: string;
-  };
+  equipment_name: string;
+  equipment_code: string;
+  startDate: string;
+  endDate: string;
+}
+
+interface UserType {
+  users_id: number;
+  // ฟิลด์อื่น ๆ ตามต้องการ
 }
 
 const ReturnOf = () => {
   const router = useRouter();
-  const { auToken } = router.query;
-
-  const [user, setUser] = useState<any>(null);
-  const [flatList, setFlatList] = useState<BorrowEquipmentItem[]>([]);
-  const [returnedList, setReturnedList] = useState<number[]>([]);
-  const [validated, setValidated] = useState(false);
+  const [user, setUser] = useState<UserType | null>(null);
+  const [isLoading, setLoading] = useState(true);
+  const [borrowedItems, setBorrowedItems] = useState<BorrowedItemType[]>([]);
+  const [returnList, setReturnList] = useState<number[]>([]); // เก็บ ID ของอุปกรณ์ที่ต้องการคืน
   const [alert, setAlert] = useState({ show: false, message: '' });
-  const [isLoading, setLoading] = useState(false);
 
-  // ดึงข้อมูลผู้ใช้เมื่อมี auToken
-  useEffect(() => {
-    if (auToken) {
-      fetchUserData();
-    }
-  }, [auToken]);
-
-  // เมื่อได้ข้อมูลผู้ใช้แล้วให้ดึงข้อมูลการยืมที่ได้รับการอนุมัติ
-  useEffect(() => {
-    if (user) {
-      fetchApprovedBorrows();
-    }
-  }, [user]);
-
-  // ดึงข้อมูลผู้ใช้จาก API (ปรับให้ตรงกับระบบของคุณ)
+  // ดึงข้อมูลผู้ใช้โดยใช้ auToken
   const fetchUserData = async () => {
     try {
-      const response = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
-      if (response.data?.data) {
-        setUser(response.data.data);
-      } else {
-        setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
+      const auToken = router.query.auToken;
+      if (auToken) {
+        const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
+        if (responseUser.data?.data) {
+          setUser(responseUser.data.data);
+        } else {
+          setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
+        }
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error("Error fetching user data:", error);
       setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
     }
   };
 
-  // ดึงข้อมูลการยืมที่ได้รับการอนุมัติและแปลงเป็น flat list
-  const fetchApprovedBorrows = async () => {
+  // ดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ (API จะกรองเฉพาะรายการที่ได้รับการอนุมัติและยังไม่คืน)
+  const fetchBorrowedItems = async (userId: number) => {
     try {
-      const response = await axios.get(`/api/borrowequipment/list`, {
-        params: { user_id: user.users_id },
-      });
+      setLoading(true);
+      const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
       if (response.data?.data) {
-        // response.data.data เป็น array ของ borrow equipment ซึ่งแต่ละรายการมี borrowequipment_list
-        const flat: BorrowEquipmentItem[] = [];
-        response.data.data.forEach((borrow: any) => {
-          borrow.borrowequipment_list.forEach((item: any) => {
-            flat.push({
-              borrow_equipment_id: item.borrow_equipment_id,
-              borrow_name: borrow.borrow_name,
-              borrow_date: borrow.borrow_date,
-              borrow_return: borrow.borrow_return,
-              equipment: item.equipment,
-            });
-          });
-        });
-        setFlatList(flat);
+        const borrowedData = response.data.data.flatMap((item: any) =>
+          item.borrowequipment_list.map((eq: any) => ({
+            borrow_equipment_id: eq.borrow_equipment_id, // ID สำหรับการคืน
+            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
+            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
+            startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
+            endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
+          }))
+        );
+        setBorrowedItems(borrowedData);
       }
     } catch (error) {
-      console.error('Error fetching approved borrow data:', error);
-      setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลการยืมได้' });
+      console.error('Error fetching borrowed equipment:', error);
+      setAlert({ show: true, message: 'ไม่สามารถโหลดรายการอุปกรณ์ที่ถูกยืมได้' });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // เมื่อกดกากบาทบน Toast ให้ลบรายการออกจาก UI และบันทึก id สำหรับคืน
-  const handleRemoveItem = (id: number) => {
-    setFlatList(prev => prev.filter(item => item.borrow_equipment_id !== id));
-    setReturnedList(prev => [...prev, id]);
+  // ดึงข้อมูลผู้ใช้เมื่อ auToken พร้อมใช้งาน
+  useEffect(() => {
+    if (router.query.auToken) {
+      fetchUserData();
+    }
+  }, [router.query.auToken]);
+
+  // เมื่อผู้ใช้ถูกโหลดแล้ว ให้นำ userId ไปดึงรายการอุปกรณ์ที่ยืมไป
+  useEffect(() => {
+    if (user) {
+      fetchBorrowedItems(user.users_id);
+    }
+  }, [user]);
+
+  // ลบรายการอุปกรณ์ออกจาก UI (ถือว่าอุปกรณ์ถูกคืน)
+  const removeItem = (index: number, id: number) => {
+    setReturnList([...returnList, id]);
+    setBorrowedItems(borrowedItems.filter((_, i) => i !== index));
   };
 
-  // เมื่อกดบันทึก ระบบจะส่งรายการคืนไปยัง API
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (returnedList.length === 0) {
-      setAlert({ show: true, message: 'กรุณาเลือกอุปกรณ์ที่ต้องการคืน' });
+  // บันทึกการคืนอุปกรณ์
+  const handleReturnSubmit = async () => {
+    if (returnList.length === 0) {
+      setAlert({ show: true, message: 'กรุณาเลือกรายการที่ต้องการคืน' });
       return;
     }
 
-    setLoading(true);
     try {
-      const response = await axios.post(`/api/borrowequipment/return`, {
-        returnList: returnedList,
+      setLoading(true);
+      await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, {
+        returnList,
       });
-      if (response.data?.message) {
-        setAlert({ show: true, message: response.data.message });
+      setAlert({ show: true, message: 'คืนอุปกรณ์สำเร็จแล้ว' });
+      setReturnList([]);
+      if (user) {
+        fetchBorrowedItems(user.users_id); // โหลดข้อมูลใหม่หลังคืนอุปกรณ์
       }
     } catch (error) {
-      console.error('Error updating return status:', error);
+      console.error('Error returning equipment:', error);
       setAlert({ show: true, message: 'เกิดข้อผิดพลาดในการคืนอุปกรณ์' });
     } finally {
       setLoading(false);
-      setValidated(true);
     }
   };
 
@@ -128,39 +124,42 @@ const ReturnOf = () => {
         <h1 className="py-2">คืนอุปกรณ์ครุภัณฑ์</h1>
       </div>
       <div className="px-5">
-        <Form noValidate validated={validated} onSubmit={handleSubmit}>
-          {flatList.length > 0 ? (
-            flatList.map((item) => (
-              <Toast 
-                key={item.borrow_equipment_id} 
-                className="mb-2" 
-                onClose={() => handleRemoveItem(item.borrow_equipment_id)}
-              >
-                <Toast.Header>
-                  <strong className="me-auto">{item.borrow_name}</strong>
-                </Toast.Header>
-                <Toast.Body>
-                  {item.equipment.equipment_name} - {item.equipment.equipment_code}
-                  <div className={styles.toastDate}>
-                    <span>เริ่ม {new Date(item.borrow_date).toLocaleDateString()}</span>
-                    <span>สิ้นสุด {new Date(item.borrow_return).toLocaleDateString()}</span>
-                  </div>
-                </Toast.Body>
-              </Toast>
-            ))
-          ) : (
-            <p>ไม่มีข้อมูลการยืมที่ได้รับการอนุมัติ หรือท่านได้ทำการคืนอุปกรณ์ครบแล้ว</p>
-          )}
-          <div className="d-flex justify-content-center py-3">
-            <ButtonState type="submit" text={'บันทึก'} isLoading={isLoading} />
-          </div>
+        <Form noValidate>
+          <Form.Group className="py-2">
+            {isLoading ? (
+              <p>กำลังโหลด...</p>
+            ) : borrowedItems.length > 0 ? (
+              borrowedItems.map((item, index) => (
+                <Toast
+                  key={index}
+                  onClose={() => removeItem(index, item.borrow_equipment_id)}
+                  className="mb-2"
+                >
+                  <Toast.Header>
+                    <strong className="me-auto">{item.equipment_name}</strong>
+                  </Toast.Header>
+                  <Toast.Body>
+                    <div>
+                      <span style={{ fontWeight: 'bold' }}>
+                        หมายเลขอุปกรณ์: {item.equipment_code}
+                      </span>
+                    </div>
+                    <div className={styles.toastDate}>
+                      <span>เริ่ม {item.startDate}</span>
+                      <span>สิ้นสุด {item.endDate}</span>
+                    </div>
+                  </Toast.Body>
+                </Toast>
+              ))
+            ) : (
+              <p>ไม่มีอุปกรณ์ที่ถูกยืม</p>
+            )}
+          </Form.Group>
+          <Button variant="primary" onClick={handleReturnSubmit} disabled={returnList.length === 0}>
+            {isLoading ? 'กำลังบันทึก...' : 'บันทึกการคืน'}
+          </Button>
         </Form>
       </div>
-      <ModalAlert 
-        show={alert.show} 
-        message={alert.message} 
-        handleClose={() => setAlert({ show: false, message: '' })} 
-      />
     </Container>
   );
 };
