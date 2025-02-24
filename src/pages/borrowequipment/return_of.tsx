@@ -19,7 +19,7 @@ interface BorrowedItemType {
 
 interface UserType {
   users_id: number;
-  // ฟิลด์อื่น ๆ ตามต้องการ
+  // สามารถเพิ่มฟิลด์อื่น ๆ ได้ตามที่ต้องการ
 }
 
 const ReturnOf = () => {
@@ -30,7 +30,7 @@ const ReturnOf = () => {
   const [returnList, setReturnList] = useState<number[]>([]); // เก็บ ID ของอุปกรณ์ที่ต้องการคืน
   const [alert, setAlert] = useState({ show: false, message: '' });
 
-  // ดึงข้อมูลผู้ใช้โดยใช้ auToken
+  // ฟังก์ชันดึงข้อมูลผู้ใช้โดยใช้ auToken
   const fetchUserData = async () => {
     try {
       const auToken = router.query.auToken;
@@ -48,15 +48,16 @@ const ReturnOf = () => {
     }
   };
 
-  // ดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ (API จะกรองเฉพาะรายการที่ได้รับการอนุมัติและยังไม่คืน)
+  // ฟังก์ชันดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ที่ล็อกอินอยู่ โดยใช้ userId เป็นเงื่อนไข
   const fetchBorrowedItems = async (userId: number) => {
     try {
       setLoading(true);
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
       if (response.data?.data) {
+        // สมมุติว่า API ส่งกลับข้อมูลเป็น array ของ record
         const borrowedData = response.data.data.flatMap((item: any) =>
           item.borrowequipment_list.map((eq: any) => ({
-            borrow_equipment_id: eq.borrow_equipment_id, // ID สำหรับการคืน
+            borrow_equipment_id: eq.borrow_equipment_id, // ใช้ ID สำหรับการคืน
             equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
             equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
             startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
@@ -73,7 +74,7 @@ const ReturnOf = () => {
     }
   };
 
-  // ดึงข้อมูลผู้ใช้เมื่อ auToken พร้อมใช้งาน
+  // ดึงข้อมูลผู้ใช้เมื่อค่า auToken พร้อมใช้งาน
   useEffect(() => {
     if (router.query.auToken) {
       fetchUserData();
@@ -87,13 +88,13 @@ const ReturnOf = () => {
     }
   }, [user]);
 
-  // ลบรายการอุปกรณ์ออกจาก UI (ถือว่าอุปกรณ์ถูกคืน)
+  // ฟังก์ชันลบรายการอุปกรณ์ออกจาก UI (ถือว่าอุปกรณ์ถูกคืน)
   const removeItem = (index: number, id: number) => {
     setReturnList([...returnList, id]);
     setBorrowedItems(borrowedItems.filter((_, i) => i !== index));
   };
 
-  // บันทึกการคืนอุปกรณ์
+  // ฟังก์ชันบันทึกการคืนอุปกรณ์
   const handleReturnSubmit = async () => {
     if (returnList.length === 0) {
       setAlert({ show: true, message: 'กรุณาเลือกรายการที่ต้องการคืน' });

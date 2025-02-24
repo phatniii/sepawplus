@@ -4,19 +4,15 @@ import prisma from '@/lib/prisma';
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
-      // อ่าน userId จาก query parameter (ต้องมีการส่ง userId มาด้วย)
-      const userIdParam = req.query.userId;
-      if (!userIdParam) {
-        return res.status(400).json({ message: 'User ID is required' });
-      }
-      const userId = parseInt(userIdParam as string, 10);
+      // อ่าน userId จาก query parameter (ถ้ามีส่งมาด้วย)
+      const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : null;
 
       // ดึงเฉพาะรายการการยืมที่ได้รับการอนุมัติจากแอดมิน (borrow_equipment_status = 2)
-      // และเฉพาะรายการของผู้ใช้ที่ล็อกอิน (borrow_user_id = userId)
+      // ถ้ามี userId จะเพิ่มเงื่อนไขกรองด้วย borrow_user_id: userId
       const borrowedItems = await prisma.borrowequipment.findMany({
         where: {
-          borrow_equipment_status: 2, // 2 = อนุมัติแล้ว
-          borrow_user_id: userId,
+          borrow_equipment_status: 2, // อนุมัติจากแอดมินแล้ว
+          ...(userId && { borrow_user_id: userId }),
         },
         include: {
           borrowequipment_list: {
@@ -28,15 +24,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         orderBy: { borrow_create_date: 'desc' }, // เรียงจากรายการล่าสุด
       });
 
-      // กรองเฉพาะรายการที่ยังมีอุปกรณ์ที่ยังไม่คืน (equipment_status = 0)
+      // กรองเฉพาะอุปกรณ์ที่ยังถูกยืมอยู่ (equipment_status = 0)
       const filteredItems = borrowedItems
-        .map(item => {
-          const remainingEquipment = item.borrowequipment_list.filter(
+        .map(item => ({
+          ...item,
+          borrowequipment_list: item.borrowequipment_list.filter(
             eq => eq.equipment?.equipment_status === 0
-          );
-          return { ...item, borrowequipment_list: remainingEquipment };
-        })
-        .filter(item => item.borrowequipment_list.length > 0);
+          ),
+        }))
+        .filter(item => item.borrowequipment_list.length > 0); // กรองเฉพาะที่มีอุปกรณ์เหลืออยู่
 
       return res.status(200).json({ message: 'success', data: filteredItems });
     } catch (error) {
