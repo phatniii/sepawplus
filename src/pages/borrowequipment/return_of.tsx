@@ -15,6 +15,7 @@ interface BorrowedItemType {
   equipment_code: string;
   startDate: string;
   endDate: string;
+  borrow_equipment_status: number; // เพิ่มสถานะการยืม
 }
 
 interface UserType {
@@ -53,16 +54,18 @@ const ReturnOf = () => {
       setLoading(true);
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
       if (response.data?.data) {
-        const borrowedData = response.data.data.flatMap((item: any) =>
+        const borrowedData: BorrowedItemType[] = response.data.data.flatMap((item: any) =>
           item.borrowequipment_list.map((eq: any) => ({
             borrow_equipment_id: eq.borrow_equipment_id,
             equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
             equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
             startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
             endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
+            borrow_equipment_status: item.borrow_equipment_status, // เพิ่มสถานะการยืม
           }))
         );
-        setBorrowedItems(borrowedData);
+        // กรองเฉพาะรายการที่มีสถานะเป็น "อนุมัติ" (borrow_equipment_status = 2)
+        setBorrowedItems(borrowedData.filter((item) => item.borrow_equipment_status === 2));
       }
     } catch (error) {
       console.error('Error fetching borrowed equipment:', error);
@@ -72,15 +75,17 @@ const ReturnOf = () => {
     }
   };
 
+  // ดึงข้อมูลผู้ใช้เมื่อค่า auToken พร้อมใช้งาน
   useEffect(() => {
     if (router.query.auToken) {
       fetchUserData();
     }
   }, [router.query.auToken]);
 
+  // เมื่อผู้ใช้ถูกโหลดแล้ว ให้นำ userId ไปดึงรายการอุปกรณ์ที่ยืมไป
   useEffect(() => {
     if (user) {
-      fetchBorrowedItems(user.users_id); // ส่ง userId ไปให้ API ดึงรายการอุปกรณ์ที่ยืม
+      fetchBorrowedItems(user.users_id);
     }
   }, [user]);
 
@@ -127,19 +132,13 @@ const ReturnOf = () => {
               <p>กำลังโหลด...</p>
             ) : borrowedItems.length > 0 ? (
               borrowedItems.map((item, index) => (
-                <Toast
-                  key={index}
-                  onClose={() => removeItem(index, item.borrow_equipment_id)}
-                  className="mb-2"
-                >
+                <Toast key={index} onClose={() => removeItem(index, item.borrow_equipment_id)} className="mb-2">
                   <Toast.Header>
                     <strong className="me-auto">{item.equipment_name}</strong>
                   </Toast.Header>
                   <Toast.Body>
                     <div>
-                      <span style={{ fontWeight: 'bold' }}>
-                        หมายเลขอุปกรณ์: {item.equipment_code}
-                      </span>
+                      <span style={{ fontWeight: 'bold' }}>หมายเลขอุปกรณ์: {item.equipment_code}</span>
                     </div>
                     <div className={styles.toastDate}>
                       <span>เริ่ม {item.startDate}</span>
