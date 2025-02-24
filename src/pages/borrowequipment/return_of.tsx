@@ -84,7 +84,7 @@ const ReturnOf = () => {
   // เมื่อผู้ใช้ถูกโหลดแล้ว ให้นำ userId ไปดึงรายการอุปกรณ์ที่ยืมไป
   useEffect(() => {
     if (user) {
-      fetchBorrowedItems(user.users_id);
+      fetchBorrowedItems(user.users_id);  // ส่ง userId ไปให้ API ดึงรายการอุปกรณ์ที่ยืม
     }
   }, [user]);
 
