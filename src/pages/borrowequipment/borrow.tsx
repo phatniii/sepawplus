@@ -41,6 +41,25 @@ const Borrow = () => {
     const [listItem, setListItem] = useState<EquipmentType[]>([]);
     const [carePerson, setCarePerson] = useState<any>(null);
 
+    const [answers, setAnswers] = useState<any>({
+        question1: '',
+        question2: '',
+        question3: '',
+        question4: '',
+        question5: '',
+        question6: '',
+        question7: '',
+        question8: '',
+        question9: '',
+        question10: ''
+    });
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>, question: string) => {
+        setAnswers({
+            ...answers,
+            [question]: e.target.value
+        });
+    };
+
     // โหลดรายการอุปกรณ์ครั้งเดียวเมื่อ component mount
     useEffect(() => {
         fetchAvailableEquipment();
@@ -122,6 +141,7 @@ const Borrow = () => {
                // borrow_objective: event.currentTarget['borrow_objective'].value,
                 borrow_name: event.currentTarget['borrow_name'].value, // เก็บชื่อผู้สูงอายุ
                 borrow_list: listItem.map(item => ({ equipment_id: item.equipment_id }))
+               // answers: answers  // เพิ่มการส่งคำตอบจากแบบสอบถาม
             };
 
             await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/create`, data);
@@ -232,6 +252,286 @@ const Borrow = () => {
                     <TextareaLabel label='11.การมีผู้ดูแลผู้สูงอายุ' id="borrow_address" required />
                     <TextareaLabel label='12.การเข้าร่วมกิจกรรม' id="borrow_address" required />
                     
+                     <h3>ตอนที่2.ความสามารถในการทำกิจกรรมพื้นฐาน</h3>
+
+                    {/* แทรกคำถาม 1 */}
+                    <Form.Group controlId="question1">
+                        <Form.Label>1. รับประทานอาหารเมื่อเตรียมสำหรับไว้ให้เรียบร้อยต่อหน้า</Form.Label>
+                        <Col>
+                            <Form.Check 
+                                type="radio"
+                                label="0 ไม่สามารถตักอาหารเข้าปากได้ ต้องมีคนป้อนให้"
+                                value="0"
+                                checked={answers.question1 === '0'}
+                                onChange={(e) => handleChange(e, 'question1')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="1 ตักอาหารเองได้ แต่ต้องมีคนช่วย"
+                                value="1"
+                                checked={answers.question1 === '1'}
+                                onChange={(e) => handleChange(e, 'question1')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="2 ตักอาหารและช่วยตัวเองได้เป็นปกติ"
+                                value="2"
+                                checked={answers.question1 === '2'}
+                                onChange={(e) => handleChange(e, 'question1')}
+                            />
+                        </Col>
+                    </Form.Group>
+                     {/* คำถามที่ 2 */}
+            <Form.Group controlId="question2">
+                <Form.Label>2. ล้างหน้า หวีผม แปรงฟัน โกนหนวด ในระยะเวลา 24 – 48 ชั่วโมงที่ผ่านมา</Form.Label>
+                <Col>
+                    <Form.Check 
+                        type="radio"
+                        label="0 ต้องการความช่วยเหลือ"
+                        value="0"
+                        checked={answers.question2 === '0'}
+                        onChange={(e) => handleChange(e, 'question2')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="1 ทำเองได้ (รวมทั้งที่ทำได้เอง ถ้าเตรียมอุปกรณ์ไว้ให้)"
+                        value="1"
+                        checked={answers.question2 === '1'}
+                        onChange={(e) => handleChange(e, 'question2')}
+                    />
+                </Col>
+            </Form.Group>
+
+            {/* คำถามที่ 3 */}
+            <Form.Group controlId="question3">
+                <Form.Label>3. ลุกนั่งจากที่นอน หรือจากเตียงไปยังเก้าอี้</Form.Label>
+                <Col>
+                    <Form.Check 
+                        type="radio"
+                        label="0 ไม่สามารถนั่งได้ (นั่งแล้วจะล้มเสมอ) หรือต้องใช้คนสองคนช่วยกันยกขึ้น"
+                        value="0"
+                        checked={answers.question3 === '0'}
+                        onChange={(e) => handleChange(e, 'question3')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="1 ต้องการความช่วยเหลืออย่างมากจึงจะนั่งได้"
+                        value="1"
+                        checked={answers.question3 === '1'}
+                        onChange={(e) => handleChange(e, 'question3')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="2 ต้องการความช่วยเหลือบ้าง เช่น บอกให้ทำตาม หรือช่วยพยุงเล็กน้อย"
+                        value="2"
+                        checked={answers.question3 === '2'}
+                        onChange={(e) => handleChange(e, 'question3')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="3 ทำได้เอง"
+                        value="3"
+                        checked={answers.question3 === '3'}
+                        onChange={(e) => handleChange(e, 'question3')}
+                    />
+                </Col>
+            </Form.Group>
+
+            {/* คำถามที่ 4 */}
+            <Form.Group controlId="question4">
+                <Form.Label>4. ใช้ห้องน้ำ</Form.Label>
+                <Col>
+                    <Form.Check 
+                        type="radio"
+                        label="0 ช่วยตัวเองไม่ได้"
+                        value="0"
+                        checked={answers.question4 === '0'}
+                        onChange={(e) => handleChange(e, 'question4')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="1 ทำเองได้บ้าง (อย่างน้อยทำความสะอาดตัวเองได้หลังจากเสร็จธุระ)"
+                        value="1"
+                        checked={answers.question4 === '1'}
+                        onChange={(e) => handleChange(e, 'question4')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="2 ช่วยตัวเองได้ดี"
+                        value="2"
+                        checked={answers.question4 === '2'}
+                        onChange={(e) => handleChange(e, 'question4')}
+                    />
+                </Col>
+            </Form.Group>
+
+            {/* คำถามที่ 5 */}
+            <Form.Group controlId="question5">
+                <Form.Label>5. การเคลื่อนที่ภายในห้องหรือบ้าน</Form.Label>
+                <Col>
+                    <Form.Check 
+                        type="radio"
+                        label="0 เคลื่อนที่ไปไหนไม่ได้"
+                        value="0"
+                        checked={answers.question5 === '0'}
+                        onChange={(e) => handleChange(e, 'question5')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="1 ต้องใช้รถเข็นช่วยตัวเอง"
+                        value="1"
+                        checked={answers.question5 === '1'}
+                        onChange={(e) => handleChange(e, 'question5')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="2 เดินหรือเคลื่อนที่โดยมีคนช่วย"
+                        value="2"
+                        checked={answers.question5 === '2'}
+                        onChange={(e) => handleChange(e, 'question5')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="3 เดินหรือเคลื่อนที่ได้เอง"
+                        value="3"
+                        checked={answers.question5 === '3'}
+                        onChange={(e) => handleChange(e, 'question5')}
+                    />
+                </Col>
+            </Form.Group>
+
+            {/* คำถามที่ 6 */}
+            <Form.Group controlId="question6">
+                <Form.Label>6. การสวมใส่เสื้อผ้า</Form.Label>
+                <Col>
+                    <Form.Check 
+                        type="radio"
+                        label="0 ต้องมีคนสวมใส่ให้"
+                        value="0"
+                        checked={answers.question6 === '0'}
+                        onChange={(e) => handleChange(e, 'question6')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="1 ช่วยตัวเองได้ประมาณร้อยละ 50"
+                        value="1"
+                        checked={answers.question6 === '1'}
+                        onChange={(e) => handleChange(e, 'question6')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="2 ช่วยตัวเองได้ดี"
+                        value="2"
+                        checked={answers.question6 === '2'}
+                        onChange={(e) => handleChange(e, 'question6')}
+                    />
+                </Col>
+            </Form.Group>
+
+            {/* คำถามที่ 7 */}
+            <Form.Group controlId="question7">
+                <Form.Label>7. การขึ้นลงบันได 1 ชั้น</Form.Label>
+                <Col>
+                    <Form.Check 
+                        type="radio"
+                        label="0 ไม่สามารถทำได้"
+                        value="0"
+                        checked={answers.question7 === '0'}
+                        onChange={(e) => handleChange(e, 'question7')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="1 ต้องการคนช่วย"
+                        value="1"
+                        checked={answers.question7 === '1'}
+                        onChange={(e) => handleChange(e, 'question7')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="2 ขึ้นลงได้เอง"
+                        value="2"
+                        checked={answers.question7 === '2'}
+                        onChange={(e) => handleChange(e, 'question7')}
+                    />
+                </Col>
+            </Form.Group>
+
+            {/* คำถามที่ 8 */}
+            <Form.Group controlId="question8">
+                <Form.Label>8. การอาบน้ำ</Form.Label>
+                <Col>
+                    <Form.Check 
+                        type="radio"
+                        label="0 ต้องมีคนช่วยหรือทำให้"
+                        value="0"
+                        checked={answers.question8 === '0'}
+                        onChange={(e) => handleChange(e, 'question8')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="1 อาบน้ำเองได้"
+                        value="1"
+                        checked={answers.question8 === '1'}
+                        onChange={(e) => handleChange(e, 'question8')}
+                    />
+                </Col>
+            </Form.Group>
+
+            {/* คำถามที่ 9 */}
+            <Form.Group controlId="question9">
+                <Form.Label>9. การกลั้นการถ่ายอุจจาระในระยะ 1 สัปดาห์ที่ผ่านมา</Form.Label>
+                <Col>
+                    <Form.Check 
+                        type="radio"
+                        label="0 กลั้นไม่ได้"
+                        value="0"
+                        checked={answers.question9 === '0'}
+                        onChange={(e) => handleChange(e, 'question9')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="1 กลั้นไม่ได้บางครั้ง"
+                        value="1"
+                        checked={answers.question9 === '1'}
+                        onChange={(e) => handleChange(e, 'question9')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="2 กลั้นได้เป็นปกติ"
+                        value="2"
+                        checked={answers.question9 === '2'}
+                        onChange={(e) => handleChange(e, 'question9')}
+                    />
+                </Col>
+            </Form.Group>
+
+            {/* คำถามที่ 10 */}
+            <Form.Group controlId="question10">
+                <Form.Label>10. การกลั้นปัสสาวะในระยะ 1 สัปดาห์ที่ผ่านมา</Form.Label>
+                <Col>
+                    <Form.Check 
+                        type="radio"
+                        label="0 กลั้นไม่ได้"
+                        value="0"
+                        checked={answers.question10 === '0'}
+                        onChange={(e) => handleChange(e, 'question10')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="1 กลั้นไม่ได้บางครั้ง"
+                        value="1"
+                        checked={answers.question10 === '1'}
+                        onChange={(e) => handleChange(e, 'question10')}
+                    />
+                    <Form.Check 
+                        type="radio"
+                        label="2 กลั้นได้เป็นปกติ"
+                        value="2"
+                        checked={answers.question10 === '2'}
+                        onChange={(e) => handleChange(e, 'question10')}
+                    />
+                </Col>
+            </Form.Group>
 
                     <Form.Group className="py-2">
                         {listItem.length > 0 && listItem.map((item, index) => (
