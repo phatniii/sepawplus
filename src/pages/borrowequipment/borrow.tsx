@@ -69,31 +69,22 @@ const Borrow = () => {
         try {
             const auToken = router.query.auToken;
             if (auToken) {
-                // ✅ ดึงข้อมูลผู้ใช้
                 const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
                 if (responseUser.data?.data) {
-                    const userInfo = responseUser.data.data;
-                    setUser(userInfo);
-    
-                    // ✅ ดึงข้อมูลผู้สูงอายุ **ตรงๆ จาก API**
-                    const responseTakecare = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUserTakecareperson/${userInfo.users_id}`);
-                    
-                    if (responseTakecare.data?.data) {
-                        setCarePerson(responseTakecare.data.data);
-                        console.log("✅ ข้อมูลผู้สูงอายุที่โหลดได้:", responseTakecare.data.data);
-                    } else {
-                        console.log("❌ ไม่พบข้อมูลผู้สูงอายุสำหรับผู้ใช้:", userInfo.users_id);
+                    setUser(responseUser.data.data);
+
+                    if (responseUser.data.data.takecareperson?.length>0){
+                        setCarePerson(responseUser.data.data.takecareperson[0]);
                     }
                 } else {
-                    setAlert({ show: true, message: '❌ ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
+                    setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
                 }
             }
         } catch (error) {
-            console.error("🚨 Error fetching user data:", error);
-            setAlert({ show: true, message: '❌ ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
+            console.error("Error fetching user data:", error);
+            setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
         }
     };
-    
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
