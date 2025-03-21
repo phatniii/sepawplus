@@ -39,6 +39,7 @@ const Borrow = () => {
     const [availableEquipment, setAvailableEquipment] = useState<EquipmentType[]>([]);
     const [selectedEquipment, setSelectedEquipment] = useState<EquipmentType | null>(null);
     const [listItem, setListItem] = useState<EquipmentType[]>([]);
+    const [carePerson, setCarePerson] = useState<any>(null);
 
     // โหลดรายการอุปกรณ์ครั้งเดียวเมื่อ component mount
     useEffect(() => {
@@ -71,6 +72,10 @@ const Borrow = () => {
                 const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
                 if (responseUser.data?.data) {
                     setUser(responseUser.data.data);
+
+                    if (responseUser.data.data.takecareperson?.length>0){
+                        setCarePerson(responseUser.data.data.takecareperson[0]);
+                    }
                 } else {
                     setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
                 }
@@ -102,7 +107,7 @@ const Borrow = () => {
                 borrow_address: event.currentTarget['borrow_address'].value,
                 borrow_tel: event.currentTarget['borrow_tel'].value,
                 borrow_objective: event.currentTarget['borrow_objective'].value,
-                borrow_name: event.currentTarget['borrow_name'].value,
+                borrow_name: carePerson ? `${carePerson.takecare_fname} ${carePerson.takecare_sname}` : '',
                 borrow_list: listItem.map(item => ({ equipment_id: item.equipment_id }))
             };
 
@@ -136,7 +141,22 @@ const Borrow = () => {
             </div>
             <div className="px-5">
                 <Form noValidate validated={validated} onSubmit={handleSubmit}>
-                    <InputLabel label='ชื่อผู้ยืม' id="borrow_name" required />
+                <Form.Group>
+                    <Form.Label>ชื่อผู้ดูแล</Form.Label>
+                    <Form.Control
+                            value={user ? `${user.users_fname} ${user.users_sname}` : ''}
+                            readOnly
+                            disabled
+                            />
+                    </Form.Group>
+                    <Form.Group>
+                        <Form.Label>ชื่อผู้สูงอายุ</Form.Label>
+                        <Form.Control
+                            value={carePerson ?`${carePerson.takecare_fname}${carePerson.takecare_sname}`: ''}
+                            readOnly
+                            disabled
+                        />
+                    </Form.Group>
                     <TextareaLabel label='ที่อยู่' id="borrow_address" required />
                     <InputLabel label='หมายเลขโทรศัพท์' id="borrow_tel" required />
                     <InputLabel label='ขอยืมครุภัณฑ์เพื่อ' id="borrow_objective" required />
