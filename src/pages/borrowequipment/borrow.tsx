@@ -16,7 +16,7 @@ import ButtonAdd from '@/components/Button/ButtonAdd';
 import DatePickerX from '@/components/DatePicker/DatePickerX';
 import { encrypt } from '@/utils/helpers'
 import styles from '@/styles/page.module.css';
-
+import moment from 'moment';
 interface EquipmentType {
     equipment_id: number;
     equipment_name: string;
@@ -52,6 +52,16 @@ const Borrow = () => {
             fetchUserData();
         }
     }, [router.query.auToken]);
+
+     // ฟังก์ชันที่คำนวณวันที่สิ้นสุด (90 วันหลังจากวันที่เริ่ม)
+     const handleStartDateChange = (date: Date | null) => {
+        if (date) {
+            setStartDate(date);
+            // คำนวณวันที่สิ้นสุด (90 วันหลังจากวันที่เริ่ม)
+            const calculatedEndDate = moment(date).add(90, 'days').toDate();
+            setEndDate(calculatedEndDate);  // ตั้งค่าวันที่สิ้นสุด
+        }
+    };
 
     const fetchAvailableEquipment = async () => {
         try {
@@ -140,7 +150,7 @@ const Borrow = () => {
     return (
         <Container>
             <div className={styles.main}>
-                <h1 className="py-2">ยืมอุปกรณ์ครุภัณฑ์</h1>
+                <h1 className="py-2">ยืมอุปกรณ์นาฬิกา</h1>
             </div>
             <div className="px-5">
                 <Form noValidate validated={validated} onSubmit={handleSubmit}>
@@ -174,19 +184,19 @@ const Borrow = () => {
                     <Form.Group>
                         <Form.Label>ที่อยู่</Form.Label>
                         <Form.Control 
-                            value={user ? `${user.users_number} ${user.users_moo} ${user.users_road} ${user.users_tubon} ${user.usersamphur} ${user.users_province} ${user.users_postcode}` :''}
+                            value={user ? `${user.users_number} ${user.users_moo} ${user.users_road} ${user.users_tubon} ${user.users_amphur} ${user.users_province} ${user.users_postcode}` :''}
                             disabled
                             readOnly />
                              <Form.Control
                             type="hidden"
                             id="borrow_address"
                             name="borrow_address"
-                            value={user ? `${user.users_number} ${user.users_moo} ${user.users_road} ${user.users_tubon} ${user.usersamphur} ${user.users_province} ${user.users_postcode}` :''}
+                            value={user ? `${user.users_number} ${user.users_moo} ${user.users_road} ${user.users_tubon} ${user.users_amphur} ${user.users_province} ${user.users_postcode}` :''}
                         />
                         
                     </Form.Group>
                     <Form.Group>
-                        <Form.Label>หมายเลขโทรศัพท์</Form.Label>
+                        <Form.Label>เบอร์โทรศัพท์</Form.Label>
                         <Form.Control 
                             value={user ? `${user.users_tel1} ` :''}
                             disabled
@@ -197,16 +207,31 @@ const Borrow = () => {
                             name="borrow_tel"
                             value={user ? `${user.users_tel1} ` :''}
                         />
-                        
                     </Form.Group>
                    
             
                     
-                    <p className="m-0">วันเดือนปี (เริ่ม)</p>
-                    <DatePickerX selected={startDate} onChange={setStartDate} />
+                    <p className="m-0">กรุณาเลือกวันที่ต้องการยืมอุปกรณ์นาฬิกา</p>
+                    <DatePickerX selected={startDate} onChange={handleStartDateChange} />
 
                     <p className="m-0">วันเดือนปี (สิ้นสุด)</p>
-                    <DatePickerX selected={endDate} onChange={setEndDate} />
+                    <DatePickerX selected={endDate} onChange={setEndDate} disabled/>
+
+                    <h1 className="py-2">กรุณากรอกแบบสอบถาม</h1>
+                    <h3 className="py-2">ตอนที่ 1 ข้อมูลทั่วไปของผู้สูงอายุ</h3>
+                    <TextareaLabel label='1.เพศ' id="borrow_address" required />
+                    <TextareaLabel label='2.อายุ' id="borrow_address" required />
+                    <TextareaLabel label='3.สถานภาพสมรส' id="borrow_address" required />
+                    <TextareaLabel label='4.ลักษณะของครอบครัว' id="borrow_address" required />
+                    <TextareaLabel label='5.ระดับการศึกษา' id="borrow_address" required />
+                    <TextareaLabel label='6.รายได้' id="borrow_address" required />
+                    <TextareaLabel label='7.ท่านมีรายได้เพียงพอต่อค่าใช้จ่ายหรือไม่' id="borrow_address" required />
+                    <TextareaLabel label='8.ท่านมีโรคประจำตัวหรือไม่' id="borrow_address" required />
+                    <TextareaLabel label='9.การรับประทานยา' id="borrow_address" required />
+                    <TextareaLabel label='10.การเข้าถึงระบบบริการสุขภาพ' id="borrow_address" required />
+                    <TextareaLabel label='11.การมีผู้ดูแลผู้สูงอายุ' id="borrow_address" required />
+                    <TextareaLabel label='12.การเข้าร่วมกิจกรรม' id="borrow_address" required />
+                    
 
                     <Form.Group className="py-2">
                         {listItem.length > 0 && listItem.map((item, index) => (
