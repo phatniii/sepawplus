@@ -150,13 +150,22 @@ const Borrow = () => {
                             />
                     </Form.Group>
                     <Form.Group>
-                        <Form.Label>ชื่อผู้สูงอายุ</Form.Label>
-                        <Form.Control
-                            value={carePerson ?`${carePerson.takecare_fname}${carePerson.takecare_sname}`: ''}
-                            readOnly
-                            disabled
-                        />
-                    </Form.Group>
+    <Form.Label>ชื่อผู้สูงอายุ</Form.Label>
+    {/* ช่องแสดงผลแบบ disabled */}
+    <Form.Control
+        value={carePerson ? `${carePerson.takecare_fname} ${carePerson.takecare_sname}` : ''}
+        disabled
+        readOnly
+    />
+    {/* ช่องซ่อนที่ใช้สำหรับส่งค่าผ่าน event.currentTarget */}
+    <Form.Control
+        type="hidden"
+        id="borrow_name"
+        name="borrow_name"
+        value={carePerson ? `${carePerson.takecare_fname} ${carePerson.takecare_sname}` : ''}
+    />
+</Form.Group>
+
                     <TextareaLabel label='ที่อยู่' id="borrow_address" required />
                     <InputLabel label='หมายเลขโทรศัพท์' id="borrow_tel" required />
                     <InputLabel label='ขอยืมครุภัณฑ์เพื่อ' id="borrow_objective" required />
