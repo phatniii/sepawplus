@@ -238,7 +238,201 @@ const Borrow = () => {
                     <DatePickerX selected={endDate} onChange={setEndDate} disabled/>
 
                     <h1 className="py-2">กรุณากรอกแบบสอบถาม</h1>
-                    <h3 className="py-2">ตอนที่ 1 ข้อมูลทั่วไปของผู้สูงอายุ</h3>
+                    <h3>ตอนที่1.แบบสอบถามข้อมูลส่วนบุคคล </h3>
+                    {/* เพศ */}
+                    <Form.Group controlId="gender">
+                        <Form.Label>1. เพศ</Form.Label>
+                        <Col>
+                            <Form.Check 
+                                type="radio"
+                                label="ชาย"
+                                value="ชาย"
+                                checked={answers.gender === 'ชาย'}
+                                onChange={(e) => handleChange(e, 'gender')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="หญิง"
+                                value="หญิง"
+                                checked={answers.gender === 'หญิง'}
+                                onChange={(e) => handleChange(e, 'gender')}
+                            />
+                        </Col>
+                    </Form.Group>
+                    {/* อายุ */}
+                    <Form.Group controlId="age">
+                        <Form.Label>2. อายุ</Form.Label>
+                        <Col>
+                            <Form.Check 
+                                type="radio"
+                                label="อายุ 21 ปีขึ้นไป"
+                                value="21"
+                                checked={answers.age === '21'}
+                                onChange={(e) => handleChange(e, 'age')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="อายุ 21-40 ปี"
+                                value="21-40"
+                                checked={answers.age === '21-40'}
+                                onChange={(e) => handleChange(e, 'age')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="อายุ 41-60 ปี"
+                                value="41-60"
+                                checked={answers.age === '41-60'}
+                                onChange={(e) => handleChange(e, 'age')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="อายุ 61 ปี ขึ้นไป"
+                                value="61"
+                                checked={answers.age === '61'}
+                                onChange={(e) => handleChange(e, 'age')}
+                            />
+                        </Col>
+                    </Form.Group>
+                    {/* การศึกษา */}
+                    <Form.Group controlId="education">
+                        <Form.Label>3. ระดับการศึกษา</Form.Label>
+                        <Col>
+                            <Form.Check 
+                                type="radio"
+                                label="ระดับปริญญาตรี"
+                                value="ปริญญาตรี"
+                                checked={answers.education === 'ปริญญาตรี'}
+                                onChange={(e) => handleChange(e, 'education')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="ระดับปริญญาโท"
+                                value="ปริญญาโท"
+                                checked={answers.education === 'ปริญญาโท'}
+                                onChange={(e) => handleChange(e, 'education')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="สูงกว่าระดับปริญญาโท"
+                                value="สูงกว่าปริญญาโท"
+                                checked={answers.education === 'สูงกว่าปริญญาโท'}
+                                onChange={(e) => handleChange(e, 'education')}
+                            />
+                        </Col>
+                    </Form.Group>
+
+                    {/* สถานภาพสมรส */}
+                    <Form.Group controlId="maritalStatus">
+                        <Form.Label>4. สถานภาพสมรส</Form.Label>
+                        <Col>
+                            <Form.Check 
+                                type="radio"
+                                label="โสด"
+                                value="โสด"
+                                checked={answers.maritalStatus === 'โสด'}
+                                onChange={(e) => handleChange(e, 'maritalStatus')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="สมรส"
+                                value="สมรส"
+                                checked={answers.maritalStatus === 'สมรส'}
+                                onChange={(e) => handleChange(e, 'maritalStatus')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="หม้ายหรือหย่าร้าง"
+                                value="หม้าย/หย่าร้าง"
+                                checked={answers.maritalStatus === 'หม้าย/หย่าร้าง'}
+                                onChange={(e) => handleChange(e, 'maritalStatus')}
+                            />
+                        </Col>
+                    </Form.Group>
+
+                    {/* รายได้ต่อเดือน */}
+                    <Form.Group controlId="income">
+                        <Form.Label>5. รายได้ต่อเดือน</Form.Label>
+                        <Col>
+                            <Form.Check 
+                                type="radio"
+                                label="ต่ำกว่า 5,000 บาท"
+                                value="ต่ำกว่า 5,000 บาท"
+                                checked={answers.income === 'ต่ำกว่า 5,000 บาท'}
+                                onChange={(e) => handleChange(e, 'income')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="5,000 - 10,000 บาท"
+                                value="5,000 - 10,000 บาท"
+                                checked={answers.income === '5,000 - 10,000 บาท'}
+                                onChange={(e) => handleChange(e, 'income')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="มากกว่า 10,000 บาท"
+                                value="มากกว่า 10,000 บาท"
+                                checked={answers.income === 'มากกว่า 10,000 บาท'}
+                                onChange={(e) => handleChange(e, 'income')}
+                            />
+                        </Col>
+                    </Form.Group>
+
+                    {/* ระยะเวลาการดูแล */}
+                    <Form.Group controlId="duration">
+                        <Form.Label>6. ระยะเวลาการดูแล</Form.Label>
+                        <Col>
+                            <Form.Check 
+                                type="radio"
+                                label="1-6 เดือน"
+                                value="1-6 เดือน"
+                                checked={answers.duration === '1-6 เดือน'}
+                                onChange={(e) => handleChange(e, 'duration')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="7-12 เดือน"
+                                value="7-12 เดือน"
+                                checked={answers.duration === '7-12 เดือน'}
+                                onChange={(e) => handleChange(e, 'duration')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="1 ปีขึ้นไป"
+                                value="1 ปีขึ้นไป"
+                                checked={answers.duration === '1 ปีขึ้นไป'}
+                                onChange={(e) => handleChange(e, 'duration')}
+                            />
+                        </Col>
+                    </Form.Group>
+
+                    {/* ลักษณะความสัมพันธ์กับผู้สูงอายุ */}
+                    <Form.Group controlId="caregiver">
+                        <Form.Label>7. ลักษณะความสัมพันธ์กับผู้สูงอายุ</Form.Label>
+                        <Col>
+                            <Form.Check 
+                                type="radio"
+                                label="ลูก"
+                                value="ลูก"
+                                checked={answers.caregiver === 'ลูก'}
+                                onChange={(e) => handleChange(e, 'caregiver')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="คู่สมรส"
+                                value="คู่สมรส"
+                                checked={answers.caregiver === 'คู่สมรส'}
+                                onChange={(e) => handleChange(e, 'caregiver')}
+                            />
+                            <Form.Check 
+                                type="radio"
+                                label="บุคคลอื่น"
+                                value="บุคคลอื่น"
+                                checked={answers.caregiver === 'บุคคลอื่น'}
+                                onChange={(e) => handleChange(e, 'caregiver')}
+                            />
+                        </Col>
+                    </Form.Group>
+                    {/* <h3 className="py-2">ตอนที่ 1 ข้อมูลทั่วไปของผู้สูงอายุ</h3>
                     <TextareaLabel label='1.เพศ' id="borrow_address" required />
                     <TextareaLabel label='2.อายุ' id="borrow_address" required />
                     <TextareaLabel label='3.สถานภาพสมรส' id="borrow_address" required />
@@ -250,7 +444,7 @@ const Borrow = () => {
                     <TextareaLabel label='9.การรับประทานยา' id="borrow_address" required />
                     <TextareaLabel label='10.การเข้าถึงระบบบริการสุขภาพ' id="borrow_address" required />
                     <TextareaLabel label='11.การมีผู้ดูแลผู้สูงอายุ' id="borrow_address" required />
-                    <TextareaLabel label='12.การเข้าร่วมกิจกรรม' id="borrow_address" required />
+                    <TextareaLabel label='12.การเข้าร่วมกิจกรรม' id="borrow_address" required /> */}
                     
                      <h3>ตอนที่2.ความสามารถในการทำกิจกรรมพื้นฐาน</h3>
 
