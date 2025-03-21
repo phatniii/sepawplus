@@ -14,7 +14,7 @@ import ModalActions from '@/components/Modals/ModalActions';
 import ButtonState from '@/components/Button/ButtonState';
 import ButtonAdd from '@/components/Button/ButtonAdd';
 import DatePickerX from '@/components/DatePicker/DatePickerX';
-
+import { encrypt } from '@/utils/helpers'
 import styles from '@/styles/page.module.css';
 
 interface EquipmentType {
@@ -72,10 +72,12 @@ const Borrow = () => {
                 const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
                 if (responseUser.data?.data) {
                     setUser(responseUser.data.data);
+                    const encodedUsersId = encrypt(responseUser.data?.data.users_id.toString());
                     // ดึงข้อมูลผู้สูงอายุจากผู้ดูแล
-                    const carePersonResponse = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUserTakecareperson/${responseUser.data.data.users_id}`);
-                    if (carePersonResponse.data?.data) {
-                        setCarePerson(carePersonResponse.data.data);
+                    const responseTakecareperson = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUserTakecareperson/${encodedUsersId}`);
+                    const data = responseTakecareperson.data?.data;
+                    if (data) {
+                        setCarePerson(data);  // เก็บข้อมูลผู้สูงอายุที่ดูแล
                     }
                 } else {
                     setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
