@@ -109,7 +109,7 @@ const Borrow = () => {
                 borrow_user_id: user.users_id,
                 borrow_address: event.currentTarget['borrow_address'].value,
                 borrow_tel: event.currentTarget['borrow_tel'].value,
-                borrow_objective: event.currentTarget['borrow_objective'].value,
+               // borrow_objective: event.currentTarget['borrow_objective'].value,
                 borrow_name: event.currentTarget['borrow_name'].value, // เก็บชื่อผู้สูงอายุ
                 borrow_list: listItem.map(item => ({ equipment_id: item.equipment_id }))
             };
@@ -171,9 +171,36 @@ const Borrow = () => {
                     </Form.Group>
 
                     {/* ที่อยู่และเบอร์โทร */}
-                    <TextareaLabel label='ที่อยู่' id="borrow_address" required />
-                    <InputLabel label='หมายเลขโทรศัพท์' id="borrow_tel" required />
-                    <InputLabel label='ขอยืมครุภัณฑ์เพื่อ' id="borrow_objective" required />
+                    <Form.Group>
+                        <Form.Label>ที่อยู่</Form.Label>
+                        <Form.Control 
+                            value={user ? `${user.users_number} ${user.users_moo} ${user.users_road} ${user.users_tubon} ${user.usersamphur} ${user.users_province} ${user.users_postcode}` :''}
+                            disabled
+                            readOnly />
+                             <Form.Control
+                            type="hidden"
+                            id="borrow_address"
+                            name="borrow_address"
+                            value={user ? `${user.users_number} ${user.users_moo} ${user.users_road} ${user.users_tubon} ${user.usersamphur} ${user.users_province} ${user.users_postcode}` :''}
+                        />
+                        
+                    </Form.Group>
+                    <Form.Group>
+                        <Form.Label>หมายเลขโทรศัพท์</Form.Label>
+                        <Form.Control 
+                            value={user ? `${user.users_tel1} ` :''}
+                            disabled
+                            readOnly />
+                             <Form.Control
+                            type="hidden"
+                            id="borrow_tel"
+                            name="borrow_tel"
+                            value={user ? `${user.users_tel1} ` :''}
+                        />
+                        
+                    </Form.Group>
+                   
+            
                     
                     <p className="m-0">วันเดือนปี (เริ่ม)</p>
                     <DatePickerX selected={startDate} onChange={setStartDate} />
