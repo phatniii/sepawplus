@@ -40,7 +40,7 @@ const LayoutPage: React.FC<LayoutProps> = ({
             permission: [1, 2, 3]
         },
         {
-            path:"/borrowequipment",
+            path:"/admin/check_equipment",
             name: "ตรวจสอบครุภัณฑ์",
             icon: "fas fa-align-right",
             permission: [1, 2, 3]
