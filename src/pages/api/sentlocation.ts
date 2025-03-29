@@ -2,9 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
 import { replyNotification, replyNotificationPostback } from '@/utils/apiLineReply';
 import moment from 'moment';
-
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method === 'PUT') {
+    if (req.method === 'PUT' || req.method === 'POST') {
         try {
             const { uId, takecare_id, distance, latitude, longitude, battery } = req.body;
 
@@ -49,21 +48,50 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 calculatedStatus = 2; // ออกนอก Safezone ชั้นที่ 2
             }
 
-            // บันทึกข้อมูลในฐานข้อมูล
-            const updatedLocation = await prisma.location.create({
-                data: {
+            // เช็คว่ามีข้อมูลในตาราง Location หรือไม่
+            const existingLocation = await prisma.location.findFirst({
+                where: {
                     users_id: Number(uId),
                     takecare_id: Number(takecare_id),
-                    locat_timestamp: new Date(),
-                    locat_latitude: latitude.toString(),
-                    locat_longitude: longitude.toString(),
-                    locat_status: calculatedStatus,
-                    locat_distance: Number(distance),
-                    locat_battery: Number(battery),
-                    locat_noti_time: new Date(),
-                    locat_noti_status: 1,
                 },
             });
+
+            let updatedLocation;
+
+            if (existingLocation) {
+                // ถ้ามีข้อมูลแล้ว ให้ทำการอัปเดต
+                updatedLocation = await prisma.location.update({
+                    where: {
+                        location_id: existingLocation.location_id, // ใช้ primary key หรือ ID ที่เป็น unique
+                    },
+                    data: {
+                        locat_timestamp: new Date(),
+                        locat_latitude: latitude.toString(),
+                        locat_longitude: longitude.toString(),
+                        locat_status: calculatedStatus,
+                        locat_distance: Number(distance),
+                        locat_battery: Number(battery),
+                        locat_noti_time: new Date(),
+                        locat_noti_status: 1,
+                    },
+                });
+            } else {
+                // ถ้าไม่มีข้อมูล ให้เพิ่มข้อมูลใหม่
+                updatedLocation = await prisma.location.create({
+                    data: {
+                        users_id: Number(uId),
+                        takecare_id: Number(takecare_id),
+                        locat_timestamp: new Date(),
+                        locat_latitude: latitude.toString(),
+                        locat_longitude: longitude.toString(),
+                        locat_status: calculatedStatus,
+                        locat_distance: Number(distance),
+                        locat_battery: Number(battery),
+                        locat_noti_time: new Date(),
+                        locat_noti_status: 1,
+                    },
+                });
+            }
 
             // ถ้าสถานะเป็น 0 (อยู่ใน Safezone) ไม่ต้องส่งการแจ้งเตือน
             if (calculatedStatus === 0) {
@@ -137,7 +165,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             return res.status(500).json({ message: 'error', data: 'เกิดข้อผิดพลาดในการประมวลผล' });
         }
     } else {
-        res.setHeader('Allow', ['PUT']);
+        res.setHeader('Allow', ['PUT', 'POST']);
         res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
     }
 }
