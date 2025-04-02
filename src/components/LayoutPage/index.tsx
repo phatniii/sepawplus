@@ -39,12 +39,12 @@ const LayoutPage: React.FC<LayoutProps> = ({
             icon: "fas fa-align-right",
             permission: [1, 2, 3]
         },
-        {
-            path:"/admin/check_equipment",
-            name: "ตรวจสอบครุภัณฑ์",
-            icon: "fas fa-align-right",
-            permission: [1, 2, 3]
-        },
+        // {
+        //     path:"/admin/check_equipment",
+        //     name: "ตรวจสอบครุภัณฑ์",
+        //     icon: "fas fa-align-right",
+        //     permission: [1, 2, 3]
+        // },
         {
             path: "/admin/borrow_equipment",
             name: "รายการยืมครุภัณฑ์",
