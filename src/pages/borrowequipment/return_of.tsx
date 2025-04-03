@@ -6,16 +6,19 @@ import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
 import Toast from 'react-bootstrap/Toast';
 import Button from 'react-bootstrap/Button';
+import Spinner from 'react-bootstrap/Spinner';
 
 import styles from '@/styles/page.module.css';
+import ModalAlert from '@/components/Modals/ModalAlert';
 
 interface BorrowedItemType {
   borrow_equipment_id: number;
+  equipment_id: number;
   equipment_name: string;
   equipment_code: string;
   startDate: string;
   endDate: string;
-  borrow_equipment_status: number; // เพิ่มสถานะการยืม
+  borrow_status: number;
 }
 
 interface UserType {
@@ -27,17 +30,17 @@ const ReturnOf = () => {
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setLoading] = useState(true);
   const [borrowedItems, setBorrowedItems] = useState<BorrowedItemType[]>([]);
-  const [returnList, setReturnList] = useState<number[]>([]); // เก็บ ID ของอุปกรณ์ที่ต้องการคืน
+  const [returnList, setReturnList] = useState<number[]>([]);
   const [alert, setAlert] = useState({ show: false, message: '' });
 
-  // ฟังก์ชันดึงข้อมูลผู้ใช้โดยใช้ auToken
+  // ดึงข้อมูลผู้ใช้
   const fetchUserData = async () => {
     try {
       const auToken = router.query.auToken;
       if (auToken) {
-        const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
-        if (responseUser.data?.data) {
-          setUser(responseUser.data.data);
+        const response = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`);
+        if (response.data?.data) {
+          setUser(response.data.data);
         } else {
           setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
         }
@@ -48,24 +51,29 @@ const ReturnOf = () => {
     }
   };
 
-  // ฟังก์ชันดึงข้อมูลอุปกรณ์ที่ถูกยืมของผู้ใช้ที่ล็อกอินอยู่ โดยใช้ userId เป็นเงื่อนไข
+  // ดึงรายการอุปกรณ์ที่ถูกยืม
   const fetchBorrowedItems = async (userId: number) => {
     try {
       setLoading(true);
       const response = await axios.get(`${process.env.WEB_DOMAIN}/api/borrowequipment/list?userId=${userId}`);
+      
       if (response.data?.data) {
-        const borrowedData: BorrowedItemType[] = response.data.data.flatMap((item: any) =>
-          item.borrowequipment_list.map((eq: any) => ({
-            borrow_equipment_id: eq.borrow_equipment_id,
-            equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
-            equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
-            startDate: item.borrow_date ? new Date(item.borrow_date).toISOString().split('T')[0] : "",
-            endDate: item.borrow_return ? new Date(item.borrow_return).toISOString().split('T')[0] : "",
-            borrow_equipment_status: item.borrow_equipment_status, // เพิ่มสถานะการยืม
-          }))
+        // กรองเฉพาะรายการที่อนุมัติแล้วและยังไม่คืน
+        const filteredItems = response.data.data.flatMap((item: any) => 
+          item.borrowequipment_list
+            .filter((eq: any) => eq.equipment?.equipment_status === 0) // กรองเฉพาะที่ยังถูกยืมอยู่
+            .map((eq: any) => ({
+              borrow_equipment_id: eq.borrow_equipment_id,
+              equipment_id: eq.equipment_id,
+              equipment_name: eq.equipment?.equipment_name || "ไม่พบข้อมูล",
+              equipment_code: eq.equipment?.equipment_code || "ไม่พบข้อมูล",
+              startDate: item.borrow_date ? new Date(item.borrow_date).toLocaleDateString('th-TH') : "",
+              endDate: item.borrow_return ? new Date(item.borrow_return).toLocaleDateString('th-TH') : "",
+              borrow_status: item.borrow_status,
+            }))
         );
-        // กรองเฉพาะรายการที่มีสถานะเป็น "อนุมัติ" (borrow_equipment_status = 2)
-        setBorrowedItems(borrowedData.filter((item) => item.borrow_equipment_status === 2));
+
+        setBorrowedItems(filteredItems);
       }
     } catch (error) {
       console.error('Error fetching borrowed equipment:', error);
@@ -75,27 +83,26 @@ const ReturnOf = () => {
     }
   };
 
-  // ดึงข้อมูลผู้ใช้เมื่อค่า auToken พร้อมใช้งาน
   useEffect(() => {
     if (router.query.auToken) {
       fetchUserData();
     }
   }, [router.query.auToken]);
 
-  // เมื่อผู้ใช้ถูกโหลดแล้ว ให้นำ userId ไปดึงรายการอุปกรณ์ที่ยืมไป
   useEffect(() => {
     if (user) {
       fetchBorrowedItems(user.users_id);
     }
   }, [user]);
 
-  // ฟังก์ชันลบรายการอุปกรณ์ออกจาก UI (ถือว่าอุปกรณ์ถูกคืน)
-  const removeItem = (index: number, id: number) => {
-    setReturnList([...returnList, id]);
-    setBorrowedItems(borrowedItems.filter((_, i) => i !== index));
+  const handleReturnItem = (id: number) => {
+    if (returnList.includes(id)) {
+      setReturnList(returnList.filter(itemId => itemId !== id));
+    } else {
+      setReturnList([...returnList, id]);
+    }
   };
 
-  // ฟังก์ชันบันทึกการคืนอุปกรณ์
   const handleReturnSubmit = async () => {
     if (returnList.length === 0) {
       setAlert({ show: true, message: 'กรุณาเลือกรายการที่ต้องการคืน' });
@@ -107,6 +114,7 @@ const ReturnOf = () => {
       await axios.post(`${process.env.WEB_DOMAIN}/api/borrowequipment/return`, {
         returnList,
       });
+
       setAlert({ show: true, message: 'คืนอุปกรณ์สำเร็จแล้ว' });
       setReturnList([]);
       if (user) {
@@ -125,37 +133,62 @@ const ReturnOf = () => {
       <div className={styles.main}>
         <h1 className="py-2">คืนอุปกรณ์ครุภัณฑ์</h1>
       </div>
+      
       <div className="px-5">
         <Form noValidate>
           <Form.Group className="py-2">
             {isLoading ? (
-              <p>กำลังโหลด...</p>
+              <div className="text-center">
+                <Spinner animation="border" variant="primary" />
+                <p>กำลังโหลดข้อมูล...</p>
+              </div>
             ) : borrowedItems.length > 0 ? (
-              borrowedItems.map((item, index) => (
-                <Toast key={index} onClose={() => removeItem(index, item.borrow_equipment_id)} className="mb-2">
+              borrowedItems.map((item) => (
+                <Toast 
+                  key={item.borrow_equipment_id} 
+                  className={`mb-2 ${returnList.includes(item.borrow_equipment_id) ? 'bg-light' : ''}`}
+                  onClick={() => handleReturnItem(item.borrow_equipment_id)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <Toast.Header>
                     <strong className="me-auto">{item.equipment_name}</strong>
+                    <small>สถานะ: {item.borrow_status === 1 ? 'รออนุมัติ' : 'อนุมัติแล้ว'}</small>
                   </Toast.Header>
                   <Toast.Body>
                     <div>
                       <span style={{ fontWeight: 'bold' }}>หมายเลขอุปกรณ์: {item.equipment_code}</span>
                     </div>
                     <div className={styles.toastDate}>
-                      <span>เริ่ม {item.startDate}</span>
-                      <span>สิ้นสุด {item.endDate}</span>
+                      <span>วันที่ยืม: {item.startDate}</span>
+                      <span>วันที่คืน: {item.endDate}</span>
                     </div>
                   </Toast.Body>
                 </Toast>
               ))
             ) : (
-              <p>ไม่มีอุปกรณ์ที่ถูกยืม</p>
+              <p className="text-center">ไม่มีอุปกรณ์ที่ถูกยืม</p>
             )}
           </Form.Group>
-          <Button variant="primary" onClick={handleReturnSubmit} disabled={returnList.length === 0}>
-            {isLoading ? 'กำลังบันทึก...' : 'บันทึกการคืน'}
-          </Button>
+
+          {borrowedItems.length > 0 && (
+            <div className="text-center">
+              <Button 
+                variant="primary" 
+                onClick={handleReturnSubmit} 
+                disabled={returnList.length === 0 || isLoading}
+              >
+                {isLoading ? 'กำลังดำเนินการ...' : 'ยืนยันการคืนอุปกรณ์'}
+              </Button>
+            </div>
+          )}
         </Form>
       </div>
+
+      <ModalAlert 
+        show={alert.show} 
+        message={alert.message} 
+        handleClose={() => setAlert({ show: false, message: '' })} 
+      />
     </Container>
   );
 };
