@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
         try {
-            const { returnList } = req.body; // รับรายการอุปกรณ์ที่ต้องการคืน (เป็น array ของ borrow_equipment_id)
+            const { returnList } = req.body; // รับรายการอุปกรณ์ที่ต้องการคืน (array ของ borrow_equipment_id)
 
             if (!returnList || returnList.length === 0) {
                 return res.status(400).json({ message: 'ไม่มีรายการอุปกรณ์ที่ต้องคืน' });
@@ -18,10 +18,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
             const equipmentIds = returnedEquipments.map(item => item.equipment_id);
 
-            // ✅ อัปเดตสถานะเฉพาะอุปกรณ์ให้พร้อมให้ยืม (`equipment_status = 1`)
+            // อัปเดตสถานะของอุปกรณ์ให้เป็น 1 (ว่าง)
             await prisma.equipment.updateMany({
                 where: { equipment_id: { in: equipmentIds } },
                 data: { equipment_status: 1 }
+            });
+
+            // ลบรายการใน borrowequipment_list ที่เกี่ยวข้องกับอุปกรณ์ที่ถูกคืน
+            await prisma.borrowequipment_list.deleteMany({
+                where: { borrow_equipment_id: { in: returnList } }
             });
 
             return res.status(200).json({ message: 'คืนอุปกรณ์สำเร็จ' });
