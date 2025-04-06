@@ -57,12 +57,12 @@ const LayoutPage: React.FC<LayoutProps> = ({
             icon: "fas fa-align-right",
             permission: [1, 2, 3]
         },
-        {
-            path: "/admin/send_questionnaire",
-            name: "ส่งลิงค์แบบสอบถาม",
-            icon: "fas fa-align-right",
-            permission: [1, 2, 3]
-        },
+        // {
+        //     path: "/admin/send_questionnaire",
+        //     name: "ส่งลิงค์แบบสอบถาม",
+        //     icon: "fas fa-align-right",
+        //     permission: [1, 2, 3]
+        // },
         {
             path: "/admin/additional_help",
             name: "รายการขอความช่วยเหลือเพิ่มเติม",

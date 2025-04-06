@@ -145,7 +145,7 @@ const AdditionalHelp = () => {
                         </Card.Body>
                     </Card>
                 </Row>
-                <Row>
+                {/* <Row>
                     <Card className="card-stats card-dashboard shadow mb-4 mb-xl-0 p-0">
                         <Card.Header>
                             <p className="m-0">รายการแบบสอบถาม</p>
@@ -199,7 +199,7 @@ const AdditionalHelp = () => {
                             </Table>
                         </Card.Body>
                     </Card>
-                </Row>
+                </Row> */}
 
                 <Modal show={show.isShow} onHide={() => handleClose()} size="lg">
                     <Modal.Header closeButton>
