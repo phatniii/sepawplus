@@ -187,11 +187,11 @@ const ReturnEquipment = () => {
                                     <td className="px-2">{show.body.borrow_name}</td>
                                 </tr>
                                 <tr>
-                                    <td className="px-2">{'วันที่ขอ'}</td>
+                                    <td className="px-2">{'วันที่ขอยืม'}</td>
                                     <td className="px-2">{moment(show.body.borrow_date).format('DD-MM-YYYY')}</td>
                                 </tr>
                                 <tr>
-                                    <td className="px-2">{'วันที่สินสุด'}</td>
+                                    <td className="px-2">{'วันที่สิ้นสุด'}</td>
                                     <td className="px-2">{moment(show.body.borrow_return).format('DD-MM-YYYY')}</td>
                                 </tr>
                                 <tr>

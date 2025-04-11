@@ -173,7 +173,7 @@ const Borrow = () => {
                     {/* ที่อยู่และเบอร์โทร */}
                     <TextareaLabel label='ที่อยู่' id="borrow_address" required />
                     <InputLabel label='หมายเลขโทรศัพท์' id="borrow_tel" required />
-                    <InputLabel label='ขอยืมครุภัณฑ์เพื่อ' id="borrow_objective" required />
+                    <InputLabel label='เหตุผลในการยืมครุภัณฑ์' id="borrow_objective" required />
                     
                     <p className="m-0">วันเดือนปี (เริ่ม)</p>
                     <DatePickerX selected={startDate} onChange={setStartDate} />
