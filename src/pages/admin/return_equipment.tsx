@@ -141,7 +141,7 @@ const ReturnEquipment = () => {
                                         <th className="px-2">ลำดับ</th>
                                         <th className="px-2">ชื่อ-สกุล ของผู้ดูแลผู้สูงอายุ</th>
                                         <th className="px-2">ชื่อ-สกุล ของผู้สูงอายุ</th>
-                                        <th className="px-2">วันที่สินสุด</th>
+                                        <th className="px-2">วันที่สิ้นสุด</th>
                                         <th className="px-2">สถานะ</th>
                                         <th className="px-2">เครื่องมือ</th>
                                     </tr>
