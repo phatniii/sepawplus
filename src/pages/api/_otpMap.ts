@@ -1,10 +1,10 @@
-// pages/api/_otpMap.ts
-type OTPEntry = {
-    otp: string;
-    expiresAt: number;
-  };
+// // pages/api/_otpMap.ts
+// type OTPEntry = {
+//     otp: string;
+//     expiresAt: number;
+//   };
   
-  const otpMap = new Map<string, OTPEntry>();
+//   const otpMap = new Map<string, OTPEntry>();
   
-  export default otpMap;
+//   export default otpMap;
   
