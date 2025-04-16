@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const user = await prisma.users.findFirst({
     where: {
-      users_user: uuid,
+      users_line_id: uuid,
       users_status_onweb: 1,
       users_status_active: 1,
     },
