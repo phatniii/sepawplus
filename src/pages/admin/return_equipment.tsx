@@ -141,7 +141,7 @@ const ReturnEquipment = () => {
                                         <th className="px-2">ลำดับ</th>
                                         <th className="px-2">ชื่อ-สกุล ของผู้ดูแลผู้สูงอายุ</th>
                                         <th className="px-2">ชื่อ-สกุล ของผู้สูงอายุ</th>
-                                        <th className="px-2">วันที่สิ้นสุด</th>
+                                        {/* <th className="px-2">วันที่สิ้นสุด</th> */}
                                         <th className="px-2">สถานะ</th>
                                         <th className="px-2">เครื่องมือ</th>
                                     </tr>
@@ -187,13 +187,13 @@ const ReturnEquipment = () => {
                                     <td className="px-2">{show.body.borrow_name}</td>
                                 </tr>
                                 <tr>
-                                    <td className="px-2">{'วันที่ขอยืม'}</td>
+                                    <td className="px-2">{'วันเดือนปีที่ยื่นคำขอ'}</td>
                                     <td className="px-2">{moment(show.body.borrow_date).format('DD-MM-YYYY')}</td>
                                 </tr>
-                                <tr>
+                                {/* <tr>
                                     <td className="px-2">{'วันที่สิ้นสุด'}</td>
                                     <td className="px-2">{moment(show.body.borrow_return).format('DD-MM-YYYY')}</td>
-                                </tr>
+                                </tr> */}
                                 <tr>
                                     <td className="px-2">{'สถานะ'}</td>
                                     <td className="px-2">{show.body.borrow_equipment_status === 1 ? 'รออนุมัติ' : (show.body.borrow_equipment_status === 2 ? <span className="alert-success">{'อนุมัติ'}</span> : <span className="alert-danger">{'ไม่อนุมัติ'}</span>)}</td>
