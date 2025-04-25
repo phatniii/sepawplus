@@ -166,7 +166,7 @@ const BorrowEquipment = () => {
                                                         </Button>
                                                     </td> */}
                                                     <td className="px-2">{moment(item.borrow_date).format('DD-MM-YYYY')}</td>
-                                                    <td className="px-2">{moment(item.borrow_return).format('DD-MM-YYYY')}</td>
+                                                    {/* <td className="px-2">{moment(item.borrow_return).format('DD-MM-YYYY')}</td> */}
                                                     <td className="px-2">{item.borrow_equipment_status === 1 ? 'รออนุมัติ' : (item.borrow_equipment_status === 2 ? <span className="alert-success">{'อนุมัติ'}</span> : <span className="alert-danger">{'ไม่อนุมัติ'}</span>)}</td>
                                                     <td className="px-2">
                                                         <Button variant="link" className="p-0 btn-edit" onClick={() => setShow({ isShow: true, title: item.borrow_name, body: item })}>

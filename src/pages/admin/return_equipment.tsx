@@ -154,7 +154,7 @@ const ReturnEquipment = () => {
                                                     <td className="px-2">{index + 1}</td>
                                                     <td className="px-2">{item.users_id_ref.users_fname} {item.users_id_ref.users_sname}</td>
                                                     <td className="px-2">{item.borrow_name}</td>
-                                                    <td className="px-2">{moment(item.borrow_return).format('DD-MM-YYYY')}</td>
+                                                    {/* <td className="px-2">{moment(item.borrow_return).format('DD-MM-YYYY')}</td> */}
                                                     <td className="px-2">{item.borrow_status === 1 ? 'รอคืน' : item.borrow_status === 2 ? <span className="alert-success">{'คืนสำเร็จ'}</span> : <span className="alert-danger">{'ส่งคืนไม่สำเร็จ'}</span>}</td>
                                                     <td className="px-2">
                                                         <Button variant="link" className="p-0 btn-edit" onClick={() => setShow({ isShow: true, title: item.borrow_name, body: item })}>
