@@ -169,17 +169,68 @@ const Borrow = () => {
                             value={carePerson ? `${carePerson.takecare_fname} ${carePerson.takecare_sname}` : ''}
                         />
                     </Form.Group>
-
-                    {/* ที่อยู่และเบอร์โทร */}
-                    <TextareaLabel label='ที่อยู่' id="borrow_address" required />
-                    <InputLabel label='หมายเลขโทรศัพท์' id="borrow_tel" required />
-                    <InputLabel label='เหตุผลในการยืมครุภัณฑ์' id="borrow_objective" required />
                     
-                    <p className="m-0">วันเดือนปี (เริ่ม)</p>
+                    
+{/* ที่อยู่ผู้ดูแล */}
+<Form.Group>
+    <Form.Label>ที่อยู่</Form.Label>
+    <Form.Control
+        as="textarea"
+        rows={2}
+        disabled
+        value={
+            carePerson
+                ? `${carePerson.takecare_number ?? ''} หมู่ ${carePerson.takecare_moo ?? ''} `
+                  + `${carePerson.takecare_road ?? ''} `
+                  + `ตำบล.${carePerson.takecare_tubon ?? ''} `
+                  + `อำเภอ.${carePerson.takecare_amphur ?? ''} `
+                  + `จังหวัด.${carePerson.takecare_province ?? ''} `
+                  + `${carePerson.takecare_postcode ?? ''}`
+                : ''
+        }
+    />
+    <Form.Control
+        type="hidden"
+        id="borrow_address"
+        name="borrow_address"
+        value={
+            carePerson
+                ? `${carePerson.takecare_number ?? ''} หมู่ ${carePerson.takecare_moo ?? ''} `
+                  + `${carePerson.takecare_road ?? ''} `
+                  + `ตำบล.${carePerson.takecare_tubon ?? ''} `
+                  + `อำเภอ.${carePerson.takecare_amphur ?? ''} `
+                  + `จังหวัด.${carePerson.takecare_province ?? ''} `
+                  + `${carePerson.takecare_postcode ?? ''}`
+                : ''
+        }
+    />
+</Form.Group>
+
+{/* เบอร์โทรผู้สูงอายุ */}
+<Form.Group>
+    <Form.Label>เบอร์โทร</Form.Label>
+    <Form.Control
+        type="text"
+        disabled
+        value={user?.users_tel1 ?? ''}
+    />
+    <Form.Control
+        type="hidden"
+        id="borrow_tel"
+        name="borrow_tel"
+        value={user?.users_tel1 ?? ''}
+    />
+</Form.Group>
+                    {/* ที่อยู่และเบอร์โทร */}
+                    {/* <TextareaLabel label='ที่อยู่' id="borrow_address" required />
+                    <InputLabel label='หมายเลขโทรศัพท์' id="borrow_tel" required /> */}
+                    <InputLabel label='เหตุผล (ระบุลักษณะอาการหรือข้อจำกัดที่ส่งผลต่อการดำเนินชีวิตของผู้สูงอายุ เช่น ภาวะหลงลืม เดินหลงทาง ข้อจำกัดในการดูแลตนเอง หรือเคลื่อนไหวลำบาก)' id="borrow_objective" required />
+                    
+                    <p className="m-0">วันเดือนปี (ยื่นคำขอ)</p>
                     <DatePickerX selected={startDate} onChange={setStartDate} />
 
-                    <p className="m-0">วันเดือนปี (สิ้นสุด)</p>
-                    <DatePickerX selected={endDate} onChange={setEndDate} />
+                    {/* <p className="m-0">วันเดือนปี (สิ้นสุด)</p>
+                    <DatePickerX selected={endDate} onChange={setEndDate} /> */}
 
                     <Form.Group className="py-2">
                         {listItem.length > 0 && listItem.map((item, index) => (

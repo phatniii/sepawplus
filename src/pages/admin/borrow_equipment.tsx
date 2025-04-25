@@ -22,6 +22,7 @@ const defaultShowState = {
         borrow_name: '',
         borrow_address:'',
         borrow_tel:'',
+        borrow_objective:'',
         borrow_date: '',
         borrow_return: '',
         borrow_equipment_status: 1,
@@ -205,6 +206,10 @@ const BorrowEquipment = () => {
                                 <tr>
                                     <td className="px-2">{'เบอร์โทร'}</td>
                                     <td className="px-2">{show.body.borrow_tel}</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-2">{'เหตุผลในการขอยืมครุภัณฑ์'}</td>
+                                    <td className="px-2">{show.body.borrow_objective}</td>
                                 </tr>
                                 <tr>
                                     <td className="px-2">{'วันที่ขอยืม'}</td>
