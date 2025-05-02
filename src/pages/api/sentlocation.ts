@@ -92,7 +92,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
                 // ถ้าสถานะเป็น 3 (เข้าใกล้ Safezone ชั้นที่ 2)
                 if (calculatedStatus === 3) {
-                    const warningMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nเข้าใกล้ Safezone ชั้นที่ 2 แล้ว`;
+                    const warningMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nเข้าใกล้เขตปลอดภัย ชั้นที่ 2 แล้ว`;
                     if (replyToken) {
                         await replyNotification({
                             replyToken,
@@ -104,7 +104,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 }
                 // ถ้าสถานะเป็น 1 (ออกนอก Safezone ชั้นที่ 1)
                 else if (calculatedStatus === 1) {
-                    const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 1 แล้ว`;
+                    const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอกเขตปลอดภัย ชั้นที่ 1 แล้ว`;
                     if (replyToken) {
                         await replyNotification({ replyToken, message });
                     } else {
@@ -113,7 +113,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 }
                 // ถ้าสถานะเป็น 2 (ออกนอก Safezone ชั้นที่ 2)
                 else if (calculatedStatus === 2) {
-                    const postbackMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอก Safezone ชั้นที่ 2 แล้ว`;
+                    const postbackMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอกเขตปลอดภัย ชั้นที่ 2 แล้ว`;
                     if (replyToken) {
                         await replyNotificationPostback({
                             userId: Number(uId),
