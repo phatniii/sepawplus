@@ -83,11 +83,11 @@ const Login = () => {
                                 </Form.Group>
                             </Form>
                         </Card.Body>
-                        <Card.Footer className="text-muted">
+                        {/* <Card.Footer className="text-muted">
                             <Link href="/admin/login_line">
                                 <p className="mr-2 mb-0">Login Line</p>
                             </Link>
-                        </Card.Footer>
+                        </Card.Footer> */}
                     </Card>
                 </div>
             </div>
