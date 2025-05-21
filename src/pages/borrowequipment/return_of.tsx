@@ -139,7 +139,7 @@ const ReturnOf = () => {
                     </div>
                     <div className={styles.toastDate}>
                       <span>เริ่ม {item.startDate}</span>
-                      <span>สิ้นสุด {item.endDate}</span>
+                      {/* <span>สิ้นสุด {item.endDate}</span> */}
                     </div>
                   </Toast.Body>
                 </Toast>
