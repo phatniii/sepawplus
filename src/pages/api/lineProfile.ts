@@ -108,8 +108,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								console.log("User not registered, sending registration reply.");
 								await replyRegistration({replyToken, userId})
 							}
-						} else if (events.message.text === "การยืม-คืนอุปกรณ์") {
-							console.log("User selected 'การยืม-คืนอุปกรณ์'");
+						} else if (events.message.text === "การยืม-คืนครุภัณฑ์") {
+							console.log("User selected 'การยืม-คืนครุภัณฑ์'");
 							const responseUser = await api.getUser(userId);
 							if(responseUser){
 								console.log("User is registered, replying with menu borrow equipment.");
