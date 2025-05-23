@@ -55,7 +55,7 @@ const AdditionalHelp = () => {
                    return moment(item.exten_date).format('M')
                 })
                 const exted_closed = _.groupBy(response.data, (item) => {
-                    return moment(item.exted_closed_date).format('M') 
+                    return moment(item.exted_closed).format('M') && item.exted_closed_date
                 })
                 const labels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
                 const data = {
@@ -145,7 +145,7 @@ const AdditionalHelp = () => {
                         </Card.Body>
                     </Card>
                 </Row>
-                {/* <Row>
+                <Row>
                     <Card className="card-stats card-dashboard shadow mb-4 mb-xl-0 p-0">
                         <Card.Header>
                             <p className="m-0">รายการแบบสอบถาม</p>
@@ -199,7 +199,7 @@ const AdditionalHelp = () => {
                             </Table>
                         </Card.Body>
                     </Card>
-                </Row> */}
+                </Row>
 
                 <Modal show={show.isShow} onHide={() => handleClose()} size="lg">
                     <Modal.Header closeButton>
@@ -390,4 +390,3 @@ const AdditionalHelp = () => {
 }
 
 export default AdditionalHelp
-//dvv
