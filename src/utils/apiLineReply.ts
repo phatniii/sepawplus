@@ -276,7 +276,7 @@ export const replyNotRegistration = async ({
                                 },
                                 {
                                     type  : "text",
-                                    text  : `คุณ ${profile.displayName} ยังไม่ได้ลงทะเบียน กรุณาลงทะเบียนก่อนเข้าใช้งาน`,
+                                    text  : `คุณ ${profile.displayName} ยังไม่ได้ลงทะเบียน กรูณาลงทะเบียนก่อนเข้าใช้งาน`,
                                     size  : "sm",
                                     color : "#555555",
                                     wrap  : true,
@@ -574,7 +574,7 @@ export const replyLocation = async ({
                                         uri  : `tel:${userTakecarepersonData.takecare_tel1 || '-'}`
                                     }
                                 },
-                                {
+                                { 
                                     type  : "button",
                                     style : "primary",
                                     height: "sm",
@@ -680,12 +680,12 @@ export const replyUserInfo = async ({
     userTakecarepersonData
 }: ReplyUserData) => {
     try {
-        // const profile = await getUserProfile(userData.users_line_id);
+       // const profile = await getUserProfile(userData.users_line_id);
         let contentTakecareperson = [
             layoutBoxBaseline("ข้อมูล", 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุ'),
         ]
    
-        if(userTakecarepersonData){
+        if (userTakecarepersonData) {
             contentTakecareperson = [
                 layoutBoxBaseline("ชื่อ-สกุล", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, 4, 5),
                 layoutBoxBaseline("วันเดือนปีเกิด", `${moment(userTakecarepersonData.takecare_birthday).format('DD/MM/YYYY')}`, 4, 5),
@@ -774,6 +774,8 @@ export const replyUserInfo = async ({
                                     ]
 
                                 },
+
+                                
                                 {
                                     type  : "button",
                                     style : "primary",
@@ -818,9 +820,10 @@ export const replyUserData = async ({
     replyToken,
     userData
 }: ReplyUserData) => {
+
     try {
         const profile = await getUserProfile(userData.users_line_id);
-        const requestData = {
+        const requestData = { 
             replyToken,
             messages: [
                 {
@@ -902,7 +905,6 @@ export const replyNotification = async ({
     message
 }: ReplyNotification) => {
     try {
-
         const requestData = {
             to:replyToken,
             messages: [
@@ -981,10 +983,10 @@ export const replyNotificationPostback = async ({
     takecarepersonId,
     type,
     message,
-    replyToken
+    replyToken,
+    
 }: ReplyNotificationPostback ) => {
     try {
-        console.log("Type before sending postback: ", type);
         const requestData = {
             to:replyToken,
             messages: [
@@ -1055,10 +1057,10 @@ export const replyNotificationPostback = async ({
                                         data : `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
-                                {
+                                { 
                                     type  : "text",
                                     text  : " ",
-                                    wrap : true,
+                                    wrap  : true,
                                     lineSpacing: "5px",
                                     margin: "md",
                                     contents:[
@@ -1264,97 +1266,3 @@ export const replyNotificationSendDocQuery = async ({
         }
     }
 }
-//เพิ่มการแจ้งเตือนใหม่ โดยแอดมินกดส่งมาให้ผู้ดูแลทราบ29/3
-// export const replyNotificationSendBorrow = async ({
-//     replyToken,
-//     userData
-// }: {
-//      replyToken: string;
-//      userData  : any;
-// }) => {
-//     try {
-
-//         const requestData = {
-//             to:replyToken,
-//             messages: [
-//                 {
-//                     type    : "flex",
-//                     altText : "แจ้งเตือน",
-//                     contents: {
-//                         type: "bubble",
-//                         body: {
-//                             type    : "box",
-//                             layout  : "vertical",
-//                             contents: [
-//                                 {
-//                                     type    : "text",
-//                                     text    : " ",
-//                                     contents: [
-//                                         {
-//                                             type      : "span",
-//                                             text      : "แบบสอบถาม",
-//                                             color     : "#FC0303",
-//                                             size      : "xl",
-//                                             weight    : "bold",
-//                                             decoration: "none"
-//                                         },
-//                                         {
-//                                             type      : "span",
-//                                             text      : " ",
-//                                             size      : "xxl",
-//                                             decoration: "none"
-//                                         }
-//                                     ]
-//                                 },
-//                                 {
-//                                     type  : "separator",
-//                                     margin: "md"
-//                                 },
-//                                 {
-//                                     type  : "text",
-//                                     text  : " ",
-//                                     wrap : true,
-//                                     lineSpacing: "5px",
-//                                     margin: "md",
-//                                     contents:[
-//                                         {
-//                                             type      : "span",
-//                                             text      : "คำขอยืมอุปกรณ์นาฬิกาได้รับการอนุมัติ",
-//                                             color     : "#555555",
-//                                             size      : "md",
-//                                             // decoration: "none",
-//                                             // wrap      : true
-//                                         },
-                                       
-//                                         {
-//                                             type      : "span",
-//                                             text      : " ",
-//                                             size      : "xl",
-//                                             decoration: "none"
-//                                         }
-//                                     ]
-//                                 },
-//                                 // {
-//                                 //     type  : "button",
-//                                 //     style : "primary",
-//                                 //     height: "sm",
-//                                 //     margin: "xxl",
-//                                 //     action: {
-//                                 //         type : "uri",
-//                                 //         label: "ตอบแบบสอบถาม",
-//                                 //         uri  : `${WEB_API}/questionnaire?id=${userData.borrow_id}`
-//                                 //     }
-//                                 // },
-//                             ]
-//                         }
-//                     }
-//                 }
-//             ],
-//         };
-//        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
-//     } catch (error) {
-//         if (error instanceof Error) {
-//             console.log(error.message);
-//         }
-//     }
-// }
