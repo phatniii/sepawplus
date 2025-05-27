@@ -1,182 +1,143 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '@/lib/prisma'; // Prisma ORM สำหรับจัดการฐานข้อมูล
-import { replyNotification, replyNotificationPostback } from '@/utils/apiLineReply'; // ฟังก์ชันสำหรับส่งข้อความแจ้งเตือนผ่าน LINE
-import _ from 'lodash';
+import prisma from '@/lib/prisma';
+import { replyNotification, replyNotificationPostback } from '@/utils/apiLineReply';
 import moment from 'moment';
 
-type Data = {
-    message: string;
-    data?: any;
-};
-
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-
     if (req.method === 'PUT') {
-        if (req.headers['content-type'] !== 'application/json') {
-            return res.status(400).json({ message: 'error', error: "Content-Type must be application/json" });
-        }
         try {
-            const body = req.body;
+            const { uId, takecare_id, distance, latitude, longitude, battery } = req.body;
 
-            // ตรวจสอบว่ามีข้อมูลครบถ้วนหรือไม่
-            if (!body.uId || !body.takecare_id || !body.latitude || !body.longitude) {
-                return res.status(400).json({ message: 'error', data: 'ไม่พบพารามิเตอร์ uId, takecare_id, latitude, longitude, status, distance, battery' });
+            console.log("Received Data:", req.body);
+
+            // ตรวจสอบว่าได้ส่งข้อมูลครบถ้วน
+            if (!uId || !takecare_id || !distance || !latitude || !longitude || !battery) {
+                return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ไม่ครบถ้วน' });
             }
 
-            if (_.isNaN(Number(body.uId)) || _.isNaN(Number(body.takecare_id)) || _.isNaN(Number(body.status)) || _.isNaN(Number(body.distance)) || _.isNaN(Number(body.battery))) {
-                return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ uId, takecare_id, status, distance, battery ไม่ใช่ตัวเลข' });
-            }
-
-            // ค้นหาผู้ใช้ในฐานข้อมูล
-            const user = await prisma.users.findFirst({
+            // ดึงข้อมูล Safezone
+            const safezone = await prisma.safezone.findFirst({
                 where: {
-                    users_id: Number(body.uId)
-                },
-                include: {
-                    users_status_id: {
-                        select: {
-                            status_name: true
-                        }
-                    },
+                    takecare_id: Number(takecare_id),
+                    users_id: Number(uId),
                 },
             });
 
-            // ค้นหาผู้ดูแลที่เชื่อมโยงกับผู้ใช้
+            if (!safezone) {
+                return res.status(404).json({
+                    message: 'error',
+                    data: 'ไม่พบข้อมูล Safezone',
+                });
+            }
+
+            // กำหนด r1 และ r2 จาก safezone
+            const r1 = safezone.safez_radiuslv1;
+            const r2 = safezone.safez_radiuslv2;
+
+            // คำนวณ 80% ของ r2
+            const safezoneThreshold = r2 * 0.8;
+
+            // คำนวณสถานะจากระยะทาง
+            let calculatedStatus = 0;
+            if (distance <= r1) {
+                calculatedStatus = 0; // อยู่ใน Safezone
+            } else if (distance > r1 && distance < safezoneThreshold) {
+                calculatedStatus = 1; // ออกนอก Safezone ชั้นที่ 1
+            } else if (distance >= safezoneThreshold && distance <= r2) {
+                calculatedStatus = 3; // เข้าใกล้ Safezone ชั้นที่ 2
+            } else if (distance > r2) {
+                calculatedStatus = 2; // ออกนอก Safezone ชั้นที่ 2
+            }
+
+            // บันทึกข้อมูลในฐานข้อมูล
+            const updatedLocation = await prisma.location.create({
+                data: {
+                    users_id: Number(uId),
+                    takecare_id: Number(takecare_id),
+                    locat_timestamp: new Date(),
+                    locat_latitude: latitude.toString(),
+                    locat_longitude: longitude.toString(),
+                    locat_status: calculatedStatus,
+                    locat_distance: Number(distance),
+                    locat_battery: Number(battery),
+                    locat_noti_time: new Date(),
+                    locat_noti_status: 1,
+                },
+            });
+
+            // ถ้าสถานะเป็น 0 (อยู่ใน Safezone) ไม่ต้องส่งการแจ้งเตือน
+            if (calculatedStatus === 0) {
+                console.log(`Status is ${calculatedStatus}, no notification sent.`);
+                return res.status(200).json({
+                    message: 'success',
+                    data: updatedLocation,
+                });
+            }
+
+            // ค้นหาผู้ใช้และผู้ดูแล
+            const user = await prisma.users.findFirst({
+                where: { users_id: Number(uId) },
+            });
+
             const takecareperson = await prisma.takecareperson.findFirst({
                 where: {
-                    takecare_id: Number(body.takecare_id),
-                    takecare_status: 1
-                }
+                    users_id: Number(uId),
+                    takecare_id: Number(takecare_id),
+                    takecare_status: 1,
+                },
             });
 
-            // ตรวจสอบว่าเจอทั้งผู้ใช้และผู้ดูแลหรือไม่
             if (user && takecareperson) {
-                // ค้นหาข้อมูล Safezone
-                const safezone = await prisma.safezone.findFirst({
-                    where: {
-                        takecare_id: takecareperson.takecare_id as number,
-                        users_id: user.users_id as number,
-                    }
-                });
+                const replyToken = user.users_line_id || ''; // รับ replyToken
 
-                if (safezone) {
-                    const location = await prisma.location.findFirst({
-                        where: {
-                            users_id: user.users_id as number,
-                            takecare_id: takecareperson.takecare_id as number,
-                        },
-                        orderBy: {
-                            locat_timestamp: 'desc'
-                        }
-                    });
-
-                    const status = Number(body.status);
-                    let noti_time = null;
-                    let noti_status = null;
-
-                    if (location) {
-                        // คำนวณเงื่อนไขการแจ้งเตือนสำหรับสถานะ 1 (ออกจาก Safezone ชั้นที่ 1)
-                        if (status === 1 && (location.locat_noti_status !== 1 || !location.locat_noti_time)) {
-                            noti_time = new Date();
-                            const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอกเขตปลอดภัย ชั้นที่ 1 แล้ว`;
-
-                            const replyToken = user.users_line_id || ''; // ใช้ค่าว่างถ้าค่าเป็น null
-                            if (replyToken) {
-                                await replyNotification({ replyToken, message });
-                            }
-                            noti_status = 1; // แจ้งสถานะออกจากชั้นที่ 1
-
-                        } else if (status === 1) {
-                            // คำนวณระยะห่าง 80% ของ Safezone ชั้นที่ 1
-                            const distance = (Number(safezone.safez_radiuslv1) * 0.8);
-                            const checkTime = location.locat_noti_status === 2 && moment().diff(moment(location.locat_noti_time), 'minutes') >= 5 ? true : false;
-
-                            // ถ้าระยะทางเกิน 80% ของ Safezone ชั้นที่ 1
-                            if (Number(body.distance) >= distance) {
-                                noti_status = 2;
-                                noti_time = location.locat_noti_time;
-                                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nเข้าใกล้เขตปลอดภัย ชั้นที่ 2 แล้ว`;
-
-                                if (location.locat_noti_status === 1) {
-                                    const replyToken = user.users_line_id || '';
-                                    if (replyToken) {
-                                        await replyNotification({ replyToken, message });
-                                    }
-                                } else if (location.locat_noti_status === 2 && checkTime) {
-                                    const replyToken = user.users_line_id || '';
-                                    if (replyToken) {
-                                        await replyNotification({ replyToken, message });
-                                        noti_time = new Date(); // อัปเดตเวลาแจ้งเตือน
-                                    }
-                                }
-                            }
-                        }
-
-                        // คำนวณเงื่อนไขสำหรับสถานะ 2 (ออกจากเขต Safezone ชั้นที่ 2)
-                        if (status === 2 && (location.locat_noti_status !== 2 || moment().diff(moment(location.locat_noti_time), 'minutes') >= 5)) {
-                            const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอกเขตปลอดภัย ชั้นที่ 2 แล้ว`;
-
-                            const replyToken = user.users_line_id || ''; // ใช้ค่าว่างถ้าค่าเป็น null
-                            if (replyToken) {
-                                await replyNotificationPostback({
-                                    replyToken,
-                                    userId: user.users_id,
-                                    takecarepersonId: takecareperson.takecare_id,
-                                    type: 'safezone',
-                                    message
-                                });
-                                noti_status = 3; // แจ้งสถานะออกจากชั้นที่ 2
-                                noti_time = new Date();
-                            }
-                        }
-
-                        // อัปเดตสถานะตำแหน่ง
-                        await prisma.location.update({
-                            where: {
-                                location_id: location.location_id as number,
-                            },
-                            data: {
-                                locat_timestamp: new Date(),
-                                locat_latitude: body.latitude,
-                                locat_longitude: body.longitude,
-                                locat_status: status,
-                                locat_distance: Number(body.distance),
-                                locat_battery: Number(body.battery),
-                                locat_noti_time: noti_time,
-                                locat_noti_status: noti_status,
-                            },
+                // ถ้าสถานะเป็น 3 (เข้าใกล้ Safezone ชั้นที่ 2)
+                if (calculatedStatus === 3) {
+                    const warningMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nเข้าใกล้เขตปลอดภัย ชั้นที่ 2 แล้ว`;
+                    if (replyToken) {
+                        await replyNotification({
+                            replyToken,
+                            message: warningMessage,
                         });
                     } else {
-                        await prisma.location.create({
-                            data: {
-                                users_id: user.users_id,
-                                takecare_id: takecareperson.takecare_id,
-                                locat_timestamp: new Date(),
-                                locat_latitude: body.latitude,
-                                locat_longitude: body.longitude,
-                                locat_status: status,
-                                locat_distance: Number(body.distance),
-                                locat_battery: Number(body.battery),
-                            },
-                        });
+                        console.warn("User does not have a Line ID for notification");
                     }
-
-                    return res.status(200).json({ message: 'success', data: 'บันทึกข้อมูลเรียบร้อย' });
                 }
-                return res.status(200).json({ message: 'error', data: 'ไม่พบข้อมูล safezone' });
-            } else {
-                return res.status(200).json({ message: 'error', data: 'ไม่พบข้อมูล user หรือ takecareperson' });
+                // ถ้าสถานะเป็น 1 (ออกนอก Safezone ชั้นที่ 1)
+                else if (calculatedStatus === 1) {
+                    const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอกเขตปลอดภัย ชั้นที่ 1 แล้ว`;
+                    if (replyToken) {
+                        await replyNotification({ replyToken, message });
+                    } else {
+                        console.warn("User does not have a Line ID for notification");
+                    }
+                }
+                // ถ้าสถานะเป็น 2 (ออกนอก Safezone ชั้นที่ 2)
+                else if (calculatedStatus === 2) {
+                    const postbackMessage = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nออกนอกเขตปลอดภัย ชั้นที่ 2 แล้ว`;
+                    if (replyToken) {
+                        await replyNotificationPostback({
+                            userId: Number(uId),
+                            takecarepersonId: Number(takecare_id),
+                            type: 'safezone', // กำหนด type เป็น 'safezone'
+                            message: postbackMessage,
+                            replyToken,
+                        });
+                    } else {
+                        console.warn("User does not have a Line ID for postback notification");
+                    }
+                }
             }
-        } catch (error) {
-            console.log("🚀 ~ file: create.ts:31 ~ handle ~ error:", error);
-            return res.status(400).json({ message: 'error', data: error });
-        }
 
-    } else if (req.method === 'POST') {
-        const body = req.body;
-        console.log("🚀 ~ handle ~ body:", body);
+            return res.status(200).json({
+                message: 'success',
+                data: updatedLocation,
+            });
+        } catch (error) {
+            console.error("Error:", error);
+            return res.status(500).json({ message: 'error', data: 'เกิดข้อผิดพลาดในการประมวลผล' });
+        }
     } else {
         res.setHeader('Allow', ['PUT']);
-        res.status(400).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
+        res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
     }
 }
