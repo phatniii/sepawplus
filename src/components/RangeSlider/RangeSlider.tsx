@@ -8,6 +8,7 @@ interface Props {
     onChange?: ((value: number) => void | undefined) | undefined;
     min?: number;
     max?: number;
+    step?:number;
 }
 
 const RangeSlider = ({
@@ -16,7 +17,8 @@ const RangeSlider = ({
     value,
     onChange,
     min = 1,
-    max = 20000
+    max = 20000,
+    step=1,
 }: Props) => {
     return (
         <FormRange
@@ -25,6 +27,7 @@ const RangeSlider = ({
             onChange={(e) => onChange && onChange(Number(e.target.value))}
             min={min}
             max={max}
+            step={step}
         />
     )
 }
