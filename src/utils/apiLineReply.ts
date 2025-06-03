@@ -599,100 +599,133 @@ export const replyLocation = async ({
     }
 }
 export const replySetting = async ({
-    replyToken,
-    userData,
-    userTakecarepersonData,
-    safezoneData,
-    temperatureSettingData
-}: ReplySettingData  & { temperatureSettingData?: any }) => {
-    try {
-        // const profile = await getUserProfile(userData.users_line_id);
-        let r1 = 0
-        let r2 = 0
-        let idsafezone = 0
-        let idSetting = null; // รหัส setting อุณหภูมิ
+  replyToken,
+  userData,
+  userTakecarepersonData,
+  safezoneData,
+  temperatureSettingData // เพิ่มข้อมูลตั้งค่าอุณหภูมิ (ถ้ามี)
+}: ReplySettingData & { temperatureSettingData?: any }) => {
+  try {
+    // ค่า default
+    let r1 = 0;
+    let r2 = 0;
+    let idsafezone = 0;
+    let maxTemperature = 0; // ค่า default อุณหภูมิ
+    let idSetting = null; // รหัส setting อุณหภูมิ
 
-        if(safezoneData){
-            r1 = safezoneData.safez_radiuslv1
-            r2 = safezoneData.safez_radiuslv2
-            idsafezone = safezoneData.safezone_id
-        }
-         if (temperatureSettingData) {
-            idSetting = temperatureSettingData.setting_id || null;
+    if (safezoneData) {
+      r1 = safezoneData.safez_radiuslv1 || 0;
+      r2 = safezoneData.safez_radiuslv2 || 0;
+      idsafezone = safezoneData.safezone_id || 0;
     }
-        const requestData = {
-            replyToken,
-            messages: [
+
+    if (temperatureSettingData) {
+      maxTemperature = temperatureSettingData.max_temperature || 37;
+      idSetting = temperatureSettingData.setting_id || null;
+    }
+
+    const requestData = {
+      replyToken,
+      messages: [
+        {
+          type: "flex",
+          altText: "ตั้งค่าเขตปลอดภัยและอุณหภูมิ",
+          contents: {
+            type: "bubble",
+            body: {
+              type: "box",
+              layout: "vertical",
+              contents: [
                 {
-                    type    : "flex",
-                    altText : "ตั้งค่าเขตปลอดภัยและอุณหภูมิ",
-                    contents: {
-                        type: "bubble",
-                        body: {
-                            type    : "box",
-                            layout  : "vertical",
-                            contents: [
-                                {
-                                    type  : "text",
-                                    text  : "ตั้งค่าเขตปลอดภัยและอุณหภูมิ",
-                                    color : "#FFB400",
-                                    size  : "xl",
-                                    weight: "bold",
-                                    wrap  : true
-                                },
-                                {
-                                    type  : "separator",
-                                    margin: "xxl"
-                                },
-                                {
-                                    type: "box",
-                                    layout: "vertical",
-                                    margin: "xxl",
-                                    spacing: "sm",
-                                    contents: [
-                                        layoutBoxBaseline("ชื่อ", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`),
-                                        layoutBoxBaseline("รัศมี ชั้นที่ 1", `${r1} ม.`),
-                                        layoutBoxBaseline("รัศมี ชั้นที่ 2", `${r2} ม.`),
-                                    ]
-
-                                },
-                                {
-                                    type  : "button",
-                                    style : "primary",
-                                    height: "sm",
-                                    margin: "xxl",
-                                    action: {
-                                        type : "uri",
-                                        label: "ตั้งค่าเขตปลอดภัย",
-                                        uri  : `${WEB_API}/setting?auToken=${userData.users_line_id}&idsafezone=${idsafezone}`
-                                    }
-                                },
-                                {    type  : "button",
-                                    style : "primary",
-                                    height: "sm",
-                                    margin: "xxl",
-                                    color : "#4477CE",
-                                    action: {
-                                        type : "uri",
-                                        label: "ตั้งค่าอุณหภูมิร่างกาย",
-                                        uri  : `${WEB_API}/settingTemp?auToken=${userData.users_line_id}&idsetting=${idsafezone}`
-                                    }
-                                },
-
-                               
-                            ]
-                        }
-                    }
+                  type: "text",
+                  text: "ตั้งค่าเขตปลอดภัยและอุณหภูมิ",
+                  color: "#FFB400",
+                  size: "xl",
+                  weight: "bold",
+                  wrap: true
+                },
+                {
+                  type: "separator",
+                  margin: "xxl"
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  margin: "xxl",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      contents: [
+                        { type: "text", text: "ชื่อ", flex: 2, weight: "bold" },
+                        { type: "text", text: `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, flex: 3, wrap: true }
+                      ]
+                    },
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      contents: [
+                        { type: "text", text: "รัศมี ชั้นที่ 1", flex: 2, weight: "bold" },
+                        { type: "text", text: `${r1} ม.`, flex: 3 }
+                      ]
+                    },
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      contents: [
+                        { type: "text", text: "รัศมี ชั้นที่ 2", flex: 2, weight: "bold" },
+                        { type: "text", text: `${r2} ม.`, flex: 3 }
+                      ]
+                    },
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      contents: [
+                        { type: "text", text: "อุณหภูมิสูงสุดที่อนุญาต", flex: 2, weight: "bold" },
+                        { type: "text", text: `${maxTemperature} °C`, flex: 3 }
+                      ]
+                    },
+                  ]
+                },
+                {
+                  type: "button",
+                  style: "primary",
+                  height: "sm",
+                  margin: "xxl",
+                  action: {
+                    type: "uri",
+                    label: "ตั้งค่าเขตปลอดภัย",
+                    uri: `${WEB_API}/setting?auToken=${userData.users_line_id}&idsafezone=${idsafezone}`
+                  }
+                },
+                {
+                  type: "button",
+                  style: "primary",
+                  height: "sm",
+                  margin: "xxl",
+                  color: "#4477CE",
+                  action: {
+                    type: "uri",
+                    label: "ตั้งค่าอุณหภูมิร่างกาย",
+                    uri: `${WEB_API}/settingTemp?auToken=${userData.users_line_id}&idsetting=${idSetting || ''}`
+                  }
                 }
-            ],
-        };
-       await axios.post(LINE_MESSAGING_API, requestData, { headers:LINE_HEADER });
-    } catch (error) {
-        if (error instanceof Error) {
-            console.log(error.message);
+              ]
+            }
+          }
         }
+      ]
+    };
+
+    await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
+
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("replySetting error:", error.message);
     }
-}
+  }
+};
 export const replyUserInfo = async ({
     replyToken,
     userData,
