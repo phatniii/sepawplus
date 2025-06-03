@@ -625,7 +625,7 @@ export const replySetting = async ({
             messages: [
                 {
                     type    : "flex",
-                    altText : "ตั้งค่าเขตปลอดภัย",
+                    altText : "ตั้งค่าเขตปลอดภัยและอุณหภูมิ",
                     contents: {
                         type: "bubble",
                         body: {
@@ -634,7 +634,7 @@ export const replySetting = async ({
                             contents: [
                                 {
                                     type  : "text",
-                                    text  : "ตั้งค่าเขตปลอดภัย",
+                                    text  : "ตั้งค่าเขตปลอดภัยและอุณหภูมิ",
                                     color : "#FFB400",
                                     size  : "xl",
                                     weight: "bold",
@@ -675,7 +675,7 @@ export const replySetting = async ({
                                     action: {
                                         type : "uri",
                                         label: "ตั้งค่าอุณหภูมิร่างกาย",
-                                        uri  : `${WEB_API}/sittingTemp?auToken=${userData.users_line_id}&idsetting=${idsafezone}`
+                                        uri  : `${WEB_API}/settingTemp?auToken=${userData.users_line_id}&idsetting=${idsafezone}`
                                     }
                                 },
 
