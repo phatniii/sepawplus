@@ -661,6 +661,17 @@ export const replySetting = async ({
                                         uri  : `${WEB_API}/setting?auToken=${userData.users_line_id}&idsafezone=${idsafezone}`
                                     }
                                 },
+                                {
+                                    type : "button",
+                                    style :"primary",
+                                    height : "sm",
+                                    margin : "xxl",
+                                    action:{
+                                        type :"uri",
+                                        label : "ตั้งค่าอุณหภูมิ",
+                                        //uri :`${WEB_API}/setting?auToken=${userData.users_line_id}&idsafezone=${idsafezone}`
+                                    }
+                                }
                             ]
                         }
                     }
