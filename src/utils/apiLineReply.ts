@@ -708,7 +708,7 @@ export const replySetting = async ({
                   action: {
                     type: "uri",
                     label: "ตั้งค่าอุณหภูมิร่างกาย",
-                    uri: `${WEB_API}/temperature-setting?auToken=${userData.users_line_id}&idsetting=${idSetting || ''}`
+                    uri: `${WEB_API}/settingTemp?auToken=${userData.users_line_id}&idsetting=${idSetting || ''}`
                   }
                 }
               ]
