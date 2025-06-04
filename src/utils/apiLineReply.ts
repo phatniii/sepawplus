@@ -611,7 +611,7 @@ export const replySetting = async ({
     let r2 = 0;
     let idsafezone = 0;
     let maxTemperature = 0; // ค่า default อุณหภูมิ
-    let idSetting = null; // รหัส setting อุณหภูมิ
+    let idSetting = 0; // รหัส setting อุณหภูมิ
 
     if (safezoneData) {
       r1 = safezoneData.safez_radiuslv1 || 0;
@@ -621,7 +621,7 @@ export const replySetting = async ({
 
     if (temperatureSettingData) {
       maxTemperature = temperatureSettingData.max_temperature || 37;
-      idSetting = temperatureSettingData.setting_id || null;
+      idSetting = temperatureSettingData.setting_id || 0;
     }
 
     const requestData = {
