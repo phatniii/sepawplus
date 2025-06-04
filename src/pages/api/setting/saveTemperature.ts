@@ -27,11 +27,30 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 if (body.setting_id) {
 
                     await prisma.temperature_settings.update({
-                        where: {setting_id: Number(body.setting_id)},
-                        data: {max_temperature: Number(body.max_temperature)},
-                    })
-                    return res.status(200).json({ message: 'success' })
-                } else {
+                        where: { setting_id: Number(body.setting_id) },
+                        data: { max_temperature: Number(body.max_temperature) },
+                    });
+                    return res.status(200).json({ message: 'success' });
+                }
+                const existing =  await prisma.temperature_settings.findFirst({
+                    where: {
+                        users_id: Number(body.users_id),
+                        takecare_id: Number(body.takecare_id),
+                    },
+                });
+                if (existing) {
+                    await prisma.temperature_settings.update({
+                        where: {
+                            setting_id: existing.setting_id,
+                        },
+                        data: {
+                            max_temperature: Number(body.max_temperature),
+                        },
+                    });
+                    return res.status(200).json({ message: 'success', id: existing.setting_id });
+                }
+
+                else {
                     const createdTemperature = await prisma.temperature_settings.create({
                         data: {
                             takecare_id: Number(body.takecare_id),
