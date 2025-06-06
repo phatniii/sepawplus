@@ -10,7 +10,7 @@ type Data = {
 };
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse<Data>) {
-    if (req.method === 'PUT') {
+    if (req.method === 'PUT' || req.method === 'POST') {
         try {
             const body = req.body;
 
@@ -117,11 +117,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
             return res.status(200).json({ message: 'success', data: 'บันทึกข้อมูลเรียบร้อย' });
 
         } catch (error) {
-            console.error("🚀 ~ API /temperature PUT error:", error);
+            console.error("🚀 ~ API /temperature error:", error);
             return res.status(400).json({ message: 'error', data: error });
         }
     } else {
-        res.setHeader('Allow', ['PUT']);
+        res.setHeader('Allow', ['PUT', 'POST']);
         return res.status(405).json({ message: 'error', data: `วิธี ${req.method} ไม่อนุญาต` });
     }
 }
