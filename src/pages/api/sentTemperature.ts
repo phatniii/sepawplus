@@ -49,7 +49,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 }
             });
 
-            const status = Number(body.status);
+            // เปรียบเทียบอุณหภูมิ
+            const temperatureValue = Number(body.temperature_value);
+            let calculatedStatus = Number(body.status);
+
+            if (settingTemp && temperatureValue > settingTemp.max_temperature) {
+                calculatedStatus = 1;
+            } else {
+                calculatedStatus = 0;
+            }
+
+            const status = calculatedStatus;
+
             let noti_time: Date | null = null;
             let noti_status: number | null = null;
 
@@ -93,7 +104,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                         temperature_id: temp.temperature_id
                     },
                     data: {
-                        temperature_value: Number(body.temperature_value),
+                        temperature_value: temperatureValue,
                         record_date: new Date(),
                         status: status,
                         noti_time: noti_time,
@@ -105,7 +116,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                     data: {
                         users_id: user.users_id,
                         takecare_id: takecareperson.takecare_id,
-                        temperature_value: Number(body.temperature_value),
+                        temperature_value: temperatureValue,
                         record_date: new Date(),
                         status: status,
                         noti_time: noti_time,
