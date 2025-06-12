@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
 import _ from 'lodash';
-import { replyNotificationPostback } from '@/utils/apiLineReply';
+import { replyNotificationPostback, replyNotificationPostbackTemp } from '@/utils/apiLineReply';
 import moment from 'moment';
 
 type Data = {
@@ -79,11 +79,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
 
                 const replyToken = user.users_line_id || '';
                 if (replyToken) {
-                    await replyNotificationPostback({
+                    await replyNotificationPostbackTemp({
                         replyToken,
                         userId: user.users_id,
                         takecarepersonId: takecareperson.takecare_id,
-                        type: 'safezone',
+                        type: 'temperature',
                         message
                     });
                 }
