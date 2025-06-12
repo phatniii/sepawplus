@@ -83,7 +83,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                         replyToken,
                         userId: user.users_id,
                         takecarepersonId: takecareperson.takecare_id,
-                        type: 'temperature',
+                        type: 'safezone',
                         message
                     });
                 }
