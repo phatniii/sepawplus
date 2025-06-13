@@ -80,7 +80,18 @@ const getLocation = async (takecare_id: number, users_id: number, safezone_id: n
 		return null
 	}
 }
-
+//add
+const getTemperature = async (takecare_id: number,users_id: number)=>{
+	console.log(`Fetching settingTemp data for ${takecare_id}, user_id ${users_id}`);
+	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/setting/getTemperature?takecare_id=${takecare_id}&users_id=${users_id}`);
+	if (response.data?.data){
+		console.log("settingtemp data retrieved ", response.data.data);
+		return response.data.data
+	} else {
+		console.log("settingtemp data not found for takecare_id:", takecare_id, "users_id:", users_id);
+		return null
+	}
+}//add
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
 	if (req.method === 'POST') {
 		try {
@@ -167,8 +178,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								const responseUserTakecareperson = await getUserTakecareperson(encodedUsersId);
 								if (responseUserTakecareperson) {
 									const responeSafezone = await getSafezone(responseUserTakecareperson.takecare_id, responseUser.users_id);
+									const responseTemp = await getTemperature(responseUserTakecareperson.takecare_id,responseUser.users_id);
 									console.log("Replying with safezone setting information.");
-									await replySetting({ replyToken, userData: responseUser, userTakecarepersonData: responseUserTakecareperson, safezoneData: responeSafezone })
+									await replySetting({ replyToken, userData: responseUser, userTakecarepersonData: responseUserTakecareperson, safezoneData: responeSafezone ,temperatureSettingData:responseTemp})
 								} else {
 									console.log("No takecare person added, replying with error message.");
 									await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถตั้งค่าเขตปลอดภัยได้' })

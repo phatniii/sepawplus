@@ -81,6 +81,7 @@ interface ReplySettingData {
     };
     userTakecarepersonData?: any;
     safezoneData?: any;
+    temperatureSettingData?: any;
 }
 interface ReplyLocationData {
     replyToken: string;
