@@ -25,48 +25,68 @@ export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSaf
 
     if (resUser && resTakecareperson) {
       const resSafezone = await api.getSafezone(resTakecareperson.takecare_id, resUser.users_id);
-      const responeLocation = await getLocation(resTakecareperson.takecare_id, resUser.users_id, resSafezone.safezone_id);
+      if (resSafezone) {
+        const responseLocation = await getLocation(
+          resTakecareperson.takecare_id,
+          resUser.users_id,
+          resSafezone.safezone_id
+        );
 
-      const resExtendedHelp = await api.getExtendedHelp(resTakecareperson.takecare_id, resUser.users_id);
+        const resExtendedHelp = await api.getExtendedHelp(resTakecareperson.takecare_id, resUser.users_id);
+        let extendedHelpId = null;
 
-      let extendedHelpId = null;
+        if (resExtendedHelp) {
+          // เคสเก่ายังไม่มีคนตอบรับ → ส่งอีกครั้ง
+          if (
+            resExtendedHelp.exten_received_user_id === null &&
+            resExtendedHelp.exten_received_date === null
+          ) {
+            extendedHelpId = resExtendedHelp.exten_id;
+            await api.updateExtendedHelp({
+              extenId: extendedHelpId,
+              typeStatus: 'sendAgain',
+            });
+          } else {
+            // เคสเก่าโดนรับแล้ว → สร้างเคสใหม่
+            const data = {
+              takecareId: resTakecareperson.takecare_id,
+              usersId: resUser.users_id,
+              typeStatus: 'save',
+              safezLatitude: resSafezone.safez_latitude,
+              safezLongitude: resSafezone.safez_longitude,
+            };
+            const resNewId = await api.saveExtendedHelp(data);
+            extendedHelpId = resNewId;
+          }
+        } else {
+          // ไม่เคยมีเคสมาก่อน → สร้างใหม่
+          const data = {
+            takecareId: resTakecareperson.takecare_id,
+            usersId: resUser.users_id,
+            typeStatus: 'save',
+            safezLatitude: resSafezone.safez_latitude,
+            safezLongitude: resSafezone.safez_longitude,
+          };
+          const resNewId = await api.saveExtendedHelp(data);
+          extendedHelpId = resNewId;
+        }
 
-      // ✅ เพิ่มเงื่อนไขเช็คว่า เคสนี้ยัง "รอการช่วยเหลืออยู่จริง"
-      const isUnreceived = resExtendedHelp &&
-                           resExtendedHelp.exten_received_user_id === null &&
-                           resExtendedHelp.exten_received_date === null;
+        await replyNotification({
+          resUser,
+          resTakecareperson,
+          resSafezone,
+          extendedHelpId,
+          locationData: responseLocation,
+        });
 
-      if (isUnreceived) {
-        extendedHelpId = resExtendedHelp.exten_id;
-        await api.updateExtendedHelp({ extenId: extendedHelpId, typeStatus: 'sendAgain' });
-      } else {
-        const data = {
-          takecareId: resTakecareperson.takecare_id,
-          usersId: resUser.users_id,
-          typeStatus: 'save',
-          safezLatitude: responeLocation?.latitude || null,
-          safezLongitude: responeLocation?.longitude || null,
-        };
-        const resExtendedHelpId = await api.saveExtendedHelp(data);
-        extendedHelpId = resExtendedHelpId;
+        return extendedHelpId;
       }
-
-      // ✅ ใช้ฟังก์ชันเดียวกับ safezone
-      await replyNotification({
-        resUser,
-        resTakecareperson,
-        resSafezone,
-        extendedHelpId,
-        locationData: responeLocation,
-      });
-
-      return resUser.users_line_id;
     }
 
     return null;
   } catch (error) {
-    console.log("🚨 ~ postbackTemp error:", error);
-    return error;
+    console.log("🚨 ~ postbackTemp ~ error:", error);
+    return null;
   }
 };
 

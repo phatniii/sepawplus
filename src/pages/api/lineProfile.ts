@@ -81,10 +81,10 @@ const getLocation = async (takecare_id: number, users_id: number, safezone_id: n
 	}
 }
 //add
-const getTemperature = async (takecare_id: number,users_id: number)=>{
+const getTemperature = async (takecare_id: number, users_id: number) => {
 	console.log(`Fetching settingTemp data for ${takecare_id}, user_id ${users_id}`);
 	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/setting/getTemperature?takecare_id=${takecare_id}&users_id=${users_id}`);
-	if (response.data?.data){
+	if (response.data?.data) {
 		console.log("settingtemp data retrieved ", response.data.data);
 		return response.data.data
 	} else {
@@ -178,9 +178,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								const responseUserTakecareperson = await getUserTakecareperson(encodedUsersId);
 								if (responseUserTakecareperson) {
 									const responeSafezone = await getSafezone(responseUserTakecareperson.takecare_id, responseUser.users_id);
-									const responseTemp = await getTemperature(responseUserTakecareperson.takecare_id,responseUser.users_id);
+									const responseTemp = await getTemperature(responseUserTakecareperson.takecare_id, responseUser.users_id);
 									console.log("Replying with safezone setting information.");
-									await replySetting({ replyToken, userData: responseUser, userTakecarepersonData: responseUserTakecareperson, safezoneData: responeSafezone ,temperatureSettingData:responseTemp})
+									await replySetting({ replyToken, userData: responseUser, userTakecarepersonData: responseUserTakecareperson, safezoneData: responeSafezone, temperatureSettingData: responseTemp })
 								} else {
 									console.log("No takecare person added, replying with error message.");
 									await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถตั้งค่าเขตปลอดภัยได้' })
@@ -231,15 +231,23 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 					}
 					else if (postback.type === 'temperature') {
 						console.log("Handling temperature postback data.");
-						const replyToken = await postbackTemp({
+
+						const extendedHelpId = await postbackTemp({
 							userLineId: postback.userLineId,
 							takecarepersonId: Number(postback.takecarepersonId)
 						});
-						if (replyToken) {
-							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือกรณีอุณหภูมิสูงแล้ว' });
-						}
 
-						// ✅ Accept
+						if (extendedHelpId) {
+							const replyToken = events.replyToken;
+
+							await replyNotification({
+								replyToken,
+								message: 'ส่งคำขอความช่วยเหลือกรณีอุณหภูมิสูงแล้ว'
+							});
+
+							// 🟢 OPTIONAL: ส่ง Flex Message ปุ่มตอบรับ/ปิดเคสที่ใช้ extendedHelpId
+							// await sendFlexCaseOptions(replyToken, extendedHelpId) // ถ้าคุณมีฟังก์ชันแบบนี้
+						}
 					}
 					else if (postback.type === 'accept') {
 						console.log("Handling accept postback data.");
