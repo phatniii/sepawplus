@@ -24,15 +24,19 @@ export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSaf
     const resTakecareperson = await api.getTakecareperson(takecarepersonId.toString());
 
     if (resUser && resTakecareperson) {
-      // ✅ ดึงตำแหน่งล่าสุดของผู้ที่ดูแล
-      const resSafezone = await api.getSafezone(resTakecareperson.takecare_id, resUser.users_id)
-      const responeLocation = await getLocation(resTakecareperson.takecare_id, resUser.users_id,resSafezone.safezone_id);
+      const resSafezone = await api.getSafezone(resTakecareperson.takecare_id, resUser.users_id);
+      const responeLocation = await getLocation(resTakecareperson.takecare_id, resUser.users_id, resSafezone.safezone_id);
 
-      // ✅ สร้างหรืออัปเดต ExtendedHelp
       const resExtendedHelp = await api.getExtendedHelp(resTakecareperson.takecare_id, resUser.users_id);
+
       let extendedHelpId = null;
 
-      if (resExtendedHelp) {
+      // ✅ เพิ่มเงื่อนไขเช็คว่า เคสนี้ยัง "รอการช่วยเหลืออยู่จริง"
+      const isUnreceived = resExtendedHelp &&
+                           resExtendedHelp.exten_received_user_id === null &&
+                           resExtendedHelp.exten_received_date === null;
+
+      if (isUnreceived) {
         extendedHelpId = resExtendedHelp.exten_id;
         await api.updateExtendedHelp({ extenId: extendedHelpId, typeStatus: 'sendAgain' });
       } else {
@@ -47,11 +51,11 @@ export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSaf
         extendedHelpId = resExtendedHelpId;
       }
 
-      // ✅ ส่งข้อความแจ้งเตือน + ตำแหน่งล่าสุด
+      // ✅ ใช้ฟังก์ชันเดียวกับ safezone
       await replyNotification({
         resUser,
         resTakecareperson,
-        resSafezone, // ไม่เกี่ยวกับ safezone
+        resSafezone,
         extendedHelpId,
         locationData: responeLocation,
       });
@@ -65,7 +69,6 @@ export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSaf
     return error;
   }
 };
-
 
 
 //
