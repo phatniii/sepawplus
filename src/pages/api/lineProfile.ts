@@ -245,8 +245,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								message: 'ส่งคำขอความช่วยเหลือกรณีอุณหภูมิสูงแล้ว'
 							});
 
-							// 🟢 OPTIONAL: ส่ง Flex Message ปุ่มตอบรับ/ปิดเคสที่ใช้ extendedHelpId
-							// await sendFlexCaseOptions(replyToken, extendedHelpId) // ถ้าคุณมีฟังก์ชันแบบนี้
 						}
 					}
 					else if (postback.type === 'accept') {
