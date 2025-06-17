@@ -691,7 +691,7 @@ export const replySetting = async ({
                       layout: "baseline",
                       contents: [
                         { type: "text", text: "อุณหภูมิสูงสุด", flex: 2, weight: "bold" },
-                        { type: "text", text: `${maxTemperature} °C`, flex: 3 }
+                        { type: "text", text: `${maxTemperature} องศา`, flex: 3 }
                       ]
                     },
                   ]
