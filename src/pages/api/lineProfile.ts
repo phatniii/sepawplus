@@ -231,19 +231,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 					}
 					else if (postback.type === 'temperature') {
 						console.log("Handling temperature postback data.");
-
-						const result = await postbackTemp({
+						const replyToken = await postbackTemp({
 							userLineId: postback.userLineId,
 							takecarepersonId: Number(postback.takecarepersonId)
 						});
 
-						if (result) {
-							const replyToken = events.replyToken;
-
-							await replyNotification({
-								replyToken,
-								message: 'ส่งคำขอความช่วยเหลือกรณีอุณหภูมิสูงแล้ว'
-							});
+						if (replyToken) {
+							console.log("Temperature request sent, replying with notification.");
+							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือกรณีอุณหภูมิสูงแล้ว' });
 
 						}
 					}
