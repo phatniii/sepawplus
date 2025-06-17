@@ -232,12 +232,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 					else if (postback.type === 'temperature') {
 						console.log("Handling temperature postback data.");
 
-						const extendedHelpId = await postbackTemp({
+						const result = await postbackTemp({
 							userLineId: postback.userLineId,
 							takecarepersonId: Number(postback.takecarepersonId)
 						});
 
-						if (extendedHelpId) {
+						if (result) {
 							const replyToken = events.replyToken;
 
 							await replyNotification({

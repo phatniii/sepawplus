@@ -17,7 +17,7 @@ const getLocation = async (takecare_id: number, users_id: number, safezone_id:nu
 		return null
 	}
 }
-//สร้างฟังก์ชันของอุณหภูมิ 
+// สร้างฟังก์ชันของอุณหภูมิให้มีหลักการทำงานเดียวกับ safezone
 export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSafezoneProps) => {
   try {
     const resUser = await api.getUser(userLineId);
@@ -36,7 +36,7 @@ export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSaf
         let extendedHelpId = null;
 
         if (resExtendedHelp) {
-          // เคสเก่ายังไม่มีคนตอบรับ → ส่งอีกครั้ง
+          // ถ้ายังไม่มีคนตอบรับเคสเดิม → ส่งอีกครั้ง
           if (
             resExtendedHelp.exten_received_user_id === null &&
             resExtendedHelp.exten_received_date === null
@@ -47,7 +47,7 @@ export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSaf
               typeStatus: 'sendAgain',
             });
           } else {
-            // เคสเก่าโดนรับแล้ว → สร้างเคสใหม่
+            // ถ้ามีคนรับเคสเดิมแล้ว → สร้างเคสใหม่
             const data = {
               takecareId: resTakecareperson.takecare_id,
               usersId: resUser.users_id,
@@ -59,7 +59,7 @@ export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSaf
             extendedHelpId = resNewId;
           }
         } else {
-          // ไม่เคยมีเคสมาก่อน → สร้างใหม่
+          // ถ้าไม่เคยมีเคสมาก่อนเลย → สร้างเคสใหม่
           const data = {
             takecareId: resTakecareperson.takecare_id,
             usersId: resUser.users_id,
@@ -71,15 +71,14 @@ export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSaf
           extendedHelpId = resNewId;
         }
 
-        await replyNotification({
+        // ส่งข้อมูลออกเพื่อให้ภายนอกใช้ replyNotification เหมือน safezone
+        return {
           resUser,
           resTakecareperson,
           resSafezone,
           extendedHelpId,
           locationData: responseLocation,
-        });
-
-        return extendedHelpId;
+        };
       }
     }
 
@@ -89,7 +88,6 @@ export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSaf
     return null;
   }
 };
-
 
 //
 export const postbackSafezone = async ({userLineId, takecarepersonId}:PostbackSafezoneProps) => {
