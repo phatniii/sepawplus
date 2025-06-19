@@ -12,7 +12,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       let temperature_settings = null
 
       if (setting_id) {
-        console.log("🔍 Query by setting_id:", setting_id);
+        console.log(" Query by setting_id:", setting_id);
         temperature_settings = await prisma.temperature_settings.findFirst({
           where: { setting_id: Number(setting_id) },
         });
@@ -21,7 +21,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           return res.status(400).json({ message: 'error', data: 'พารามิเตอร์ takecare_id หรือ users_id ไม่ใช่ตัวเลข' });
         }
 
-        console.log("🔍 Query by users_id + takecare_id:", users_id, takecare_id);
+        console.log(" Query by users_id + takecare_id:", users_id, takecare_id);
         temperature_settings = await prisma.temperature_settings.findFirst({
           where: {
             users_id: Number(users_id),
@@ -33,7 +33,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(200).json({ message: 'success', data: temperature_settings });
 
     } catch (error) {
-      console.error("❌ Error fetching temperature settings:", error)
+      console.error(" Error fetching temperature settings:", error)
       return res.status(500).json({ message: 'error', data: error });
     }
 
