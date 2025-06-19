@@ -52,6 +52,7 @@ model users {
   approved_borrows     borrowequipment[]      @relation("borrow_approver")
   return_borrows       borrowequipment[]      @relation("borrow_return_user_id")
   borrowequipment      borrowequipment[]
+  fall_records         fall_records[]
   location             location[]
   safezone             safezone[]
   takecareperson       takecareperson[]
@@ -79,6 +80,7 @@ model takecareperson {
   takecare_disease     String?                @db.VarChar(300)
   takecare_drug        String?                @db.VarChar(300)
   takecare_status      Int                    @default(1)
+  fall_records         fall_records[]
   location             location[]
   safezone             safezone[]
   gender_id_ref        gender                 @relation(fields: [gender_id], references: [gender_id])
@@ -218,4 +220,21 @@ model temperature_settings {
   max_temperature Float          @default(37)
   takecareperson  takecareperson @relation(fields: [takecare_id], references: [takecare_id], map: "fk_takecare_temperature_settings")
   users           users          @relation(fields: [users_id], references: [users_id], map: "fk_users_temperature_settings")
+}
+
+model fall_records {
+  fall_id        Int            @id @default(autoincrement())
+  users_id       Int
+  takecare_id    Int
+  fall_timestamp DateTime?      @default(now()) @db.Timestamp(6)
+  fall_latitude  String?        @default("0") @db.VarChar(255)
+  fall_longitude String?        @default("0") @db.VarChar(255)
+  x_axis         Float
+  y_axis         Float
+  z_axis         Float
+  fall_status    Int?           @default(0)
+  noti_time      DateTime?      @db.Timestamp(6)
+  noti_status    Int?
+  takecareperson takecareperson @relation(fields: [takecare_id], references: [takecare_id], map: "fk_takecare_fall_records")
+  users          users          @relation(fields: [users_id], references: [users_id], map: "fk_users_fall_records")
 }
