@@ -14,17 +14,30 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
         try {
             const body = req.body;
 
-            // 1. ตรวจสอบพารามิเตอร์
-            if (!body.users_id || !body.takecare_id || !body.x_axis || !body.y_axis || !body.z_axis || !body.fall_status || !body.latitude || !body.longitude) {
+            // *** เช็คแค่ undefined หรือ null ***
+            if (
+                body.users_id === undefined || body.users_id === null ||
+                body.takecare_id === undefined || body.takecare_id === null ||
+                body.x_axis === undefined || body.x_axis === null ||
+                body.y_axis === undefined || body.y_axis === null ||
+                body.z_axis === undefined || body.z_axis === null ||
+                body.fall_status === undefined || body.fall_status === null ||
+                body.latitude === undefined || body.latitude === null ||
+                body.longitude === undefined || body.longitude === null
+            ) {
                 return res.status(400).json({ message: 'error', data: 'ไม่พบพารามิเตอร์ users_id, takecare_id, x_axis, y_axis, z_axis, fall_status, latitude, longitude' });
             }
 
-            // 2. ตรวจสอบว่าเป็นตัวเลข
-            if (isNaN(Number(body.users_id)) || isNaN(Number(body.takecare_id)) || isNaN(Number(body.fall_status))) {
+            // ตรวจสอบว่าเป็นตัวเลข (users_id, takecare_id, fall_status)
+            if (
+                isNaN(Number(body.users_id)) ||
+                isNaN(Number(body.takecare_id)) ||
+                isNaN(Number(body.fall_status))
+            ) {
                 return res.status(400).json({ message: 'error', data: 'users_id, takecare_id, fall_status ต้องเป็นตัวเลข' });
             }
 
-            // 3. หา user กับ takecareperson
+            // หา user กับ takecareperson
             const user = await prisma.users.findUnique({
                 where: { users_id: Number(body.users_id) }
             });
@@ -37,7 +50,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 return res.status(200).json({ message: 'error', data: 'ไม่พบข้อมูล user หรือ takecareperson' });
             }
 
-            // 4. สร้าง fall_records (insert ใหม่ทุกครั้ง)
+            // สร้าง fall_records (insert ใหม่ทุกครั้ง)
             await prisma.fall_records.create({
                 data: {
                     users_id: user.users_id,
