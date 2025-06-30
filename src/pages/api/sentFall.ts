@@ -5,7 +5,8 @@ import { replyNotificationPostback, replyNotificationPostbackTemp } from '@/util
 import moment from 'moment';
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method !== 'POST' && req.method! == 'PUT') {
+    // แก้จุดนี้
+    if (req.method !== 'POST' && req.method !== 'PUT') {
         res.setHeader('Allow', ['POST', 'PUT'])
         return res.status(405).json({ message: `วิธี ${req.method} ไม่อนุญาต` });
     }
@@ -57,7 +58,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 }
             });
 
-        }else{
+        } else {
             fallRecord = await prisma.fall_records.findFirst({
                 where:{
                     users_id:Number(users_id),
