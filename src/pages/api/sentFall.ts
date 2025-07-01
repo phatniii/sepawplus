@@ -15,7 +15,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
             const fallStatus = Number(body.fall_status);
 
             // --- เช็คว่าข้อมูลครบหรือไม่ ---
-             if (
+            if (
                 !body.users_id ||
                 !body.takecare_id ||
                 body.x_axis === undefined ||
@@ -60,22 +60,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
             let noti_status: number | null = null;
             let noti_time: Date | null = null;
 
-            // --- บันทึกข้อมูลการล้ม (รอเซฟ noti_status/noti_time เพิ่มท้าย) ---
-            const fallData: any = {
-                users_id: user.users_id,
-                takecare_id: takecareperson.takecare_id,
-                x_axis: Number(body.x_axis),
-                y_axis: Number(body.y_axis),
-                z_axis: Number(body.z_axis),
-                fall_latitude: body.latitude,
-                fall_longitude: body.longitude,
-                fall_status: fallStatus
-            };
+            // log debug สำคัญ!
+            console.log('[fall debug]', { fallStatus, lastFall });
 
-            // --- แจ้งเตือนเฉพาะสถานะ 2, 3 และยังไม่แจ้งซ้ำภายใน 5 นาที ---
-            if ((fallStatus === 2 || fallStatus === 3) && (
-                !lastFall || lastFall.noti_status !== 1 || moment().diff(moment(lastFall.noti_time), 'minutes') >= 5
-            )) {
+            // --- จุดที่เปลี่ยน logic ---
+            let shouldNotify = false;
+
+            if (fallStatus === 2 || fallStatus === 3) {
+                // แจ้งรอบแรกเสมอ
+                if (!lastFall) {
+                    shouldNotify = true;
+                } else if (lastFall.noti_status !== 1 || moment().diff(moment(lastFall.noti_time), 'minutes') >= 5) {
+                    shouldNotify = true;
+                }
+            }
+
+            if (shouldNotify) {
                 const message = fallStatus === 2
                     ? `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} กด "ไม่โอเค" ขอความช่วยเหลือ`
                     : `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} ไม่มีการตอบสนองภายใน 30 วินาที`;
@@ -96,12 +96,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
             } else {
                 noti_status = 0;
                 noti_time = null;
-                console.log("ล้มแต่ยังไม่เข้าเงื่อนไขแจ้งเตือน LINE หรือแจ้งไปแล้วใน 5 นาที");
+                console.log("[fall debug] ไม่เข้าเงื่อนไขแจ้งเตือน LINE (รอ 5 นาทีหรือซ้ำ)");
             }
 
             // --- เพิ่ม field noti_status, noti_time (ถ้า model รองรับ) ---
-            fallData.noti_status = noti_status;
-            fallData.noti_time = noti_time;
+            const fallData: any = {
+                users_id: user.users_id,
+                takecare_id: takecareperson.takecare_id,
+                x_axis: Number(body.x_axis),
+                y_axis: Number(body.y_axis),
+                z_axis: Number(body.z_axis),
+                fall_latitude: body.latitude,
+                fall_longitude: body.longitude,
+                fall_status: fallStatus,
+                noti_status: noti_status,
+                noti_time: noti_time,
+            };
 
             await prisma.fall_records.create({ data: fallData });
 
