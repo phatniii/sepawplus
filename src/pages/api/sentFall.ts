@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
-import _ from 'lodash';
-import { replyNotificationPostback } from '@/utils/apiLineReply';
+import { replyNotificationPostbackfall } from '@/utils/apiLineReply';
 import moment from 'moment';
 
 type Data = {
@@ -13,8 +12,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
     if (req.method === 'PUT' || req.method === 'POST') {
         try {
             const body = req.body;
+            const fallStatus = Number(body.fall_status);
 
-            if (
+            // --- เช็คว่าข้อมูลครบหรือไม่ ---
+             if (
                 !body.users_id ||
                 !body.takecare_id ||
                 body.x_axis === undefined ||
@@ -23,43 +24,55 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 body.fall_status === undefined ||
                 body.latitude === undefined ||
                 body.longitude === undefined
-            ){
-                return res.status(400).json({message:'error',data:'Missing parameter: users_id,takecare_id, x_axis, y_axis, z_axis, fall_status, latitude, longitude'});
+            ) {
+                return res.status(400).json({ message: 'error', data: 'ไม่พบพารามิเตอร์ users_id, takecare_id, x_axis, y_axis, z_axis, fall_status, latitude, longitude' });
             }
 
-            if(
-                _.isNaN(Number(body.users_id))||
-                _.isNaN(Number(body.takecare_id))||
-                _.isNaN(Number(body.fall_status))
-            ){
-                return res.status(400).json({message:'error',data:'users_id,takecare_id,fall_status ต้องเป็นตัวเลข'});
+            if (
+                isNaN(Number(body.users_id)) ||
+                isNaN(Number(body.takecare_id)) ||
+                isNaN(fallStatus)
+            ) {
+                return res.status(400).json({ message: 'error', data: 'users_id, takecare_id, fall_status ต้องเป็นตัวเลข' });
             }
 
-            const user = await prisma.users.findFirst({
-                where:{users_id:Number(body.users_id)}
+            const user = await prisma.users.findUnique({
+                where: { users_id: Number(body.users_id) }
             });
 
-            const takecareperson = await prisma.takecareperson.findFirst({
-                where:{takecare_id:Number(body.takecare_id), takecare_status:1}
+            const takecareperson = await prisma.takecareperson.findUnique({
+                where: { takecare_id: Number(body.takecare_id) }
             });
 
-            if(!user || !takecareperson){
-                return res.status(200).json({message:'error',data:'ไม่พบข้อมูล user หรือ takecareperson'});
+            if (!user || !takecareperson) {
+                return res.status(200).json({ message: 'error', data: 'ไม่พบข้อมูล user หรือ takecareperson' });
             }
 
-            const lastFall = await prisma.fall_records.findFirst({
-                where:{
-                    users_id:user.users_id,
-                    takecare_id:takecareperson.takecare_id
+            // --- หาเหตุการณ์ล้มล่าสุดของผู้ใช้/ผู้ดูแลนี้ ---
+            let lastFall = await prisma.fall_records.findFirst({
+                where: {
+                    users_id: user.users_id,
+                    takecare_id: takecareperson.takecare_id,
                 },
-                orderBy:{ noti_time :'desc' }
+                orderBy: { fall_timestamp: 'desc' }
             });
 
-            const fallStatus = Number(body.fall_status);
-            let noti_time:Date| null=null;
-            let noti_status:number | null = null;
+            let noti_status: number | null = null;
+            let noti_time: Date | null = null;
 
-            // แจ้งเตือนเฉพาะสถานะ 2, 3 เท่านั้น
+            // --- บันทึกข้อมูลการล้ม (รอเซฟ noti_status/noti_time เพิ่มท้าย) ---
+            const fallData: any = {
+                users_id: user.users_id,
+                takecare_id: takecareperson.takecare_id,
+                x_axis: Number(body.x_axis),
+                y_axis: Number(body.y_axis),
+                z_axis: Number(body.z_axis),
+                fall_latitude: body.latitude,
+                fall_longitude: body.longitude,
+                fall_status: fallStatus
+            };
+
+            // --- แจ้งเตือนเฉพาะสถานะ 2, 3 และยังไม่แจ้งซ้ำภายใน 5 นาที ---
             if ((fallStatus === 2 || fallStatus === 3) && (
                 !lastFall || lastFall.noti_status !== 1 || moment().diff(moment(lastFall.noti_time), 'minutes') >= 5
             )) {
@@ -69,12 +82,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
 
                 const replyToken = user.users_line_id || '';
                 if (replyToken) {
-                    await replyNotificationPostback({
-                        replyToken,
+                    await replyNotificationPostbackfall({
                         userId: user.users_id,
                         takecarepersonId: takecareperson.takecare_id,
                         type: 'fall',
-                        message
+                        message,
+                        replyToken,
                     });
                 }
 
@@ -86,42 +99,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 console.log("ล้มแต่ยังไม่เข้าเงื่อนไขแจ้งเตือน LINE หรือแจ้งไปแล้วใน 5 นาที");
             }
 
-            // update หรือ create ข้อมูล fall_records
-            if (lastFall) {
-                await prisma.fall_records.update({
-                    where: { fall_id: lastFall.fall_id },
-                    data: {
-                        x_axis: Number(body.x_axis),
-                        y_axis: Number(body.y_axis),
-                        z_axis: Number(body.z_axis),
-                        fall_latitude: body.latitude,
-                        fall_longitude: body.longitude,
-                        fall_status: fallStatus,
-                        noti_time: noti_time,
-                        noti_status: noti_status
-                    }
-                });
-            } else {
-                await prisma.fall_records.create({
-                    data: {
-                        users_id: user.users_id,
-                        takecare_id: takecareperson.takecare_id,
-                        x_axis: Number(body.x_axis),
-                        y_axis: Number(body.y_axis),
-                        z_axis: Number(body.z_axis),
-                        fall_latitude: body.latitude,
-                        fall_longitude: body.longitude,
-                        fall_status: fallStatus,
-                        noti_time: noti_time,
-                        noti_status: noti_status
-                    }
-                });
-            }
+            // --- เพิ่ม field noti_status, noti_time (ถ้า model รองรับ) ---
+            fallData.noti_status = noti_status;
+            fallData.noti_time = noti_time;
 
-            return res.status(200).json({ message: 'success', data: 'บันทึกข้อมูลเรียบร้อย' });
+            await prisma.fall_records.create({ data: fallData });
+
+            return res.status(200).json({ message: 'success', data: 'บันทึกข้อมูลการล้มและแจ้งเตือนเรียบร้อย' });
 
         } catch (error) {
-            console.error("API /sentFall error:", error);
+            console.error("🚀 ~ API /sentFall error:", error);
             return res.status(400).json({ message: 'error', data: error });
         }
     } else {
