@@ -59,6 +59,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
             let noti_time:Date| null=null;
             let noti_status:number | null = null;
 
+            // แจ้งเตือนเฉพาะสถานะ 2, 3 เท่านั้น
             if ((fallStatus === 2 || fallStatus === 3) && (
                 !lastFall || lastFall.noti_status !== 1 || moment().diff(moment(lastFall.noti_time), 'minutes') >= 5
             )) {
