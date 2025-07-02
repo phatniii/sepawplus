@@ -15,53 +15,54 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
             const body = req.body;
 
             if (
-                !body.users_id ||
-                !body.takecare_id ||
+                body.users_id === undefined || body.users_id === null ||
+                body.takecare_id === undefined || body.takecare_id === null ||
                 body.x_axis === undefined ||
                 body.y_axis === undefined ||
                 body.z_axis === undefined ||
                 body.fall_status === undefined ||
                 body.latitude === undefined ||
                 body.longitude === undefined
-            ){
-                return res.status(400).json({message:'error',data:'Missing parameter: users_id,takecare_id, x_axis, y_axis, z_axis, fall_status, latitude, longitude'});
+            ) {
+                return res.status(400).json({ message: 'error', data: 'Missing parameter: users_id, takecare_id, x_axis, y_axis, z_axis, fall_status, latitude, longitude' });
             }
 
-            if(
-                _.isNaN(Number(body.users_id))||
-                _.isNaN(Number(body.takecare_id))||
+            if (
+                _.isNaN(Number(body.users_id)) ||
+                _.isNaN(Number(body.takecare_id)) ||
                 _.isNaN(Number(body.fall_status))
-            ){
-                return res.status(400).json({message:'error',data:'users_id,takecare_id,fall_status ต้องเป็นตัวเลข'});
+            ) {
+                return res.status(400).json({ message: 'error', data: 'users_id, takecare_id, fall_status ต้องเป็นตัวเลข' });
             }
 
             const user = await prisma.users.findFirst({
-                where:{users_id:Number(body.users_id)}
+                where: { users_id: Number(body.users_id) }
             });
 
             const takecareperson = await prisma.takecareperson.findFirst({
-                where:{takecare_id:Number(body.takecare_id), takecare_status:1}
+                where: { takecare_id: Number(body.takecare_id), takecare_status: 1 }
             });
 
-            if(!user || !takecareperson){
-                return res.status(200).json({message:'error',data:'ไม่พบข้อมูล user หรือ takecareperson'});
+            if (!user || !takecareperson) {
+                return res.status(200).json({ message: 'error', data: 'ไม่พบข้อมูล user หรือ takecareperson' });
             }
 
+            // หาเหตุการณ์ล้มล่าสุด
             const lastFall = await prisma.fall_records.findFirst({
-                where:{
-                    users_id:user.users_id,
-                    takecare_id:takecareperson.takecare_id
+                where: {
+                    users_id: user.users_id,
+                    takecare_id: takecareperson.takecare_id
                 },
-                orderBy:{ noti_time :'desc' }
+                orderBy: { noti_time: 'desc' }
             });
 
             const fallStatus = Number(body.fall_status);
-            let noti_time:Date| null=null;
-            let noti_status:number | null = null;
+            let noti_time: Date | null = null;
+            let noti_status: number | null = null;
 
-            // แจ้งเตือนเฉพาะสถานะ 2, 3 เท่านั้น
+            // แจ้งเตือนเฉพาะสถานะ 2, 3 เท่านั้น และกันแจ้งซ้ำใน 5 นาที
             if ((fallStatus === 2 || fallStatus === 3) && (
-                !lastFall || lastFall.noti_status !== 1 || moment().diff(moment(lastFall.noti_time), 'minutes') >= 5
+                !lastFall || lastFall.noti_status !== 1 || !lastFall.noti_time || moment().diff(moment(lastFall.noti_time), 'minutes') >= 5
             )) {
                 const message = fallStatus === 2
                     ? `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} กด "ไม่โอเค" ขอความช่วยเหลือ`
@@ -86,37 +87,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 console.log("ล้มแต่ยังไม่เข้าเงื่อนไขแจ้งเตือน LINE หรือแจ้งไปแล้วใน 5 นาที");
             }
 
-            // update หรือ create ข้อมูล fall_records
-            if (lastFall) {
-                await prisma.fall_records.update({
-                    where: { fall_id: lastFall.fall_id },
-                    data: {
-                        x_axis: Number(body.x_axis),
-                        y_axis: Number(body.y_axis),
-                        z_axis: Number(body.z_axis),
-                        fall_latitude: body.latitude,
-                        fall_longitude: body.longitude,
-                        fall_status: fallStatus,
-                        noti_time: noti_time,
-                        noti_status: noti_status
-                    }
-                });
-            } else {
-                await prisma.fall_records.create({
-                    data: {
-                        users_id: user.users_id,
-                        takecare_id: takecareperson.takecare_id,
-                        x_axis: Number(body.x_axis),
-                        y_axis: Number(body.y_axis),
-                        z_axis: Number(body.z_axis),
-                        fall_latitude: body.latitude,
-                        fall_longitude: body.longitude,
-                        fall_status: fallStatus,
-                        noti_time: noti_time,
-                        noti_status: noti_status
-                    }
-                });
-            }
+            // สร้าง record ใหม่ทุกครั้ง (insert ใหม่เสมอ)
+            await prisma.fall_records.create({
+                data: {
+                    users_id: user.users_id,
+                    takecare_id: takecareperson.takecare_id,
+                    x_axis: Number(body.x_axis),
+                    y_axis: Number(body.y_axis),
+                    z_axis: Number(body.z_axis),
+                    fall_latitude: body.latitude,
+                    fall_longitude: body.longitude,
+                    fall_status: fallStatus,
+                    noti_time: noti_time,
+                    noti_status: noti_status
+                }
+            });
 
             return res.status(200).json({ message: 'success', data: 'บันทึกข้อมูลเรียบร้อย' });
 
