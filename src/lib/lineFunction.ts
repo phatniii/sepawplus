@@ -17,6 +17,60 @@ const getLocation = async (takecare_id: number, users_id: number, safezone_id:nu
 		return null
 	}
 }
+export const postbackFall = async ({ userLineId, takecarepersonId }: PostbackSafezoneProps) => {
+  try {
+    const resUser = await api.getUser(userLineId);
+    const resTakecareperson = await api.getTakecareperson(takecarepersonId.toString());
+
+    if (resUser && resTakecareperson) {
+      const resSafezone = await api.getSafezone(resTakecareperson.takecare_id, resUser.users_id);
+      if (resSafezone) {
+        const responseLocation = await getLocation(
+          resTakecareperson.takecare_id,
+          resUser.users_id,
+          resSafezone.safezone_id
+        );
+
+        const resExtendedHelp = await api.getExtendedHelp(resTakecareperson.takecare_id, resUser.users_id);
+        let extendedHelpId = null;
+
+        if (resExtendedHelp) {
+          // มีเคสเดิม → อัปเดตเคสเดิมว่า "ส่งอีกครั้ง"
+          extendedHelpId = resExtendedHelp.exten_id;
+          await api.updateExtendedHelp({ extenId: extendedHelpId, typeStatus: 'sendAgain' });
+        } else {
+          // ไม่มีเคส → สร้างเคสใหม่
+          const data = {
+            takecareId    : resTakecareperson.takecare_id,
+            usersId       : resUser.users_id,
+            typeStatus    : 'save',
+            safezLatitude : resSafezone.safez_latitude,
+            safezLongitude: resSafezone.safez_longitude,
+          };
+          const resNewId = await api.saveExtendedHelp(data);
+          extendedHelpId = resNewId;
+        }
+
+        // ส่งการแจ้งเตือนกลับ
+        await replyNotification({
+          resUser,
+          resTakecareperson,
+          resSafezone,
+          extendedHelpId,
+          locationData: responseLocation,
+        });
+
+        // ส่ง Line ID กลับเป็นตัวบ่งชี้ว่า success
+        return resUser.users_line_id;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.log("🚨 ~ postbackFall ~ error:", error);
+    return null;
+  }
+};
 // ปรับให้ postbackTemp ทำงานเหมือน postbackSafezone
 export const postbackTemp = async ({ userLineId, takecarepersonId }: PostbackSafezoneProps) => {
   try {

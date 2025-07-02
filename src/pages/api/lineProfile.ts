@@ -4,7 +4,7 @@ import axios from "axios";
 import prisma from '@/lib/prisma'
 import { replyMessage, replyRegistration, replyUserData, replyNotRegistration, replyMenuBorrowequipment, replyConnection, replyLocation, replySetting, replyUserInfo, replyNotification } from '@/utils/apiLineReply';
 import { encrypt, parseQueryString } from '@/utils/helpers'
-import { postbackSafezone, postbackAccept, postbackClose, postbackTemp } from '@/lib/lineFunction'
+import { postbackSafezone, postbackAccept, postbackClose, postbackTemp, postbackFall } from '@/lib/lineFunction'
 import * as api from '@/lib/listAPI'
 
 type Data = {
@@ -242,6 +242,19 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
 						}
 					}
+					// ---- เพิ่มส่วนนี้เข้าไป ----
+					else if (postback.type === 'fall') {
+						console.log("Handling fall postback data.");
+						const replyToken = await postbackFall({
+							userLineId: postback.userLineId,
+							takecarepersonId: Number(postback.takecarepersonId)
+						});
+						if (replyToken) {
+							console.log("Fall request sent, replying with notification.");
+							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือกรณีล้มแล้ว' });
+						}
+					}
+					// ---- END ----
 					else if (postback.type === 'accept') {
 						console.log("Handling accept postback data.");
 						let data = postback
