@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
 import _ from 'lodash';
 import axios from 'axios';
+import { replyNotificationPostback } from '@/utils/apiLineReply'; // ใช้งานฟังก์ชันเดิม
 import moment from 'moment';
 
 const LINE_PUSH_MESSAGING_API = 'https://api.line.me/v2/bot/message/push';
@@ -20,6 +21,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
         try {
             const body = req.body;
 
+           
             if (
                 body.users_id === undefined || body.users_id === null ||
                 body.takecare_id === undefined || body.takecare_id === null ||
@@ -53,7 +55,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 return res.status(200).json({ message: 'error', data: 'ไม่พบข้อมูล user หรือ takecareperson' });
             }
 
-         
             const lastFall = await prisma.fall_records.findFirst({
                 where: {
                     users_id: user.users_id,
@@ -66,7 +67,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
             let noti_time: Date | null = null;
             let noti_status: number | null = null;
 
-            
             if ((fallStatus === 2 || fallStatus === 3) && (
                 !lastFall || lastFall.noti_status !== 1 || !lastFall.noti_time || moment().diff(moment(lastFall.noti_time), 'minutes') >= 5
             )) {
@@ -75,55 +75,29 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                     : `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} ไม่มีการตอบสนองภายใน 30 วินาที`;
 
                 const replyToken = user.users_line_id || '';
-
-                
                 if (replyToken) {
-                    const requestData = {
-                        to: replyToken, 
+                    
+                    await replyNotificationPostback({
+                        replyToken,
+                        userId: user.users_id,
+                        takecarepersonId: takecareperson.takecare_id,
+                        type: 'fall',
+                        message
+                    });
+
+                    const locationRequest = {
+                        to: replyToken,
                         messages: [
                             {
                                 type: 'location',
                                 title: `ตำแหน่งผู้ล้ม`,
-                                address: `ตำแหน่งล่าสุด`,
+                                address: `ตำแหน่งที่เกิดเหตุล้ม`,
                                 latitude: Number(body.latitude),
-                                longitude: Number(body.longitude),
-                            },
-                            {
-                                type: 'flex',
-                                altText: 'แจ้งเตือนการล้ม',
-                                contents: {
-                                    type: 'bubble',
-                                    body: {
-                                        type: 'box',
-                                        layout: 'vertical',
-                                        contents: [
-                                            {
-                                                type: 'text',
-                                                text: 'แจ้งเตือนการล้ม',
-                                                color: '#FC0303',
-                                                size: 'xl',
-                                                weight: 'bold'
-                                            },
-                                            {
-                                                type: 'separator',
-                                                margin: 'md'
-                                            },
-                                            {
-                                                type: 'text',
-                                                text: message,
-                                                color: '#555555',
-                                                size: 'md',
-                                                wrap: true,
-                                                margin: 'md'
-                                            }
-                                        ]
-                                    }
-                                }
+                                longitude: Number(body.longitude)
                             }
                         ]
                     };
-
-                    await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
+                    await axios.post(LINE_PUSH_MESSAGING_API, locationRequest, { headers: LINE_HEADER });
                 }
 
                 noti_status = 1;
@@ -134,7 +108,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 console.log("ล้มแต่ยังไม่เข้าเงื่อนไขแจ้งเตือน LINE หรือแจ้งไปแล้วใน 5 นาที");
             }
 
-        
+            
             await prisma.fall_records.create({
                 data: {
                     users_id: user.users_id,
