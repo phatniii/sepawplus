@@ -53,6 +53,8 @@ model users {
   return_borrows       borrowequipment[]      @relation("borrow_return_user_id")
   borrowequipment      borrowequipment[]
   fall_records         fall_records[]
+  heartrate_records    heartrate_records[]
+  heartrate_settings   heartrate_settings[]
   location             location[]
   safezone             safezone[]
   takecareperson       takecareperson[]
@@ -81,6 +83,8 @@ model takecareperson {
   takecare_drug        String?                @db.VarChar(300)
   takecare_status      Int                    @default(1)
   fall_records         fall_records[]
+  heartrate_records    heartrate_records[]
+  heartrate_settings   heartrate_settings[]
   location             location[]
   safezone             safezone[]
   gender_id_ref        gender                 @relation(fields: [gender_id], references: [gender_id])
@@ -237,4 +241,28 @@ model fall_records {
   noti_status    Int?
   takecareperson takecareperson @relation(fields: [takecare_id], references: [takecare_id], map: "fk_takecare_fall_records")
   users          users          @relation(fields: [users_id], references: [users_id], map: "fk_users_fall_records")
+}
+
+model heartrate_records {
+  heartrate_id   Int            @id @default(autoincrement())
+  users_id       Int
+  takecare_id    Int
+  bpm            Int
+  timestamp      DateTime?      @default(now()) @db.Timestamp(6)
+  status         Int?           @default(1)
+  noti_time      DateTime?      @db.Timestamp(6)
+  noti_status    Int?
+  record_date    DateTime?      @default(dbgenerated("CURRENT_DATE")) @db.Date
+  takecareperson takecareperson @relation(fields: [takecare_id], references: [takecare_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_takecareperson_hr")
+  users          users          @relation(fields: [users_id], references: [users_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_hr")
+}
+
+model heartrate_settings {
+  id             Int            @id @default(autoincrement())
+  users_id       Int
+  takecare_id    Int
+  max_bpm        Int
+  min_bpm        Int
+  takecareperson takecareperson @relation(fields: [takecare_id], references: [takecare_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_takecareperson_hrset")
+  users          users          @relation(fields: [users_id], references: [users_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_hrset")
 }
