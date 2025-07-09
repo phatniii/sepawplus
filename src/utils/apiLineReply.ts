@@ -629,7 +629,7 @@ export const replySetting = async ({
     let idsafezone = 0;
     let maxTemperature = 0; 
     let idSetting = 0; 
-    let minBpm = 0;
+    //let minBpm = 0;
     let maxBpm = 0;
     let idSettingHR = 0;
 
@@ -644,7 +644,7 @@ export const replySetting = async ({
       idSetting = temperatureSettingData.setting_id || 0;
     }
     if(heartrateSettingData){
-        minBpm = heartrateSettingData.min_bpm || 50;
+       // minBpm = heartrateSettingData.min_bpm || 50;
         maxBpm = heartrateSettingData.max_bpm || 120;
         idSettingHR =  heartrateSettingData.id || 0;
     }
@@ -716,7 +716,7 @@ export const replySetting = async ({
                       layout: "baseline",
                       contents: [
                         { type: "text", text: "อัตราการเต้นของหัวใจ", flex: 2, weight: "bold" },
-                        { type: "text", text: `${minBpm} - ${maxBpm} bpm`, flex: 3 }
+                        { type: "text", text: `${maxBpm} bpm`, flex: 3 }
                       ]
                     }
                   ]
