@@ -4,7 +4,7 @@ import axios from "axios";
 import prisma from '@/lib/prisma'
 import { replyMessage, replyRegistration, replyUserData, replyNotRegistration, replyMenuBorrowequipment, replyConnection, replyLocation, replySetting, replyUserInfo, replyNotification } from '@/utils/apiLineReply';
 import { encrypt, parseQueryString } from '@/utils/helpers'
-import { postbackSafezone, postbackAccept, postbackClose, postbackTemp, postbackFall } from '@/lib/lineFunction'
+import { postbackSafezone, postbackAccept, postbackClose, postbackTemp, postbackFall,postbackHeartRate } from '@/lib/lineFunction'
 import * as api from '@/lib/listAPI'
 
 type Data = {
@@ -80,7 +80,6 @@ const getLocation = async (takecare_id: number, users_id: number, safezone_id: n
 		return null
 	}
 }
-//add
 const getTemperature = async (takecare_id: number, users_id: number) => {
 	console.log(`Fetching settingTemp data for ${takecare_id}, user_id ${users_id}`);
 	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/setting/getTemperature?takecare_id=${takecare_id}&users_id=${users_id}`);
@@ -91,7 +90,19 @@ const getTemperature = async (takecare_id: number, users_id: number) => {
 		console.log("settingtemp data not found for takecare_id:", takecare_id, "users_id:", users_id);
 		return null
 	}
-}//add
+}
+const getHeartRate = async (takecare_id: number, users_id: number) => {
+	console.log(`Fetching heart rate setting data for takecare_id: ${takecare_id}, users_id: ${users_id}`);
+	const response = await axios.get(`${process.env.WEB_DOMAIN}/api/setting/getHeartRate?takecare_id=${takecare_id}&users_id=${users_id}`);
+	if (response.data?.data) {
+		console.log("Heart rate setting data retrieved", response.data.data);
+		return response.data.data
+	} else {
+		console.log("Heart rate setting data not found for takecare_id:", takecare_id, "users_id:", users_id);
+		return null
+	}
+}
+
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
 	if (req.method === 'POST') {
 		try {
@@ -179,8 +190,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								if (responseUserTakecareperson) {
 									const responeSafezone = await getSafezone(responseUserTakecareperson.takecare_id, responseUser.users_id);
 									const responseTemp = await getTemperature(responseUserTakecareperson.takecare_id, responseUser.users_id);
+									const responseHeartRate = await getHeartRate(responseUserTakecareperson.takecare_id, responseUser.users_id);
 									console.log("Replying with safezone setting information.");
-									await replySetting({ replyToken, userData: responseUser, userTakecarepersonData: responseUserTakecareperson, safezoneData: responeSafezone, temperatureSettingData: responseTemp })
+									await replySetting({ replyToken, userData: responseUser, userTakecarepersonData: responseUserTakecareperson, safezoneData: responeSafezone, temperatureSettingData: responseTemp,heartrateSettingData: responseHeartRate   })
 								} else {
 									console.log("No takecare person added, replying with error message.");
 									await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถตั้งค่าเขตปลอดภัยได้' })
@@ -254,7 +266,19 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือกรณีล้มแล้ว' });
 						}
 					}
-					// ---- END ----
+					else if (postback.type === 'heartrate') {
+						console.log("Handling heart rate postback data.");
+						const replyToken = await postbackHeartRate({
+							userLineId: postback.userLineId,
+							takecarepersonId: Number(postback.takecarepersonId)
+						});
+
+						if (replyToken) {
+							console.log("Heart Rate request sent, replying with notification.");
+							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือกรณีหัวใจผิดปกติแล้ว' });
+						}
+					}
+					
 					else if (postback.type === 'accept') {
 						console.log("Handling accept postback data.");
 						let data = postback
