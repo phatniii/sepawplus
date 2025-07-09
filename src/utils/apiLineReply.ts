@@ -753,7 +753,7 @@ export const replySetting = async ({
                   action: {
                     type: "uri",
                     label: "ตั้งค่าอัตราการเต้นหัวใจ",
-                    uri: `${WEB_API}/settingHeartrate?auToken=${userData.users_line_id}&idsetting=${idSettingHR || ''}`
+                    uri: `${WEB_API}/settingHeartRate?auToken=${userData.users_line_id}&idsetting=${idSettingHR || ''}`
                   }
                 }
               ]
