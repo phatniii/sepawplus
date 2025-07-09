@@ -89,6 +89,7 @@ interface ReplySettingData {
     userTakecarepersonData?: any;
     safezoneData?: any;
     temperatureSettingData?: any;
+    heartrateSettingData?: any;
 }
 interface ReplyLocationData {
     replyToken: string;
@@ -618,15 +619,19 @@ export const replySetting = async ({
   userData,
   userTakecarepersonData,
   safezoneData,
-  temperatureSettingData // เพิ่มข้อมูลตั้งค่าอุณหภูมิ (ถ้ามี)
+  temperatureSettingData,
+  heartrateSettingData
 }: ReplySettingData & { temperatureSettingData?: any }) => {
   try {
     // ค่า default
     let r1 = 0;
     let r2 = 0;
     let idsafezone = 0;
-    let maxTemperature = 0; // ค่า default อุณหภูมิ
-    let idSetting = 0; // รหัส setting อุณหภูมิ
+    let maxTemperature = 0; 
+    let idSetting = 0; 
+    let minBpm = 0;
+    let maxBpm = 0;
+    let idSettingHR = 0;
 
     if (safezoneData) {
       r1 = safezoneData.safez_radiuslv1 || 0;
@@ -637,6 +642,11 @@ export const replySetting = async ({
     if (temperatureSettingData) {
       maxTemperature = temperatureSettingData.max_temperature || 37;
       idSetting = temperatureSettingData.setting_id || 0;
+    }
+    if(heartrateSettingData){
+        minBpm = heartrateSettingData.min_bpm || 50;
+        maxBpm = heartrateSettingData.max_bpm || 120;
+        idSettingHR =  heartrateSettingData.id || 0;
     }
 
     const requestData = {
@@ -701,6 +711,14 @@ export const replySetting = async ({
                         { type: "text", text: `${maxTemperature} องศา`, flex: 3 }
                       ]
                     },
+                     {
+                      type: "box",
+                      layout: "baseline",
+                      contents: [
+                        { type: "text", text: "อัตราการเต้นของหัวใจ", flex: 2, weight: "bold" },
+                        { type: "text", text: `${minBpm} - ${maxBpm} bpm`, flex: 3 }
+                      ]
+                    }
                   ]
                 },
                 {
@@ -724,6 +742,18 @@ export const replySetting = async ({
                     type: "uri",
                     label: "ตั้งค่าอุณหภูมิร่างกาย",
                     uri: `${WEB_API}/settingTemp?auToken=${userData.users_line_id}&idsetting=${idSetting || ''}`
+                  }
+                },
+                 {
+                  type: "button",
+                  style: "primary",
+                  height: "sm",
+                  margin: "xxl",
+                  color: "#60C4A9",
+                  action: {
+                    type: "uri",
+                    label: "ตั้งค่าอัตราการเต้นหัวใจ",
+                    uri: `${WEB_API}/settingHeartrate?auToken=${userData.users_line_id}&idsetting=${idSettingHR || ''}`
                   }
                 }
               ]
