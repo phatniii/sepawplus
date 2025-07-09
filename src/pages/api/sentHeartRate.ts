@@ -48,12 +48,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 }
             });
 
-            // เปรียบเทียบค่า HR กับที่ตั้งไว้
+            // เปรียบเทียบค่า HR กับที่ตั้งไว้ (เช็คแค่ max_bpm)
             const bpmValue = Number(body.bpm);
             let calculatedStatus = Number(body.status);
 
-            if (settingHR && (bpmValue > settingHR.max_bpm || bpmValue < settingHR.min_bpm)) {
-                calculatedStatus = 1; // นอกช่วงปกติ
+            // เช็คเฉพาะค่าที่เกิน max_bpm เท่านั้น
+            if (settingHR && bpmValue > settingHR.max_bpm) {
+                calculatedStatus = 1; // เกิน max_bpm ถือว่าผิดปกติ
             } else {
                 calculatedStatus = 0; // ปกติ
             }
@@ -63,7 +64,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
             let noti_time: Date | null = null;
             let noti_status: number | null = null;
 
-            // ตรวจสอบประวัติแจ้งเตือนล่าสุด
+          
             const lastHR = await prisma.heartrate_records.findFirst({
                 where: {
                     users_id: user.users_id,
@@ -74,7 +75,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 }
             });
 
-            // ถ้าเกินช่วงแจ้งเตือน LINE
+         
             if (
                 status === 1 &&
                 (!lastHR ||
@@ -104,7 +105,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 console.log("อัตราการเต้นของหัวใจอยู่ในระดับปกติ");
             }
 
-            // update หรือ create record
+          
             if (lastHR) {
                 await prisma.heartrate_records.update({
                     where: {
@@ -116,6 +117,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                         status: status,
                         noti_time: noti_time,
                         noti_status: noti_status
+      
                     }
                 });
             } else {
@@ -128,6 +130,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                         status: status,
                         noti_time: noti_time,
                         noti_status: noti_status
+            
                     }
                 });
             }

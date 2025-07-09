@@ -21,20 +21,15 @@ interface DataUserState {
 const SettingHeartRate = () => {
   const router = useRouter()
 
-
   const [alert, setAlert] = useState({ show: false, message: '' })
- 
   const [isLoading, setLoading] = useState(false)
-  
   const [dataUser, setDataUser] = useState<DataUserState>({
     isLogin: false,
     userData: null,
     takecareData: null,
   })
- 
   const [idSetting, setIdSetting] = useState<number | null>(null)
- 
-  const [minBpm, setMinBpm] = useState<number>(50)
+  // const [minBpm, setMinBpm] = useState<number>(50) // <--- คอมเมนต์ออก
   const [maxBpm, setMaxBpm] = useState<number>(120)
 
   useEffect(() => {
@@ -44,7 +39,6 @@ const SettingHeartRate = () => {
     }
   }, [router.query.auToken])
 
- 
   const fetchUserData = async (auToken: string) => {
     try {
       const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${auToken}`)
@@ -71,14 +65,13 @@ const SettingHeartRate = () => {
     }
   }
 
- 
   const fetchHeartRateSetting = async (settingId: number) => {
     try {
       const res = await axios.get(`${process.env.WEB_DOMAIN}/api/setting/getHeartRate?id=${settingId}`)
       if (res.data?.data) {
         const data = res.data.data
         setMaxBpm(Number(data.max_bpm))
-        setMinBpm(Number(data.min_bpm))
+        // setMinBpm(Number(data.min_bpm)) // <--- คอมเมนต์ออก (ไม่ต้องโหลด min_bpm)
         setIdSetting(settingId)
       }
     } catch (error) {
@@ -86,12 +79,10 @@ const SettingHeartRate = () => {
     }
   }
 
-  
   const showAlert = (message: string) => {
     setAlert({ show: true, message })
   }
 
- 
   const handleSave = async () => {
     if (!dataUser.takecareData || !dataUser.userData) {
       showAlert('ไม่พบข้อมูลผู้ใช้งาน')
@@ -103,7 +94,7 @@ const SettingHeartRate = () => {
         takecare_id: dataUser.takecareData.takecare_id,
         users_id: dataUser.userData.users_id,
         max_bpm: maxBpm,
-        min_bpm: minBpm,
+        // min_bpm: minBpm, // <--- คอมเมนต์ออก (ไม่ต้องส่ง min_bpm)
       }
       if (idSetting) {
         payload.id = idSetting
@@ -131,12 +122,12 @@ const SettingHeartRate = () => {
           <Row>
             <Col>
               <h3>ตั้งค่าการแจ้งเตือนอัตราการเต้นของหัวใจ</h3>
-              <p>ค่าปกติที่แนะนำ: 50-120 bpm (คุณสามารถปรับค่าได้ตามต้องการ)</p>
+              <p>กำหนดอัตราการเต้นของหัวใจสูงสุดที่อนุญาต (bpm)</p>
             </Col>
           </Row>
           <Row className="py-3">
             <Col>
-              <p>
+              {/* <p>
                 อัตราการเต้นของหัวใจต่ำสุด: <strong>{minBpm} bpm</strong>
               </p>
               <RangeSlider
@@ -145,12 +136,12 @@ const SettingHeartRate = () => {
                 step={1}
                 value={minBpm}
                 onChange={(value) => setMinBpm(Number(value))}
-              />
-              <p className="mt-4">
-                อัตราการเต้นของหัวใจสูงสุด: <strong>{maxBpm} bpm</strong>
+              /> */}
+              <p>
+                อัตราการเต้นของหัวใจสูงสุดที่อนุญาต: <strong>{maxBpm} bpm</strong>
               </p>
               <RangeSlider
-                min={minBpm}
+                min={50}
                 max={200}
                 step={1}
                 value={maxBpm}
