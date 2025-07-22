@@ -125,18 +125,39 @@ const TemperatureSetting = () => {
           <Spinner animation="border" variant="primary" />
         </div>
       ) : (
-        <Container className="py-3">
-          <Row>
-            <Col>
-              <h3>ตั้งค่าการแจ้งเตือนอุณหภูมิสูงสุด</h3>
-              <p>ค่าปกติ: 37°C (คุณสามารถปรับค่าได้ตามต้องการ)</p>
-            </Col>
-          </Row>
-          <Row className="py-3">
-            <Col>
-              <p>
-                อุณหภูมิสูงสุดที่อนุญาต: <strong>{maxTemperature}°C</strong>
-              </p>
+        <Container className="d-flex justify-content-center align-items-center min-vh-100" style={{ background: "#f7fafd" }}>
+          <div
+            className="shadow"
+            style={{
+              background: "#fff",
+              borderRadius: 24,
+              padding: "32px 24px 28px 24px",
+              maxWidth: 380,
+              width: "100%",
+              boxShadow: "0 2px 24px 0 rgba(0,0,0,0.07)"
+            }}
+          >
+            <div className="text-center mb-3">
+              {/* SVG ไอคอนอุณหภูมิ */}
+              <svg width="90" height="90" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  fill="none" 
+                  stroke="#ff6641" 
+                  strokeWidth="2" 
+                  d="M16 6C13.7909 6 12 7.79086 12 10V20C12 22.2091 13.7909 24 16 24C18.2091 24 20 22.2091 20 20V10C20 7.79086 18.2091 6 16 6ZM16 12C15.4477 12 15 12.4477 15 13V19C15 19.5523 15.4477 20 16 20C16.5523 20 17 19.5523 17 19V13C17 12.4477 16.5523 12 16 12Z" 
+                />
+              </svg>
+            </div>
+            <div className="text-center mb-3">
+              <h2 style={{ fontWeight: 700, color: "#2c3746", marginBottom: 12, fontSize: 26, lineHeight: 1.2 }}>
+                ตั้งค่าการแจ้งเตือน<br />อุณหภูมิร่างกาย
+              </h2>
+            </div>
+            <div className="mb-2" style={{ fontSize: 18, color: "#48526b", fontWeight: 500 }}>
+              ค่าอุณหภูมิสูงสุดที่อนุญาต:
+              <span style={{ color: "#ff6641", fontWeight: 700, marginLeft: 6 }}>{maxTemperature}°C</span>
+            </div>
+            <div className="my-3">
               <RangeSlider
                 min={30}
                 max={45}
@@ -144,14 +165,18 @@ const TemperatureSetting = () => {
                 value={maxTemperature}
                 onChange={(value) => setMaxTemperature(Number(value))}
               />
-            </Col>
-          </Row>
-          <Row className="py-3">
-            <Col>
-              <ButtonState text="บันทึก" isLoading={isLoading} onClick={handleSave} className="btn btn-primary" />
-            </Col>
-          </Row>
-          <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
+            </div>
+            <div className="mb-4" style={{ fontSize: 16, color: "#48526b", marginTop: 20 }}>
+              หากเกินค่านี้ ระบบจะแจ้งเตือนทันทีผ่าน LINE
+            </div>
+            <ButtonState
+              text="✔ บันทึกการตั้งค่า"
+              isLoading={isLoading}
+              onClick={handleSave}
+              className="w-100"
+            />
+            <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
+          </div>
         </Container>
       )}
     </>
