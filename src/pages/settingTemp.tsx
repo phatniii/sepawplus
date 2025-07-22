@@ -139,14 +139,7 @@ const TemperatureSetting = () => {
           >
             <div className="text-center mb-3">
               {/* SVG ไอคอนอุณหภูมิ */}
-              <svg width="90" height="90" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                <path 
-                  fill="none" 
-                  stroke="#ff6641" 
-                  strokeWidth="2" 
-                  d="M16 6C13.7909 6 12 7.79086 12 10V20C12 22.2091 13.7909 24 16 24C18.2091 24 20 22.2091 20 20V10C20 7.79086 18.2091 6 16 6ZM16 12C15.4477 12 15 12.4477 15 13V19C15 19.5523 15.4477 20 16 20C16.5523 20 17 19.5523 17 19V13C17 12.4477 16.5523 12 16 12Z" 
-                />
-              </svg>
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#000" d="M15 13V5a3 3 0 0 0-6 0v8a5 5 0 1 0 6 0m-3-9a1 1 0 0 1 1 1v3h-2V5a1 1 0 0 1 1-1"/></svg>
             </div>
             <div className="text-center mb-3">
               <h2 style={{ fontWeight: 700, color: "#2c3746", marginBottom: 12, fontSize: 26, lineHeight: 1.2 }}>
