@@ -5,8 +5,6 @@ import axios from 'axios'
 
 import Spinner from 'react-bootstrap/Spinner'
 import Container from 'react-bootstrap/Container'
-import Row from 'react-bootstrap/Row'
-import Col from 'react-bootstrap/Col'
 import ButtonState from '@/components/Button/ButtonState'
 import ModalAlert from '@/components/Modals/ModalAlert'
 import RangeSlider from '@/components/RangeSlider/RangeSlider'
@@ -29,7 +27,6 @@ const SettingHeartRate = () => {
     takecareData: null,
   })
   const [idSetting, setIdSetting] = useState<number | null>(null)
-  // const [minBpm, setMinBpm] = useState<number>(50) // <--- คอมเมนต์ออก
   const [maxBpm, setMaxBpm] = useState<number>(120)
 
   useEffect(() => {
@@ -71,7 +68,6 @@ const SettingHeartRate = () => {
       if (res.data?.data) {
         const data = res.data.data
         setMaxBpm(Number(data.max_bpm))
-        // setMinBpm(Number(data.min_bpm)) // <--- คอมเมนต์ออก (ไม่ต้องโหลด min_bpm)
         setIdSetting(settingId)
       }
     } catch (error) {
@@ -94,7 +90,6 @@ const SettingHeartRate = () => {
         takecare_id: dataUser.takecareData.takecare_id,
         users_id: dataUser.userData.users_id,
         max_bpm: maxBpm,
-        // min_bpm: minBpm, // <--- คอมเมนต์ออก (ไม่ต้องส่ง min_bpm)
       }
       if (idSetting) {
         payload.id = idSetting
@@ -118,28 +113,35 @@ const SettingHeartRate = () => {
           <Spinner animation="border" variant="primary" />
         </div>
       ) : (
-        <Container className="py-3">
-          <Row>
-            <Col>
-              <h3>ตั้งค่าการแจ้งเตือนอัตราการเต้นของหัวใจ</h3>
-              <p>กำหนดอัตราการเต้นของหัวใจสูงสุดที่อนุญาต (bpm)</p>
-            </Col>
-          </Row>
-          <Row className="py-3">
-            <Col>
-              {/* <p>
-                อัตราการเต้นของหัวใจต่ำสุด: <strong>{minBpm} bpm</strong>
-              </p>
-              <RangeSlider
-                min={30}
-                max={maxBpm}
-                step={1}
-                value={minBpm}
-                onChange={(value) => setMinBpm(Number(value))}
-              /> */}
-              <p>
-                อัตราการเต้นของหัวใจสูงสุดที่อนุญาต: <strong>{maxBpm} bpm</strong>
-              </p>
+        <Container className="d-flex justify-content-center align-items-center min-vh-100" style={{ background: "#f7fafd" }}>
+          <div
+            className="shadow"
+            style={{
+              background: "#fff",
+              borderRadius: 24,
+              padding: "32px 24px 28px 24px",
+              maxWidth: 380,
+              width: "100%",
+              boxShadow: "0 2px 24px 0 rgba(0,0,0,0.07)"
+            }}
+          >
+            <div className="text-center mb-3">
+              <svg width="90" height="90" viewBox="0 0 96 96" fill="none" style={{ marginBottom: 10 }}>
+                <rect width="96" height="96" rx="32" fill="#FFF0EB"/>
+                <path d="M48 73c-1.2-1.1-27.3-23.3-27.3-38.1C20.7 23.6 31.1 16 41.8 16c6.8 0 11.3 5 12.2 6.1C55.9 21 60.4 16 67.2 16c10.7 0 21.1 7.6 21.1 18.9C75.3 49.7 49.2 71.9 48 73z" fill="#FF6464"/>
+                <polyline points="33,52 43,40 50,54 57,40 64,52" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="text-center mb-3">
+              <h2 style={{ fontWeight: 700, color: "#2c3746", marginBottom: 12, fontSize: 26, lineHeight: 1.2 }}>
+                ตั้งค่าการแจ้งเตือน<br />อัตราการเต้นหัวใจ
+              </h2>
+            </div>
+            <div className="mb-2" style={{ fontSize: 18, color: "#48526b", fontWeight: 500 }}>
+              ค่าอัตราการเต้นสูงสุดที่อนุญาต:
+              <span style={{ color: "#ff6641", fontWeight: 700, marginLeft: 6 }}>{maxBpm} bpm</span>
+            </div>
+            <div className="my-3">
               <RangeSlider
                 min={50}
                 max={200}
@@ -147,14 +149,18 @@ const SettingHeartRate = () => {
                 value={maxBpm}
                 onChange={(value) => setMaxBpm(Number(value))}
               />
-            </Col>
-          </Row>
-          <Row className="py-3">
-            <Col>
-              <ButtonState text="บันทึก" isLoading={isLoading} onClick={handleSave} className="btn btn-primary" />
-            </Col>
-          </Row>
-          <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
+            </div>
+            <div className="mb-4" style={{ fontSize: 16, color: "#48526b", marginTop: 20 }}>
+              หากเกินค่านี้ ระบบจะแจ้งเตือนทันทีผ่าน LINE
+            </div>
+            <ButtonState
+              text="✔ บันทึกการตั้งค่า"
+              isLoading={isLoading}
+              onClick={handleSave}
+              className="w-100"
+            />
+            <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
+          </div>
         </Container>
       )}
     </>
