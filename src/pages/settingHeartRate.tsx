@@ -126,10 +126,23 @@ const SettingHeartRate = () => {
             }}
           >
             <div className="text-center mb-3">
-              <svg width="90" height="90" viewBox="0 0 96 96" fill="none" style={{ marginBottom: 10 }}>
-                <rect width="96" height="96" rx="32" fill="#FFF0EB"/>
-                <path d="M48 73c-1.2-1.1-27.3-23.3-27.3-38.1C20.7 23.6 31.1 16 41.8 16c6.8 0 11.3 5 12.2 6.1C55.9 21 60.4 16 67.2 16c10.7 0 21.1 7.6 21.1 18.9C75.3 49.7 49.2 71.9 48 73z" fill="#FF6464"/>
-                <polyline points="33,52 43,40 50,54 57,40 64,52" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              {/* SVG หัวใจเต็มดวง สวยๆ */}
+              <svg width="90" height="90" viewBox="0 0 90 90" fill="none" style={{ marginBottom: 10 }}>
+                <rect width="90" height="90" rx="28" fill="#FFF0EB"/>
+                <g>
+                  <path
+                    d="M45 69C44.3 68.4 21 50.6 21 34.5C21 25.7 28.8 19 37.5 19C41.6 19 45 21.2 46.8 23.8C48.6 21.2 52 19 56.1 19C64.8 19 72.6 25.7 72.6 34.5C72.6 50.6 49.7 68.3 45 69Z"
+                    fill="#FF6464"
+                  />
+                  <polyline
+                    points="32,52 40,44 47,55 54,36 61,52"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </g>
               </svg>
             </div>
             <div className="text-center mb-3">
