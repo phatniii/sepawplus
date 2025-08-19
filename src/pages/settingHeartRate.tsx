@@ -9,6 +9,9 @@ import ButtonState from '@/components/Button/ButtonState'
 import ModalAlert from '@/components/Modals/ModalAlert'
 import RangeSlider from '@/components/RangeSlider/RangeSlider'
 import { encrypt } from '@/utils/helpers'
+import Card from 'react-bootstrap/Card'
+import Badge from 'react-bootstrap/Badge'
+
 
 interface DataUserState {
   isLogin: boolean
@@ -128,11 +131,11 @@ const SettingHeartRate = () => {
             <div className="text-center mb-3">
               {/* SVG หัวใจใหม่ที่เลือก */}
               <svg width="90" height="90" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
-                <path 
-                  fill="#f00" 
-                  fillRule="evenodd" 
-                  d="M.549 4.85C.592 1.94 3.795-.766 6.898 2.764a.27.27 0 0 0 .4 0c3.104-3.53 6.307-.825 6.35 2.086c0 4.428-5.298 8.062-6.55 8.062c-.939 0-4.153-2.044-5.702-4.934a.24.24 0 0 1 .218-.353h1.534a.63.63 0 0 0 .483-.228l.948-1.155a.25.25 0 0 1 .405.026l1.648 2.635a.625.625 0 0 0 1.013.065l1.458-1.776a.25.25 0 0 1 .194-.091h1.306a.625.625 0 1 0 0-1.25h-1.72a.63.63 0 0 0-.483.228l-.948 1.155a.25.25 0 0 1-.405-.026L5.398 4.573a.625.625 0 0 0-1.013-.065L2.928 6.284a.25.25 0 0 1-.194.091H.946a.244.244 0 0 1-.24-.187A6 6 0 0 1 .55 4.85Z" 
-                  clipRule="evenodd"/>
+                <path
+                  fill="#f00"
+                  fillRule="evenodd"
+                  d="M.549 4.85C.592 1.94 3.795-.766 6.898 2.764a.27.27 0 0 0 .4 0c3.104-3.53 6.307-.825 6.35 2.086c0 4.428-5.298 8.062-6.55 8.062c-.939 0-4.153-2.044-5.702-4.934a.24.24 0 0 1 .218-.353h1.534a.63.63 0 0 0 .483-.228l.948-1.155a.25.25 0 0 1 .405.026l1.648 2.635a.625.625 0 0 0 1.013.065l1.458-1.776a.25.25 0 0 1 .194-.091h1.306a.625.625 0 1 0 0-1.25h-1.72a.63.63 0 0 0-.483.228l-.948 1.155a.25.25 0 0 1-.405-.026L5.398 4.573a.625.625 0 0 0-1.013-.065L2.928 6.284a.25.25 0 0 1-.194.091H.946a.244.244 0 0 1-.24-.187A6 6 0 0 1 .55 4.85Z"
+                  clipRule="evenodd" />
               </svg>
             </div>
             <div className="text-center mb-3">
@@ -140,6 +143,16 @@ const SettingHeartRate = () => {
                 ตั้งค่าการแจ้งเตือน<br />อัตราการเต้นหัวใจ
               </h2>
             </div>
+            <Card className="mb-3" style={{ borderRadius: 16, border: '1px solid #eef1f6' }}>
+              <Card.Body style={{ padding: '12px 14px' }}>
+                <Badge bg="light" text="dark" style={{ border: '1px solid #e8ecf3' }}>คำแนะนำ</Badge>
+                <div style={{ fontSize: 14, color: '#48526b', marginTop: 8 }}>
+                  อัตราการเต้นหัวใจขณะพักโดยทั่วไป: <strong>60–100 bpm</strong><br />
+
+                </div>
+              </Card.Body>
+            </Card>
+
             <div className="mb-2" style={{ fontSize: 18, color: "#48526b", fontWeight: 500 }}>
               ค่าอัตราการเต้นสูงสุดที่อนุญาต:
               <span style={{ color: "#ff6641", fontWeight: 700, marginLeft: 6 }}>{maxBpm} bpm</span>

@@ -11,6 +11,9 @@ import ButtonState from '@/components/Button/ButtonState'
 import ModalAlert from '@/components/Modals/ModalAlert'
 import RangeSlider from '@/components/RangeSlider/RangeSlider'
 import { encrypt } from '@/utils/helpers'
+import Card from 'react-bootstrap/Card'
+import Badge from 'react-bootstrap/Badge'
+
 
 interface DataUserState {
   isLogin: boolean
@@ -139,13 +142,21 @@ const TemperatureSetting = () => {
           >
             <div className="text-center mb-3">
               {/* SVG ไอคอนอุณหภูมิ */}
-             <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24"><path fill="#000" d="M14 4.5a4.5 4.5 0 0 0-9 0v9.44a.23.23 0 0 1-.06.16a6 6 0 1 0 9.12 0a.23.23 0 0 1-.06-.16ZM9.5 22a4 4 0 0 1-2.8-6.86a1 1 0 0 0 .3-.71V4.5a2.5 2.5 0 0 1 5 0v9.93a1 1 0 0 0 .3.71A4 4 0 0 1 9.5 22"/><path fill="#000" d="M10.61 16.34a.26.26 0 0 1-.11-.21V8.5a1 1 0 0 0-2 0v7.63a.26.26 0 0 1-.11.21a2 2 0 1 0 2.22 0m8.89-4.84H17a1 1 0 0 0 0 2h2.5a1 1 0 0 0 0-2m-2.5-6h2.5a1 1 0 0 0 0-2H17a1 1 0 0 0 0 2m2.5 2H17a1 1 0 0 0 0 2h2.5a1 1 0 0 0 0-2"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24"><path fill="#000" d="M14 4.5a4.5 4.5 0 0 0-9 0v9.44a.23.23 0 0 1-.06.16a6 6 0 1 0 9.12 0a.23.23 0 0 1-.06-.16ZM9.5 22a4 4 0 0 1-2.8-6.86a1 1 0 0 0 .3-.71V4.5a2.5 2.5 0 0 1 5 0v9.93a1 1 0 0 0 .3.71A4 4 0 0 1 9.5 22" /><path fill="#000" d="M10.61 16.34a.26.26 0 0 1-.11-.21V8.5a1 1 0 0 0-2 0v7.63a.26.26 0 0 1-.11.21a2 2 0 1 0 2.22 0m8.89-4.84H17a1 1 0 0 0 0 2h2.5a1 1 0 0 0 0-2m-2.5-6h2.5a1 1 0 0 0 0-2H17a1 1 0 0 0 0 2m2.5 2H17a1 1 0 0 0 0 2h2.5a1 1 0 0 0 0-2" /></svg>
             </div>
             <div className="text-center mb-3">
               <h2 style={{ fontWeight: 700, color: "#2c3746", marginBottom: 12, fontSize: 26, lineHeight: 1.2 }}>
                 ตั้งค่าการแจ้งเตือน<br />อุณหภูมิร่างกาย
               </h2>
             </div>
+            <Card className="mb-3" style={{ borderRadius: 16, border: '1px solid #eef1f6' }}>
+              <Card.Body style={{ padding: '12px 14px' }}>
+                <Badge bg="light" text="dark" style={{ border: '1px solid #e8ecf3' }}>คำแนะนำ</Badge>
+                <div style={{ fontSize: 14, color: '#48526b', marginTop: 8 }}>
+                  อุณหภูมิร่างกายทั่วไปอยู่ที่: <strong>36.5–37.5°C</strong><br />
+                </div>
+              </Card.Body>
+            </Card>
             <div className="mb-2" style={{ fontSize: 18, color: "#48526b", fontWeight: 500 }}>
               ค่าอุณหภูมิสูงสุดที่อนุญาต:
               <span style={{ color: "#ff6641", fontWeight: 700, marginLeft: 6 }}>{maxTemperature}°C</span>
