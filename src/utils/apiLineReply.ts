@@ -654,7 +654,7 @@ export const replySetting = async ({
       messages: [
         {
           type: "flex",
-          altText: "ตั้งค่าเขตปลอดภัยและอุณหภูมิ",
+          altText: "ตั้งค่าความปลอดภัย",
           contents: {
             type: "bubble",
             body: {
@@ -663,7 +663,7 @@ export const replySetting = async ({
               contents: [
                 {
                   type: "text",
-                  text: "ตั้งค่าเขตปลอดภัยและอุณหภูมิ",
+                  text: "ตั้งค่าความปลอดภัย",
                   color: "#FFB400",
                   size: "xl",
                   weight: "bold",
