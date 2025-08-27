@@ -1,6 +1,6 @@
 import axios from 'axios';
 import moment from 'moment';
-
+import prisma from '@/lib/prisma';
 const WEB_API = process.env.WEB_API_URL;
 const LINE_MESSAGING_API = 'https://api.line.me/v2/bot/message/reply';
 const LINE_PUSH_MESSAGING_API = 'https://api.line.me/v2/bot/message/push';
@@ -9,57 +9,62 @@ const LINE_HEADER = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${process.env.CHANNEL_ACCESS_TOKEN_LINE}`, // Replace with your LINE Channel Access Token
 };
-
+type LatestVitals = {
+    bpm?: number;
+    bpmTime?: Date | null;
+    temp?: number;
+    tempTime?: Date | null;
+};
 interface ReplyMessage {
     replyToken: string;
-    message   : string;
+    message: string;
 }
 interface ReplyRegistration {
     replyToken: string;
-    userId    : string;
+    userId: string;
 }
 interface ReplyNotification {
-    replyToken : string;
-    message    : string;
-    groupLineId   ?: string | null;
+    replyToken: string;
+    message: string;
+    groupLineId?: string | null;
 }
 interface ReplyNotificationPostback {
-    userId          : number;
+    userId: number;
     takecarepersonId: number;
-    type            : string;
-    message         : string;
-    replyToken      : string;
+    type: string;
+    message: string;
+    replyToken: string;
 }
-interface ReplyNotificationPostbackTemp{
-    userId          : number;
-    takecarepersonId : number;
-    type             : string;
-    message           : string;
-    replyToken          : string;
+interface ReplyNotificationPostbackTemp {
+    userId: number;
+    takecarepersonId: number;
+    type: string;
+    message: string;
+    replyToken: string;
 }
-interface ReplyNotificationPostbackfall { 
-    userId              : number;
-    takecarepersonId    : number;
-    type                : string;
-    message             : string;
-    replyToken          : string;
+interface ReplyNotificationPostbackfall {
+    userId: number;
+    takecarepersonId: number;
+    type: string;
+    message: string;
+    replyToken: string;
 }
 interface ReplyUserData {
     replyToken: string;
     userData: {
-        users_id       : string;
-        users_line_id  : string;
-        users_fname    : string;
-        users_sname    : string;
-        users_pin      : string;
-        users_number   : string;
-        users_moo      : string;
-        users_road     : string;
-        users_tubon    : string;
-        users_amphur   : string;
-        users_province : string;
-        users_postcode : string;
-        users_tel1     : string;
+        users_id: string;
+        users_line_id: string;
+        users_fname: string;
+        users_sname: string;
+        users_pin: string;
+        users_number: string;
+        users_moo: string;
+        users_road: string;
+        users_tubon: string;
+        users_amphur: string;
+        users_province: string;
+        users_postcode: string;
+        users_tel1: string;
         users_status_id: {
             status_name: string;
         }
@@ -69,19 +74,19 @@ interface ReplyUserData {
 interface ReplySettingData {
     replyToken: string;
     userData: {
-        users_id       : string;
-        users_line_id  : string;
-        users_fname    : string;
-        users_sname    : string;
-        users_pin      : string;
-        users_number   : string;
-        users_moo      : string;
-        users_road     : string;
-        users_tubon    : string;
-        users_amphur   : string;
-        users_province : string;
-        users_postcode : string;
-        users_tel1     : string;
+        users_id: string;
+        users_line_id: string;
+        users_fname: string;
+        users_sname: string;
+        users_pin: string;
+        users_number: string;
+        users_moo: string;
+        users_road: string;
+        users_tubon: string;
+        users_amphur: string;
+        users_province: string;
+        users_postcode: string;
+        users_tel1: string;
         users_status_id: {
             status_name: string;
         }
@@ -94,19 +99,19 @@ interface ReplySettingData {
 interface ReplyLocationData {
     replyToken: string;
     userData: {
-        users_id       : string;
-        users_line_id  : string;
-        users_fname    : string;
-        users_sname    : string;
-        users_pin      : string;
-        users_number   : string;
-        users_moo      : string;
-        users_road     : string;
-        users_tubon    : string;
-        users_amphur   : string;
-        users_province : string;
-        users_postcode : string;
-        users_tel1     : string;
+        users_id: string;
+        users_line_id: string;
+        users_fname: string;
+        users_sname: string;
+        users_pin: string;
+        users_number: string;
+        users_moo: string;
+        users_road: string;
+        users_tubon: string;
+        users_amphur: string;
+        users_province: string;
+        users_postcode: string;
+        users_tel1: string;
         users_status_id: {
             status_name: string;
         }
@@ -114,6 +119,73 @@ interface ReplyLocationData {
     userTakecarepersonData?: any;
     safezoneData?: any;
     locationData?: any;
+}
+// ดึง HR/Temp ล่าสุดจาก API ที่มีอยู่แล้ว
+async function getLatestVitalsViaApi(
+    usersId: number | string,
+    takecareId: number | string
+): Promise<LatestVitals> {
+    const base = process.env.WEB_API_URL; // เช่น https://example.com
+    const params = { users_id: usersId, takecare_id: takecareId, limit: 1 };
+
+    const [hrRes, tpRes] = await Promise.all([
+        axios.get(`${base}/api/setting/getHeartRate`, { params }),
+        axios.get(`${base}/api/setting/getTemperature`, { params }),
+    ]);
+
+    // รองรับหลายรูปแบบ payload (object หรือ array)
+    const pick = (v: any) => (Array.isArray(v) ? v[0] : v);
+
+    const hrData = pick(hrRes.data?.data ?? hrRes.data); // ปรับให้ตรงกับรีสปอนส์จริงถ้าแตกต่าง
+    const tpData = pick(tpRes.data?.data ?? tpRes.data);
+
+    return {
+        bpm: hrData?.bpm ?? hrData?.heart_rate ?? undefined,
+        bpmTime: hrData?.timestamp ?? hrData?.record_date ?? null,
+        temp: tpData?.temperature_value ?? tpData?.temp ?? undefined,
+        tempTime: tpData?.noti_time ?? tpData?.record_date ?? null,
+    };
+}
+
+function colorForHR(bpm?: number) {
+    if (bpm == null) return '#9CA3AF';
+    if (bpm < 50 || bpm > 120) return '#EF4444';
+    if (bpm > 100) return '#F59E0B';
+    return '#10B981';
+}
+function colorForTemp(t?: number) {
+    if (t == null) return '#9CA3AF';
+    if (t < 35 || t >= 38) return '#EF4444';
+    if (t >= 37.5) return '#F59E0B';
+    return '#3B82F6';
+}
+
+function healthChip({ label, value, unit, color, actionUri }: {
+    label: string; value: string; unit: string; color: string; actionUri?: string;
+}) {
+    return {
+        type: 'box',
+        layout: 'horizontal',
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        paddingAll: '12px',
+        spacing: 'sm',
+        contents: [
+            { type: 'box', layout: 'vertical', width: '4px', backgroundColor: color, contents: [] },
+            {
+                type: 'box', layout: 'vertical', spacing: 'xs', contents: [
+                    { type: 'text', text: label, size: 'xs', color: '#6B7280' },
+                    {
+                        type: 'box', layout: 'baseline', spacing: 'sm', contents: [
+                            { type: 'text', text: value, size: 'xxl', weight: 'bold', color: '#111827' },
+                            { type: 'text', text: unit, size: 'xs', color: '#6B7280' },
+                        ]
+                    }
+                ]
+            }
+        ],
+        action: actionUri ? { type: 'uri', label: 'open', uri: actionUri } : undefined
+    } as const;
 }
 
 const layoutBoxBaseline = (label: string, text: string, flex1 = 2, flex2 = 5) => {
@@ -183,7 +255,7 @@ export const pushMessage = async ({
 }: ReplyMessage) => {
     try {
         const requestData = {
-            to:replyToken,
+            to: replyToken,
             messages: [
                 {
                     type: 'text',
@@ -211,43 +283,43 @@ export const replyRegistration = async ({
             replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "ลงทะเบียน",
+                    type: "flex",
+                    altText: "ลงทะเบียน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type  : "text",
-                                    text  : "ลงทะเบียน",
-                                    color : "#FFB400",
-                                    size  : "xl",
+                                    type: "text",
+                                    text: "ลงทะเบียน",
+                                    color: "#FFB400",
+                                    size: "xl",
                                     weight: "bold",
-                                    wrap  : true
+                                    wrap: true
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `คุณ ${profile.displayName}`,
-                                    size  : "sm",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `คุณ ${profile.displayName}`,
+                                    size: "sm",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "xxl"
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: "ยืนยันลงทะเบียน",
-                                        uri  : `${WEB_API}/registration?auToken=${userId}`
+                                        uri: `${WEB_API}/registration?auToken=${userId}`
                                     }
                                 },
                             ]
@@ -256,7 +328,7 @@ export const replyRegistration = async ({
                 }
             ],
         };
-       await axios.post(LINE_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -274,43 +346,43 @@ export const replyNotRegistration = async ({
             replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "ลงทะเบียน",
+                    type: "flex",
+                    altText: "ลงทะเบียน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type  : "text",
-                                    text  : "ลงทะเบียน",
-                                    color : "#FFB400",
-                                    size  : "xl",
+                                    type: "text",
+                                    text: "ลงทะเบียน",
+                                    color: "#FFB400",
+                                    size: "xl",
                                     weight: "bold",
-                                    wrap  : true
+                                    wrap: true
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `คุณ ${profile.displayName} ยังไม่ได้ลงทะเบียน กรูณาลงทะเบียนก่อนเข้าใช้งาน`,
-                                    size  : "sm",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `คุณ ${profile.displayName} ยังไม่ได้ลงทะเบียน กรูณาลงทะเบียนก่อนเข้าใช้งาน`,
+                                    size: "sm",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "xxl"
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: "ยืนยันลงทะเบียน",
-                                        uri  : `${WEB_API}/registration?auToken=${userId}`
+                                        uri: `${WEB_API}/registration?auToken=${userId}`
                                     }
                                 },
                             ]
@@ -319,7 +391,7 @@ export const replyNotRegistration = async ({
                 }
             ],
         };
-       await axios.post(LINE_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -337,55 +409,55 @@ export const replyMenuBorrowequipment = async ({
             replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "การยืม การคืนครุภัณฑ์",
+                    type: "flex",
+                    altText: "การยืม การคืนครุภัณฑ์",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type  : "text",
-                                    text  : "การยืม การคืนครุภัณฑ์",
-                                    color : "#FFB400",
-                                    size  : "xl",
+                                    type: "text",
+                                    text: "การยืม การคืนครุภัณฑ์",
+                                    color: "#FFB400",
+                                    size: "xl",
                                     weight: "bold",
-                                    wrap  : true
+                                    wrap: true
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `คุณ ${profile.displayName}`,
-                                    size  : "sm",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `คุณ ${profile.displayName}`,
+                                    size: "sm",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "xxl"
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: "การยืมครุภัณฑ์",
-                                        uri  : `${WEB_API}/borrowequipment/borrow?auToken=${userData.users_line_id}`
+                                        uri: `${WEB_API}/borrowequipment/borrow?auToken=${userData.users_line_id}`
                                     }
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
-                                    color : "#4477CE",
+                                    color: "#4477CE",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: "การคืนครุภัณฑ์",
-                                        uri  : `${WEB_API}/borrowequipment/return_of?auToken=${userData.users_line_id}`
+                                        uri: `${WEB_API}/borrowequipment/return_of?auToken=${userData.users_line_id}`
                                     }
                                 },
                             ]
@@ -394,7 +466,7 @@ export const replyMenuBorrowequipment = async ({
                 }
             ],
         };
-       await axios.post(LINE_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -412,40 +484,40 @@ export const replyConnection = async ({
             replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "การเชื่อมต่อนาฬิกา",
+                    type: "flex",
+                    altText: "การเชื่อมต่อนาฬิกา",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type  : "text",
-                                    text  : "การเชื่อมต่อนาฬิกา",
-                                    color : "#FFB400",
-                                    size  : "xl",
+                                    type: "text",
+                                    text: "การเชื่อมต่อนาฬิกา",
+                                    color: "#FFB400",
+                                    size: "xl",
                                     weight: "bold",
-                                    wrap  : true
+                                    wrap: true
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `คุณ ${profile.displayName}`,
-                                    size  : "sm",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `คุณ ${profile.displayName}`,
+                                    size: "sm",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "xxl"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `ข้อมูลผู้ดูแล`,
-                                    size  : "md",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `ข้อมูลผู้ดูแล`,
+                                    size: "md",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
@@ -460,11 +532,11 @@ export const replyConnection = async ({
 
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `ข้อมูลผู้สูงอายุ`,
-                                    size  : "md",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `ข้อมูลผู้สูงอายุ`,
+                                    size: "md",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
@@ -505,7 +577,7 @@ export const replyConnection = async ({
                 }
             ],
         };
-       await axios.post(LINE_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -523,47 +595,88 @@ export const replyLocation = async ({
         // const profile = await getUserProfile(userData.users_line_id);
         let latitude = Number(safezoneData.safez_latitude)
         let longitude = Number(safezoneData.safez_longitude)
-        if(locationData){
+        if (locationData) {
             latitude = Number(locationData.locat_latitude)
             longitude = Number(locationData.locat_longitude)
         }
+        // [1] ดึง HR/Temp ล่าสุดผ่าน API routes ที่มีอยู่
+        const usersId = Number(userData.users_id);
+        const takecareId = Number(userTakecarepersonData.takecare_id);
+        const vitals = await getLatestVitalsViaApi(usersId, takecareId);
+
+        const hrColor = colorForHR(vitals.bpm);
+        const tempColor = colorForTemp(vitals.temp);
+
+        // [2] การ์ดสุขภาพ 2 ใบ
+        const healthRow = {
+            type: 'box',
+            layout: 'horizontal',
+            margin: 'xl',
+            spacing: 'md',
+            contents: [
+                healthChip({
+                    label: 'ชีพจร',
+                    value: vitals.bpm != null ? String(vitals.bpm) : '-',
+                    unit: 'BPM',
+                    color: hrColor,
+                    actionUri: `${WEB_API}/vitals/heartrate?u=${usersId}&t=${takecareId}`
+                }),
+                healthChip({
+                    label: 'อุณหภูมิ',
+                    value: vitals.temp != null ? Number(vitals.temp).toFixed(1) : '-',
+                    unit: '°C',
+                    color: tempColor,
+                    actionUri: `${WEB_API}/vitals/temperature?u=${usersId}&t=${takecareId}`
+                }),
+            ]
+        };
+
+        const updatedText = {
+            type: 'text',
+            size: 'xxs',
+            margin: 'sm',
+            color: '#9CA3AF',
+            text:
+                `อัปเดต: HR ${vitals.bpmTime ? new Date(vitals.bpmTime).toLocaleString('th-TH', { hour12: false }) : '-'}` +
+                ` • Temp ${vitals.tempTime ? new Date(vitals.tempTime).toLocaleString('th-TH', { hour12: false }) : '-'}`
+        };
         const requestData = {
             replyToken,
             messages: [
                 {
-                    type     : "location",
-                    title    : `ตำแหน่งปัจจุบันของผู้สูงอายุ ${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`,
-                    address  : `สถานที่ตั้งปัจจุบันของผู้สูงอายุ`,
-                    latitude : latitude,
+                    type: "location",
+                    title: `ตำแหน่งปัจจุบันของผู้สูงอายุ ${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`,
+                    address: `สถานที่ตั้งปัจจุบันของผู้สูงอายุ`,
+                    latitude: latitude,
                     longitude: longitude
                 },
                 {
-                    type    : "flex",
-                    altText : "ตำแหน่งปัจจุบัน",
+                    type: "flex",
+                    altText: "ตำแหน่งปัจจุบัน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type  : "text",
-                                    text  : "ตำแหน่งปัจจุบัน",
-                                    color : "#FFB400",
-                                    size  : "xl",
+                                    type: "text",
+                                    text: "ตำแหน่งปัจจุบัน",
+                                    color: "#FFB400",
+                                    size: "xl",
                                     weight: "bold",
-                                    wrap  : true
+                                    wrap: true
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "xxl"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `ข้อมูลผู้สูงอายุ`,
-                                    size  : "md",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `ข้อมูลผู้สูงอายุ`,
+                                    size: "md",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
@@ -579,26 +692,26 @@ export const replyLocation = async ({
 
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
-                                    color : "#4477CE",
+                                    color: "#4477CE",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: `โทร ${userTakecarepersonData.takecare_tel1 || '-'}`,
-                                        uri  : `tel:${userTakecarepersonData.takecare_tel1 || '-'}`
+                                        uri: `tel:${userTakecarepersonData.takecare_tel1 || '-'}`
                                     }
                                 },
-                                { 
-                                    type  : "button",
-                                    style : "primary",
+                                {
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: "ดูแผนที่จากระบบ",
-                                        uri  : `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
+                                        uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
                                     }
                                 },
                             ]
@@ -607,7 +720,7 @@ export const replyLocation = async ({
                 }
             ],
         };
-       await axios.post(LINE_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -615,161 +728,161 @@ export const replyLocation = async ({
     }
 }
 export const replySetting = async ({
-  replyToken,
-  userData,
-  userTakecarepersonData,
-  safezoneData,
-  temperatureSettingData,
-  heartrateSettingData
+    replyToken,
+    userData,
+    userTakecarepersonData,
+    safezoneData,
+    temperatureSettingData,
+    heartrateSettingData
 }: ReplySettingData & { temperatureSettingData?: any }) => {
-  try {
-    // ค่า default
-    let r1 = 0;
-    let r2 = 0;
-    let idsafezone = 0;
-    let maxTemperature = 0; 
-    let idSetting = 0; 
-    //let minBpm = 0;
-    let maxBpm = 0;
-    let idSettingHR = 0;
+    try {
+        // ค่า default
+        let r1 = 0;
+        let r2 = 0;
+        let idsafezone = 0;
+        let maxTemperature = 0;
+        let idSetting = 0;
+        //let minBpm = 0;
+        let maxBpm = 0;
+        let idSettingHR = 0;
 
-    if (safezoneData) {
-      r1 = safezoneData.safez_radiuslv1 || 0;
-      r2 = safezoneData.safez_radiuslv2 || 0;
-      idsafezone = safezoneData.safezone_id || 0;
-    }
-
-    if (temperatureSettingData) {
-      maxTemperature = temperatureSettingData.max_temperature || 37;
-      idSetting = temperatureSettingData.setting_id || 0;
-    }
-    if(heartrateSettingData){
-       // minBpm = heartrateSettingData.min_bpm || 50;
-        maxBpm = heartrateSettingData.max_bpm || 120;
-        idSettingHR =  heartrateSettingData.id || 0;
-    }
-
-    const requestData = {
-      replyToken,
-      messages: [
-        {
-          type: "flex",
-          altText: "ตั้งค่าความปลอดภัย",
-          contents: {
-            type: "bubble",
-            body: {
-              type: "box",
-              layout: "vertical",
-              contents: [
-                {
-                  type: "text",
-                  text: "ตั้งค่าความปลอดภัย",
-                  color: "#FFB400",
-                  size: "xl",
-                  weight: "bold",
-                  wrap: true
-                },
-                {
-                  type: "separator",
-                  margin: "xxl"
-                },
-                {
-                  type: "box",
-                  layout: "vertical",
-                  margin: "xxl",
-                  spacing: "sm",
-                  contents: [
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      contents: [
-                        { type: "text", text: "ชื่อ", flex: 2, weight: "bold" },
-                        { type: "text", text: `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, flex: 3, wrap: true }
-                      ]
-                    },
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      contents: [
-                        { type: "text", text: "รัศมี ชั้นที่ 1", flex: 2, weight: "bold" },
-                        { type: "text", text: `${r1} ม.`, flex: 3 }
-                      ]
-                    },
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      contents: [
-                        { type: "text", text: "รัศมี ชั้นที่ 2", flex: 2, weight: "bold" },
-                        { type: "text", text: `${r2} ม.`, flex: 3 }
-                      ]
-                    },
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      contents: [
-                        { type: "text", text: "อุณหภูมิสูงสุด", flex: 2, weight: "bold" },
-                        { type: "text", text: `${maxTemperature} องศา`, flex: 3 }
-                      ]
-                    },
-                     {
-                      type: "box",
-                      layout: "baseline",
-                      contents: [
-                        { type: "text", text: "อัตราการเต้นของหัวใจ", flex: 2, weight: "bold" },
-                        { type: "text", text: `${maxBpm} bpm`, flex: 3 }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  type: "button",
-                  style: "primary",
-                  height: "sm",
-                  margin: "xxl",
-                  action: {
-                    type: "uri",
-                    label: "ตั้งค่าเขตปลอดภัย",
-                    uri: `${WEB_API}/setting?auToken=${userData.users_line_id}&idsafezone=${idsafezone}`
-                  }
-                },
-                {
-                  type: "button",
-                  style: "primary",
-                  height: "sm",
-                  margin: "xxl",
-                  color: "#4477CE",
-                  action: {
-                    type: "uri",
-                    label: "ตั้งค่าอุณหภูมิร่างกาย",
-                    uri: `${WEB_API}/settingTemp?auToken=${userData.users_line_id}&idsetting=${idSetting || ''}`
-                  }
-                },
-                 {
-                  type: "button",
-                  style: "primary",
-                  height: "sm",
-                  margin: "xxl",
-                  color: "#60C4A9",
-                  action: {
-                    type: "uri",
-                    label: "ตั้งค่าอัตราการเต้นหัวใจ",
-                    uri: `${WEB_API}/settingHeartRate?auToken=${userData.users_line_id}&idsetting=${idSettingHR || ''}`
-                  }
-                }
-              ]
-            }
-          }
+        if (safezoneData) {
+            r1 = safezoneData.safez_radiuslv1 || 0;
+            r2 = safezoneData.safez_radiuslv2 || 0;
+            idsafezone = safezoneData.safezone_id || 0;
         }
-      ]
-    };
 
-    await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
+        if (temperatureSettingData) {
+            maxTemperature = temperatureSettingData.max_temperature || 37;
+            idSetting = temperatureSettingData.setting_id || 0;
+        }
+        if (heartrateSettingData) {
+            // minBpm = heartrateSettingData.min_bpm || 50;
+            maxBpm = heartrateSettingData.max_bpm || 120;
+            idSettingHR = heartrateSettingData.id || 0;
+        }
 
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error("replySetting error:", error.message);
+        const requestData = {
+            replyToken,
+            messages: [
+                {
+                    type: "flex",
+                    altText: "ตั้งค่าความปลอดภัย",
+                    contents: {
+                        type: "bubble",
+                        body: {
+                            type: "box",
+                            layout: "vertical",
+                            contents: [
+                                {
+                                    type: "text",
+                                    text: "ตั้งค่าความปลอดภัย",
+                                    color: "#FFB400",
+                                    size: "xl",
+                                    weight: "bold",
+                                    wrap: true
+                                },
+                                {
+                                    type: "separator",
+                                    margin: "xxl"
+                                },
+                                {
+                                    type: "box",
+                                    layout: "vertical",
+                                    margin: "xxl",
+                                    spacing: "sm",
+                                    contents: [
+                                        {
+                                            type: "box",
+                                            layout: "baseline",
+                                            contents: [
+                                                { type: "text", text: "ชื่อ", flex: 2, weight: "bold" },
+                                                { type: "text", text: `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, flex: 3, wrap: true }
+                                            ]
+                                        },
+                                        {
+                                            type: "box",
+                                            layout: "baseline",
+                                            contents: [
+                                                { type: "text", text: "รัศมี ชั้นที่ 1", flex: 2, weight: "bold" },
+                                                { type: "text", text: `${r1} ม.`, flex: 3 }
+                                            ]
+                                        },
+                                        {
+                                            type: "box",
+                                            layout: "baseline",
+                                            contents: [
+                                                { type: "text", text: "รัศมี ชั้นที่ 2", flex: 2, weight: "bold" },
+                                                { type: "text", text: `${r2} ม.`, flex: 3 }
+                                            ]
+                                        },
+                                        {
+                                            type: "box",
+                                            layout: "baseline",
+                                            contents: [
+                                                { type: "text", text: "อุณหภูมิสูงสุด", flex: 2, weight: "bold" },
+                                                { type: "text", text: `${maxTemperature} องศา`, flex: 3 }
+                                            ]
+                                        },
+                                        {
+                                            type: "box",
+                                            layout: "baseline",
+                                            contents: [
+                                                { type: "text", text: "อัตราการเต้นของหัวใจ", flex: 2, weight: "bold" },
+                                                { type: "text", text: `${maxBpm} bpm`, flex: 3 }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    type: "button",
+                                    style: "primary",
+                                    height: "sm",
+                                    margin: "xxl",
+                                    action: {
+                                        type: "uri",
+                                        label: "ตั้งค่าเขตปลอดภัย",
+                                        uri: `${WEB_API}/setting?auToken=${userData.users_line_id}&idsafezone=${idsafezone}`
+                                    }
+                                },
+                                {
+                                    type: "button",
+                                    style: "primary",
+                                    height: "sm",
+                                    margin: "xxl",
+                                    color: "#4477CE",
+                                    action: {
+                                        type: "uri",
+                                        label: "ตั้งค่าอุณหภูมิร่างกาย",
+                                        uri: `${WEB_API}/settingTemp?auToken=${userData.users_line_id}&idsetting=${idSetting || ''}`
+                                    }
+                                },
+                                {
+                                    type: "button",
+                                    style: "primary",
+                                    height: "sm",
+                                    margin: "xxl",
+                                    color: "#60C4A9",
+                                    action: {
+                                        type: "uri",
+                                        label: "ตั้งค่าอัตราการเต้นหัวใจ",
+                                        uri: `${WEB_API}/settingHeartRate?auToken=${userData.users_line_id}&idsetting=${idSettingHR || ''}`
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        };
+
+        await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
+
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error("replySetting error:", error.message);
+        }
     }
-  }
 };
 export const replyUserInfo = async ({
     replyToken,
@@ -777,11 +890,11 @@ export const replyUserInfo = async ({
     userTakecarepersonData
 }: ReplyUserData) => {
     try {
-       // const profile = await getUserProfile(userData.users_line_id);
+        // const profile = await getUserProfile(userData.users_line_id);
         let contentTakecareperson = [
             layoutBoxBaseline("ข้อมูล", 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุ'),
         ]
-   
+
         if (userTakecarepersonData) {
             contentTakecareperson = [
                 layoutBoxBaseline("ชื่อ-สกุล", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, 4, 5),
@@ -802,35 +915,35 @@ export const replyUserInfo = async ({
             replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "ข้อมูลผู้ใช้งาน",
+                    type: "flex",
+                    altText: "ข้อมูลผู้ใช้งาน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type  : "text",
-                                    text  : "ข้อมูลผู้ใช้งาน",
-                                    color : "#FFB400",
-                                    size  : "xl",
+                                    type: "text",
+                                    text: "ข้อมูลผู้ใช้งาน",
+                                    color: "#FFB400",
+                                    size: "xl",
                                     weight: "bold",
-                                    wrap  : true
+                                    wrap: true
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "xxl"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `ข้อมูลผู้ดูแล`,
-                                    size  : "md",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `ข้อมูลผู้ดูแล`,
+                                    size: "md",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
-                                
+
                                 {
                                     type: "box",
                                     layout: "vertical",
@@ -849,18 +962,18 @@ export const replyUserInfo = async ({
 
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "xxl"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `ข้อมูลผู้สูงอายุ`,
-                                    size  : "md",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `ข้อมูลผู้สูงอายุ`,
+                                    size: "md",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
-                                
+
                                 {
                                     type: "box",
                                     layout: "vertical",
@@ -872,32 +985,32 @@ export const replyUserInfo = async ({
 
                                 },
 
-                                
+
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: "ตั้งค่าข้อมูลผู้ดูแล",
-                                        uri  : `${WEB_API}/userinfo/cuserinfo?auToken=${userData.users_line_id}`
+                                        uri: `${WEB_API}/userinfo/cuserinfo?auToken=${userData.users_line_id}`
                                     },
-                                   
+
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
-                                    color : "#4477CE",
+                                    color: "#4477CE",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: "ตั้งค่าข้อมูลผู้สูงอายุ",
-                                        uri  : userTakecarepersonData ? `${WEB_API}/userinfo/puserinfo?auToken=${userData.users_line_id}` : `${WEB_API}/elderly_registration?auToken=${userData.users_line_id}`
+                                        uri: userTakecarepersonData ? `${WEB_API}/userinfo/puserinfo?auToken=${userData.users_line_id}` : `${WEB_API}/elderly_registration?auToken=${userData.users_line_id}`
                                     }
                                 }
-                                
+
                             ]
                         }
                     }
@@ -905,7 +1018,7 @@ export const replyUserInfo = async ({
             ],
         };
 
-       await axios.post(LINE_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -920,36 +1033,36 @@ export const replyUserData = async ({
 
     try {
         const profile = await getUserProfile(userData.users_line_id);
-        const requestData = { 
+        const requestData = {
             replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "ลงทะเบียน",
+                    type: "flex",
+                    altText: "ลงทะเบียน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type  : "text",
-                                    text  : "ข้อมูลลงทะเบียน",
-                                    color : "#FFB400",
-                                    size  : "xl",
+                                    type: "text",
+                                    text: "ข้อมูลลงทะเบียน",
+                                    color: "#FFB400",
+                                    size: "xl",
                                     weight: "bold",
-                                    wrap  : true
+                                    wrap: true
                                 },
                                 {
-                                    type  : "text",
-                                    text  : `คุณ ${profile.displayName}`,
-                                    size  : "sm",
-                                    color : "#555555",
-                                    wrap  : true,
+                                    type: "text",
+                                    text: `คุณ ${profile.displayName}`,
+                                    size: "sm",
+                                    color: "#555555",
+                                    wrap: true,
                                     margin: "sm"
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "xxl"
                                 },
                                 {
@@ -973,14 +1086,14 @@ export const replyUserData = async ({
 
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: "ลงทะเบียนผู้สูงอายุ",
-                                        uri  : `${WEB_API}/elderly_registration?auToken=${userData.users_line_id}`
+                                        uri: `${WEB_API}/elderly_registration?auToken=${userData.users_line_id}`
                                     }
                                 },
                             ]
@@ -989,7 +1102,7 @@ export const replyUserData = async ({
                 }
             ],
         };
-       await axios.post(LINE_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -1003,60 +1116,60 @@ export const replyNotification = async ({
 }: ReplyNotification) => {
     try {
         const requestData = {
-            to:replyToken,
+            to: replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "แจ้งเตือน",
+                    type: "flex",
+                    altText: "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type    : "text",
-                                    text    : " ",
+                                    type: "text",
+                                    text: " ",
                                     contents: [
                                         {
-                                            type      : "span",
-                                            text      : "แจ้งเตือนเขตปลอดภัย",
-                                            color     : "#FC0303",
-                                            size      : "xl",
-                                            weight    : "bold",
+                                            type: "span",
+                                            text: "แจ้งเตือนเขตปลอดภัย",
+                                            color: "#FC0303",
+                                            size: "xl",
+                                            weight: "bold",
                                             decoration: "none"
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xxl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xxl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "md"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap : true,
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : message,
-                                            color     : "#555555",
-                                            size      : "md",
+                                            type: "span",
+                                            text: message,
+                                            color: "#555555",
+                                            size: "md",
                                             // decoration: "none",
                                             // wrap      : true
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
@@ -1067,7 +1180,7 @@ export const replyNotification = async ({
                 }
             ],
         };
-       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -1081,98 +1194,98 @@ export const replyNotificationPostback = async ({
     type,
     message,
     replyToken,
-    
-}: ReplyNotificationPostback ) => {
+
+}: ReplyNotificationPostback) => {
     try {
         const requestData = {
-            to:replyToken,
+            to: replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "แจ้งเตือน",
+                    type: "flex",
+                    altText: "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type    : "text",
-                                    text    : " ",
+                                    type: "text",
+                                    text: " ",
                                     contents: [
                                         {
-                                            type      : "span",
-                                            text      : "แจ้งเตือนเขตปลอดภัย",
-                                            color     : "#FC0303",
-                                            size      : "xl",
-                                            weight    : "bold",
+                                            type: "span",
+                                            text: "แจ้งเตือนเขตปลอดภัย",
+                                            color: "#FC0303",
+                                            size: "xl",
+                                            weight: "bold",
                                             decoration: "none"
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xxl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xxl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "md"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap : true,
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : message,
-                                            color     : "#555555",
-                                            size      : "md",
+                                            type: "span",
+                                            text: message,
+                                            color: "#555555",
+                                            size: "md",
                                             // decoration: "none",
                                             // wrap      : true
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "postback",
+                                        type: "postback",
                                         label: "ส่งความช่วยเหลือเพิ่มเติม",
-                                        data : `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
+                                        data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
-                                { 
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap  : true,
+                                {
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
-                                            color     : "#FC0303",
-                                            size      : "md",
+                                            type: "span",
+                                            text: "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
+                                            color: "#FC0303",
+                                            size: "md",
                                             // decoration: "none",
                                             // wrap      : true
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
@@ -1183,7 +1296,7 @@ export const replyNotificationPostback = async ({
                 }
             ],
         };
-       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -1198,60 +1311,60 @@ export const replyNotificationSOS = async ({
     try {
 
         const requestData = {
-            to:replyToken,
+            to: replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "แจ้งเตือน",
+                    type: "flex",
+                    altText: "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type    : "text",
-                                    text    : " ",
+                                    type: "text",
+                                    text: " ",
                                     contents: [
                                         {
-                                            type      : "span",
-                                            text      : "แจ้งเตือนฉุกเฉิน",
-                                            color     : "#FC0303",
-                                            size      : "xl",
-                                            weight    : "bold",
+                                            type: "span",
+                                            text: "แจ้งเตือนฉุกเฉิน",
+                                            color: "#FC0303",
+                                            size: "xl",
+                                            weight: "bold",
                                             decoration: "none"
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xxl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xxl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "md"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap : true,
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : message,
-                                            color     : "#555555",
-                                            size      : "md",
+                                            type: "span",
+                                            text: message,
+                                            color: "#555555",
+                                            size: "md",
                                             // decoration: "none",
                                             // wrap      : true
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
@@ -1262,7 +1375,7 @@ export const replyNotificationSOS = async ({
                 }
             ],
         };
-       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -1274,80 +1387,80 @@ export const replyNotificationSendDocQuery = async ({
     replyToken,
     userData
 }: {
-     replyToken: string;
-     userData  : any;
+    replyToken: string;
+    userData: any;
 }) => {
     try {
 
         const requestData = {
-            to:replyToken,
+            to: replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "แจ้งเตือน",
+                    type: "flex",
+                    altText: "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type    : "text",
-                                    text    : " ",
+                                    type: "text",
+                                    text: " ",
                                     contents: [
                                         {
-                                            type      : "span",
-                                            text      : "แบบสอบถาม",
-                                            color     : "#FC0303",
-                                            size      : "xl",
-                                            weight    : "bold",
+                                            type: "span",
+                                            text: "แบบสอบถาม",
+                                            color: "#FC0303",
+                                            size: "xl",
+                                            weight: "bold",
                                             decoration: "none"
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xxl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xxl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "md"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap : true,
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : "กรุณาตอบแบบสอบถามเพื่อให้ข้อมูลที่ถูกต้อง",
-                                            color     : "#555555",
-                                            size      : "md",
+                                            type: "span",
+                                            text: "กรุณาตอบแบบสอบถามเพื่อให้ข้อมูลที่ถูกต้อง",
+                                            color: "#555555",
+                                            size: "md",
                                             // decoration: "none",
                                             // wrap      : true
                                         },
-                                       
+
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "uri",
+                                        type: "uri",
                                         label: "ตอบแบบสอบถาม",
-                                        uri  : `${WEB_API}/questionnaire?id=${userData.borrow_id}`
+                                        uri: `${WEB_API}/questionnaire?id=${userData.borrow_id}`
                                     }
                                 },
                             ]
@@ -1356,7 +1469,7 @@ export const replyNotificationSendDocQuery = async ({
                 }
             ],
         };
-       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
@@ -1369,98 +1482,98 @@ export const replyNotificationPostbackTemp = async ({
     type,
     message,
     replyToken,
-    
-}: ReplyNotificationPostbackTemp ) => {
+
+}: ReplyNotificationPostbackTemp) => {
     try {
         const requestData = {
-            to:replyToken,
+            to: replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "แจ้งเตือน",
+                    type: "flex",
+                    altText: "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type    : "text",
-                                    text    : " ",
+                                    type: "text",
+                                    text: " ",
                                     contents: [
                                         {
-                                            type      : "span",
-                                            text      : "แจ้งอุณหภูมิร่างกายสูง",
-                                            color     : "#FC0303",
-                                            size      : "xl",
-                                            weight    : "bold",
+                                            type: "span",
+                                            text: "แจ้งอุณหภูมิร่างกายสูง",
+                                            color: "#FC0303",
+                                            size: "xl",
+                                            weight: "bold",
                                             decoration: "none"
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xxl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xxl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "md"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap : true,
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : message,
-                                            color     : "#555555",
-                                            size      : "md",
+                                            type: "span",
+                                            text: message,
+                                            color: "#555555",
+                                            size: "md",
                                             // decoration: "none",
                                             // wrap      : true
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "postback",
+                                        type: "postback",
                                         label: "ส่งความช่วยเหลือเพิ่มเติม",
-                                        data : `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
+                                        data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
-                                { 
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap  : true,
+                                {
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
-                                            color     : "#FC0303",
-                                            size      : "md",
+                                            type: "span",
+                                            text: "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
+                                            color: "#FC0303",
+                                            size: "md",
                                             // decoration: "none",
                                             // wrap      : true
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
@@ -1471,13 +1584,13 @@ export const replyNotificationPostbackTemp = async ({
                 }
             ],
         };
-       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
         }
     }
-} 
+}
 export const replyNotificationPostbackfall = async ({
     userId,
     takecarepersonId,
@@ -1485,97 +1598,97 @@ export const replyNotificationPostbackfall = async ({
     message,
     replyToken,
 
-}: ReplyNotificationPostbackfall ) => {
+}: ReplyNotificationPostbackfall) => {
     try {
         const requestData = {
-            to:replyToken,
+            to: replyToken,
             messages: [
                 {
-                    type    : "flex",
-                    altText : "แจ้งเตือน",
+                    type: "flex",
+                    altText: "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
-                            type    : "box",
-                            layout  : "vertical",
+                            type: "box",
+                            layout: "vertical",
                             contents: [
                                 {
-                                    type    : "text",
-                                    text    : " ",
+                                    type: "text",
+                                    text: " ",
                                     contents: [
                                         {
-                                            type      : "span",
-                                            text      : "แจ้งเตือนการล้ม",
-                                            color     : "#FC0303",
-                                            size      : "xl",
-                                            weight    : "bold",
+                                            type: "span",
+                                            text: "แจ้งเตือนการล้ม",
+                                            color: "#FC0303",
+                                            size: "xl",
+                                            weight: "bold",
                                             decoration: "none"
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xxl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xxl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "separator",
+                                    type: "separator",
                                     margin: "md"
                                 },
                                 {
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap : true,
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : message,
-                                            color     : "#555555",
-                                            size      : "md",
+                                            type: "span",
+                                            text: message,
+                                            color: "#555555",
+                                            size: "md",
                                             // decoration: "none",
                                             // wrap      : true
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
                                 },
                                 {
-                                    type  : "button",
-                                    style : "primary",
+                                    type: "button",
+                                    style: "primary",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
-                                        type : "postback",
+                                        type: "postback",
                                         label: "ส่งความช่วยเหลือเพิ่มเติม",
-                                        data : `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
+                                        data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
-                                { 
-                                    type  : "text",
-                                    text  : " ",
-                                    wrap  : true,
+                                {
+                                    type: "text",
+                                    text: " ",
+                                    wrap: true,
                                     lineSpacing: "5px",
                                     margin: "md",
-                                    contents:[
+                                    contents: [
                                         {
-                                            type      : "span",
-                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
-                                            color     : "#FC0303",
-                                            size      : "md",
+                                            type: "span",
+                                            text: "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
+                                            color: "#FC0303",
+                                            size: "md",
                                             // decoration: "none",
                                             // wrap      : true
                                         },
                                         {
-                                            type      : "span",
-                                            text      : " ",
-                                            size      : "xl",
+                                            type: "span",
+                                            text: " ",
+                                            size: "xl",
                                             decoration: "none"
                                         }
                                     ]
@@ -1586,7 +1699,7 @@ export const replyNotificationPostbackfall = async ({
                 }
             ],
         };
-       await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers:LINE_HEADER });
+        await axios.post(LINE_PUSH_MESSAGING_API, requestData, { headers: LINE_HEADER });
     } catch (error) {
         if (error instanceof Error) {
             console.log(error.message);
