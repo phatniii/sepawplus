@@ -1,6 +1,6 @@
 import axios from 'axios';
 import moment from 'moment';
-
+import prisma from '@/lib/prisma';
 const WEB_API = process.env.WEB_API_URL;
 const LINE_MESSAGING_API = 'https://api.line.me/v2/bot/message/reply';
 const LINE_PUSH_MESSAGING_API = 'https://api.line.me/v2/bot/message/push';
@@ -115,7 +115,15 @@ interface ReplyLocationData {
     safezoneData?: any;
     locationData?: any;
 }
-
+// helper ทำแถวแบบ baseline (label : value) และรองรับกำหนดสี value
+const baseline = (label: string, value: string, valueColor?: string) => ({
+  type: 'box',
+  layout: 'baseline',
+  contents: [
+    { type: 'text', text: label, size: 'sm', color: '#555555', flex: 3, wrap: true },
+    { type: 'text', text: value, size: 'sm', color: valueColor || '#111111', flex: 5, wrap: true }
+  ]
+});
 const layoutBoxBaseline = (label: string, text: string, flex1 = 2, flex2 = 5) => {
     return {
         type: "box",
@@ -513,160 +521,122 @@ export const replyConnection = async ({
     }
 }
 export const replyLocation = async ({
-    replyToken,
-    userData,
-    safezoneData,
-    userTakecarepersonData,
-    locationData
+  replyToken,
+  userData,
+  safezoneData,
+  userTakecarepersonData,
+  locationData
 }: ReplyLocationData) => {
-    try {
-        let latitude = Number(safezoneData.safez_latitude);
-        let longitude = Number(safezoneData.safez_longitude);
-        if (locationData) {
-            latitude = Number(locationData.locat_latitude);
-            longitude = Number(locationData.locat_longitude);
-        }
-
-        const heartRateResponse = await axios.get(`${WEB_API}/getHeartRate?takecare_id=${userTakecarepersonData.takecare_id}`);
-        const temperatureResponse = await axios.get(`${WEB_API}/getTemperature?takecare_id=${userTakecarepersonData.takecare_id}`);
-
-        const latestHeartRate = heartRateResponse.data.bpm;
-        const latestTemperature = temperatureResponse.data.temperature_value;
-
-        const requestData = {
-            replyToken,
-            messages: [{
-                type: "location",
-                title: `ตำแหน่งปัจจุบันของผู้สูงอายุ ${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`,
-                address: `สถานที่ตั้งปัจจุบันของผู้สูงอายุ`,
-                latitude: latitude,
-                longitude: longitude
-            }, {
-                type: "flex",
-                altText: "ตำแหน่งปัจจุบัน",
-                contents: {
-                    type: "bubble",
-                    body: {
-                        type: "box",
-                        layout: "vertical",
-                        contents: [{
-                            type: "text",
-                            text: "ตำแหน่งปัจจุบัน",
-                            color: "#FFB400",
-                            size: "xl",
-                            weight: "bold",
-                            wrap: true
-                        }, {
-                            type: "separator",
-                            margin: "xxl"
-                        }, {
-                            type: "text",
-                            text: `ข้อมูลผู้สูงอายุ`,
-                            size: "md",
-                            color: "#555555",
-                            wrap: true,
-                            margin: "sm"
-                        }, {
-                            type: "box",
-                            layout: "vertical",
-                            margin: "xxl",
-                            spacing: "sm",
-                            contents: [
-                                layoutBoxBaseline("ชื่อ-สกุล", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`),
-                                layoutBoxBaseline("latitude", `${latitude}`),
-                                layoutBoxBaseline("longitude", `${longitude}`),
-                            ]
-                        }, {
-                            type: "button",
-                            style: "primary",
-                            height: "sm",
-                            margin: "xxl",
-                            color: "#4477CE",
-                            action: {
-                                type: "uri",
-                                label: `โทร ${userTakecarepersonData.takecare_tel1 || '-'}`,
-                                uri: `tel:${userTakecarepersonData.takecare_tel1 || '-'}`
-                            }
-                        }, {
-                            type: "button",
-                            style: "primary",
-                            height: "sm",
-                            margin: "xxl",
-                            action: {
-                                type: "uri",
-                                label: "ดูแผนที่จากระบบ",
-                                uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
-                            }
-                        }]
-                    }
-                }
-            }, {
-                type: "flex",
-                altText: "สุขภาพปัจจุบัน",
-                contents: {
-                    type: "bubble",
-                    body: {
-                        type: "box",
-                        layout: "vertical",
-                        contents: [{
-                            type: "text",
-                            text: "สรุปสุขภาพ",
-                            color: "#FFB400",
-                            size: "xl",
-                            weight: "bold",
-                            wrap: true,
-                        }, {
-                            type: "separator",
-                            margin: "xxl"
-                        }, {
-                            type: "box",
-                            layout: "horizontal",
-                            margin: "xxl",
-                            spacing: "sm",
-                            contents: [{
-                                type: "box",
-                                layout: "vertical",
-                                flex: 1,
-                                contents: [{
-                                    type: "text",
-                                    text: "ชีพจร",
-                                    size: "sm",
-                                    color: "#AAAAAA"
-                                }, {
-                                    type: "text",
-                                    text: `${latestHeartRate || '-'} BPM`,
-                                    size: "md",
-                                    color: "#666666"
-                                }]
-                            }, {
-                                type: "box",
-                                layout: "vertical",
-                                flex: 1,
-                                contents: [{
-                                    type: "text",
-                                    text: "อุณหภูมิ",
-                                    size: "sm",
-                                    color: "#AAAAAA"
-                                }, {
-                                    type: "text",
-                                    text: `${latestTemperature || '-'} °C`,
-                                    size: "md",
-                                    color: "#666666"
-                                }]
-                            }]
-                        }]
-                    }
-                }
-            }],
-        };
-        await axios.post(LINE_MESSAGING_API, requestData, {
-            headers: LINE_HEADER
-        });
-    } catch (error) {
-        if (error instanceof Error) {
-            console.error("replyLocation error:", error.message);
-        }
+  try {
+    // -------- 1) เลือกพิกัดจาก location ล่าสุด ถ้าไม่มีใช้ safezone --------
+    let latitude = Number(safezoneData.safez_latitude);
+    let longitude = Number(safezoneData.safez_longitude);
+    if (locationData) {
+      latitude = Number(locationData.locat_latitude);
+      longitude = Number(locationData.locat_longitude);
     }
+
+    // -------- 2) ดึงค่า Temp/HR "ล่าสุด" (แก้ type ให้เป็น number) --------
+    const userIdNum = Number(userData.users_id);
+    const takecareIdNum = Number(userTakecarepersonData.takecare_id);
+
+    const [lastTemp, lastHR] = await Promise.all([
+      prisma.temperature_records.findFirst({
+        where: { users_id: userIdNum, takecare_id: takecareIdNum },
+        orderBy: { record_date: 'desc' },
+        select: { temperature_value: true, record_date: true, status: true }
+      }),
+      prisma.heartrate_records.findFirst({
+        where: { users_id: userIdNum, takecare_id: takecareIdNum },
+        orderBy: { record_date: 'desc' },
+        select: { bpm: true, record_date: true, status: true }
+      })
+    ]);
+
+    const fmtTime = (d?: Date | null) => (d ? moment(d).format('DD/MM HH:mm') + ' น.' : '-');
+
+    const tempText = lastTemp
+      ? `${Number(lastTemp.temperature_value).toFixed(1)} °C (${fmtTime(lastTemp.record_date)})`
+      : '-';
+    const hrText = lastHR ? `${Number(lastHR.bpm)} bpm (${fmtTime(lastHR.record_date)})` : '-';
+
+    const tempColor = lastTemp?.status === 1 ? '#E11D48' : '#111111'; // แดงถ้าผิดปกติ
+    const hrColor = lastHR?.status === 1 ? '#E11D48' : '#111111';
+
+    // -------- 3) ส่ง Location + Flex card --------
+    const requestData = {
+      replyToken,
+      messages: [
+        {
+          type: 'location',
+          title: `ตำแหน่งปัจจุบันของผู้สูงอายุ ${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`,
+          address: 'สถานที่ตั้งปัจจุบันของผู้สูงอายุ',
+          latitude,
+          longitude
+        },
+        {
+          type: 'flex',
+          altText: 'ตำแหน่งปัจจุบัน',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                { type: 'text', text: 'ตำแหน่งปัจจุบัน', color: '#FFB400', size: 'xl', weight: 'bold', wrap: true },
+                { type: 'separator', margin: 'xxl' },
+                { type: 'text', text: 'ข้อมูลผู้สูงอายุ', size: 'md', color: '#555555', wrap: true, margin: 'sm' },
+
+                {
+                  type: 'box',
+                  layout: 'vertical',
+                  margin: 'xxl',
+                  spacing: 'sm',
+                  contents: [
+                    baseline('ชื่อ-สกุล', `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`),
+                    baseline('latitude', String(latitude)),
+                    baseline('longitude', String(longitude)),
+
+                    // ✅ ข้อมูลล่าสุดที่ต้องการ
+                    baseline('อุณหภูมิ (ล่าสุด)', tempText, tempColor),
+                    baseline('ชีพจร (ล่าสุด)', hrText, hrColor)
+                  ]
+                },
+
+                {
+                  type: 'button',
+                  style: 'primary',
+                  height: 'sm',
+                  margin: 'xxl',
+                  color: '#4477CE',
+                  action: {
+                    type: 'uri',
+                    label: `โทร ${userTakecarepersonData.takecare_tel1 || '-'}`,
+                    uri: `tel:${userTakecarepersonData.takecare_tel1 || '-'}`
+                  }
+                },
+                {
+                  type: 'button',
+                  style: 'primary',
+                  height: 'sm',
+                  margin: 'xxl',
+                  action: {
+                    type: 'uri',
+                    label: 'ดูแผนที่จากระบบ',
+                    uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    };
+
+    await axios.post(LINE_MESSAGING_API, requestData, { headers: LINE_HEADER });
+  } catch (error) {
+    if (error instanceof Error) console.log(error.message);
+  }
 };
 export const replySetting = async ({
   replyToken,
