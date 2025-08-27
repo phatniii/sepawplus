@@ -148,7 +148,21 @@ const layoutBoxBaseline = (label: string, text: string, flex1 = 2, flex2 = 5) =>
     }
 }
 
-
+// การ์ด KPI สำหรับค่า Vital (ตัวเลขใหญ่ + หน่วย)
+const kpiBox = (label: string, value: string, unit: string, color: string) => ({
+  type: 'box',
+  layout: 'vertical',
+  flex: 1,
+  backgroundColor: '#F7F9FC',
+  paddingAll: '12px',
+  spacing: '6px',
+  alignItems: 'center',
+  contents: [
+    { type: 'text', text: label, size: 'xs', color: '#6B7280' },
+    { type: 'text', text: value, size: '3xl', weight: 'bold', color },
+    { type: 'text', text: unit, size: 'xs', color: '#6B7280' }
+  ]
+});
 
 export const getUserProfile = async (userId: string) => {
     try {
@@ -528,7 +542,7 @@ export const replyLocation = async ({
   locationData
 }: ReplyLocationData) => {
   try {
-    // -------- 1) เลือกพิกัดจาก location ล่าสุด ถ้าไม่มีใช้ safezone --------
+    // 1) พิกัด
     let latitude = Number(safezoneData.safez_latitude);
     let longitude = Number(safezoneData.safez_longitude);
     if (locationData) {
@@ -536,7 +550,7 @@ export const replyLocation = async ({
       longitude = Number(locationData.locat_longitude);
     }
 
-    // -------- 2) ดึงค่า Temp/HR "ล่าสุด" (แก้ type ให้เป็น number) --------
+    // 2) ดึงค่า Temp/HR "ล่าสุด" (ไม่แสดงเวลา/คำว่าล่าสุด)
     const userIdNum = Number(userData.users_id);
     const takecareIdNum = Number(userTakecarepersonData.takecare_id);
 
@@ -544,29 +558,25 @@ export const replyLocation = async ({
       prisma.temperature_records.findFirst({
         where: { users_id: userIdNum, takecare_id: takecareIdNum },
         orderBy: { record_date: 'desc' },
-        select: { temperature_value: true, record_date: true, status: true }
+        select: { temperature_value: true, status: true }
       }),
       prisma.heartrate_records.findFirst({
         where: { users_id: userIdNum, takecare_id: takecareIdNum },
         orderBy: { record_date: 'desc' },
-        select: { bpm: true, record_date: true, status: true }
+        select: { bpm: true, status: true }
       })
     ]);
 
-    const fmtTime = (d?: Date | null) => (d ? moment(d).format('DD/MM HH:mm') + ' น.' : '-');
+    const tempVal = lastTemp ? Number(lastTemp.temperature_value).toFixed(1) : '—';
+    const hrVal = lastHR ? String(Number(lastHR.bpm)) : '—';
 
-    const tempText = lastTemp
-      ? `${Number(lastTemp.temperature_value).toFixed(1)} °C (${fmtTime(lastTemp.record_date)})`
-      : '-';
-    const hrText = lastHR ? `${Number(lastHR.bpm)} bpm (${fmtTime(lastHR.record_date)})` : '-';
+    const tempColor = lastTemp?.status === 1 ? '#E11D48' : '#0EA5E9'; // แดงถ้าผิดปกติ, ฟ้าเมื่อปกติ
+    const hrColor   = lastHR?.status === 1 ? '#E11D48' : '#10B981';   // แดงถ้าผิดปกติ, เขียวเมื่อปกติ
 
-    const tempColor = lastTemp?.status === 1 ? '#E11D48' : '#111111'; // แดงถ้าผิดปกติ
-    const hrColor = lastHR?.status === 1 ? '#E11D48' : '#111111';
-
-    // -------- 3) ส่ง Location + Flex card --------
     const requestData = {
       replyToken,
       messages: [
+        // แผนที่ตำแหน่ง (ข้อความประเภท location เพิ่มอะไรไม่ได้)
         {
           type: 'location',
           title: `ตำแหน่งปัจจุบันของผู้สูงอายุ ${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`,
@@ -574,57 +584,77 @@ export const replyLocation = async ({
           latitude,
           longitude
         },
+        // Flex การ์ดรายละเอียด + Vitals ดีไซน์ใหม่
         {
           type: 'flex',
-          altText: 'ตำแหน่งปัจจุบัน',
+          altText: 'ข้อมูลตำแหน่งและสุขภาพ',
           contents: {
             type: 'bubble',
             body: {
               type: 'box',
               layout: 'vertical',
+              paddingAll: '16px',
+              spacing: '12px',
               contents: [
-                { type: 'text', text: 'ตำแหน่งปัจจุบัน', color: '#FFB400', size: 'xl', weight: 'bold', wrap: true },
-                { type: 'separator', margin: 'xxl' },
-                { type: 'text', text: 'ข้อมูลผู้สูงอายุ', size: 'md', color: '#555555', wrap: true, margin: 'sm' },
-
+                {
+                  type: 'text',
+                  text: 'ตำแหน่งปัจจุบัน',
+                  color: '#111111',
+                  size: 'xl',
+                  weight: 'bold'
+                },
                 {
                   type: 'box',
                   layout: 'vertical',
-                  margin: 'xxl',
-                  spacing: 'sm',
+                  spacing: '6px',
                   contents: [
                     baseline('ชื่อ-สกุล', `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`),
-                    baseline('latitude', String(latitude)),
-                    baseline('longitude', String(longitude)),
+                    baseline('Latitude', String(latitude)),
+                    baseline('Longitude', String(longitude))
+                  ]
+                },
+                { type: 'separator', margin: 'md' },
 
-                    // ✅ ข้อมูลล่าสุดที่ต้องการ
-                    baseline('อุณหภูมิ (ล่าสุด)', tempText, tempColor),
-                    baseline('ชีพจร (ล่าสุด)', hrText, hrColor)
+                // แถว KPI vitals (สวยและอ่านง่าย)
+                {
+                  type: 'box',
+                  layout: 'horizontal',
+                  spacing: '12px',
+                  contents: [
+                    kpiBox('อุณหภูมิ', tempVal, '°C', tempColor),
+                    kpiBox('ชีพจร', hrVal, 'bpm', hrColor)
                   ]
                 },
 
+                // ปุ่มต่าง ๆ
                 {
-                  type: 'button',
-                  style: 'primary',
-                  height: 'sm',
-                  margin: 'xxl',
-                  color: '#4477CE',
-                  action: {
-                    type: 'uri',
-                    label: `โทร ${userTakecarepersonData.takecare_tel1 || '-'}`,
-                    uri: `tel:${userTakecarepersonData.takecare_tel1 || '-'}`
-                  }
-                },
-                {
-                  type: 'button',
-                  style: 'primary',
-                  height: 'sm',
-                  margin: 'xxl',
-                  action: {
-                    type: 'uri',
-                    label: 'ดูแผนที่จากระบบ',
-                    uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
-                  }
+                  type: 'box',
+                  layout: 'vertical',
+                  spacing: '10px',
+                  margin: 'lg',
+                  contents: [
+                    {
+                      type: 'button',
+                      style: 'primary',
+                      color: '#4477CE',
+                      height: 'sm',
+                      action: {
+                        type: 'uri',
+                        label: `โทร ${userTakecarepersonData.takecare_tel1 || '-'}`,
+                        uri: `tel:${userTakecarepersonData.takecare_tel1 || '-'}`
+                      }
+                    },
+                    {
+                      type: 'button',
+                      style: 'primary',
+                      height: 'sm',
+                      action: {
+                        type: 'uri',
+                        label: 'ดูแผนที่จากระบบ',
+                        uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
+                      }
+                    }
+                  ]
                 }
               ]
             }
@@ -638,6 +668,7 @@ export const replyLocation = async ({
     if (error instanceof Error) console.log(error.message);
   }
 };
+
 export const replySetting = async ({
   replyToken,
   userData,
