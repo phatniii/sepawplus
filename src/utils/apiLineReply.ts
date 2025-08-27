@@ -627,14 +627,14 @@ export const replyLocation = async ({
           value: vitals.bpm != null ? String(vitals.bpm) : '-',
           unit : 'BPM',
           color: hrColor,
-          actionUri: `${WEB_API}/vitals/heartrate?u=${usersId}&t=${takecareId}`
+          actionUri: `${WEB_API}/setting/getHeartRate?u=${usersId}&t=${takecareId}`
         }),
         healthChip({
           label: 'อุณหภูมิ',
           value: vitals.temp != null ? Number(vitals.temp).toFixed(1) : '-',
           unit : '°C',
           color: tempColor,
-          actionUri: `${WEB_API}/vitals/temperature?u=${usersId}&t=${takecareId}`
+          actionUri: `${WEB_API}/setting/getTemperature?u=${usersId}&t=${takecareId}`
         }),
       ]
     };
