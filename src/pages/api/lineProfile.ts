@@ -157,8 +157,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 								console.log("User not registered, sending not registration reply.");
 								await replyNotRegistration({ replyToken, userId })
 							}
-						} else if (events.message.text === "ดูตำแหน่งปัจจุบัน") {
-							console.log("User selected 'ดูตำแหน่งปัจจุบัน'");
+						} else if (events.message.text === "ดูข้อมูลสุขภาพและตำแหน่งปัจจุบัน") {
+							console.log("User selected 'ดูข้อมูลสุขภาพและตำแหน่งปัจจุบัน'");
 							const responseUser = await api.getUser(userId);
 							if (responseUser) {
 								const encodedUsersId = encrypt(responseUser.users_id.toString());
