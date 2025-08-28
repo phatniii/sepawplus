@@ -75,7 +75,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
             });
 
             if (status === 1 && (!temp || temp.noti_status !== 1 || moment().diff(moment(temp.noti_time), 'minutes') >= 5)) {
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nอุณหภูมิร่างกายสูง`;
+                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname} \nอุณหภูมิร่างกายเกินค่าที่กำหนด`;
 
                 const replyToken = user.users_line_id || '';
                 if (replyToken) {

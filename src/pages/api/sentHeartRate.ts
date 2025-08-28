@@ -82,7 +82,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                     lastHR.noti_status !== 1 ||
                     moment().diff(moment(lastHR.noti_time), 'minutes') >= 5)
             ) {
-                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname}\nอัตราการเต้นของหัวใจผิดปกติ: ${bpmValue} bpm`;
+                const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname}\nชีพจรเกินค่าที่กำหนด: ${bpmValue} bpm`;
 
                 const replyToken = user.users_line_id || '';
                 if (replyToken) {

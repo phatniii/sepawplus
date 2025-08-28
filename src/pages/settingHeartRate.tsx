@@ -140,7 +140,7 @@ const SettingHeartRate = () => {
             </div>
             <div className="text-center mb-3">
               <h2 style={{ fontWeight: 700, color: "#2c3746", marginBottom: 12, fontSize: 26, lineHeight: 1.2 }}>
-                ตั้งค่าการแจ้งเตือน<br />อัตราการเต้นหัวใจ
+                ตั้งค่าการแจ้งเตือน<br />ชีพจร
               </h2>
             </div>
             <Card className="mb-3" style={{ borderRadius: 16, border: '1px solid #eef1f6' }}>
