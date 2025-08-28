@@ -777,7 +777,7 @@ export const replySetting = async ({
                       type: "box",
                       layout: "baseline",
                       contents: [
-                        { type: "text", text: "อัตราการเต้นของหัวใจ", flex: 2, weight: "bold" },
+                        { type: "text", text: "ชีพจร", flex: 2, weight: "bold" },
                         { type: "text", text: `${maxBpm} bpm`, flex: 3 }
                       ]
                     }

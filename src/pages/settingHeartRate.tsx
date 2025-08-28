@@ -148,18 +148,6 @@ const SettingHeartRate = () => {
               </h2>
             </div>
 
-            {/* Meaning / Definition box */}
-            <div
-              style={{
-                background: "#f6f8fc",
-                border: "1px solid #e8ecf3",
-                borderRadius: 12,
-                padding: "12px 14px",
-                marginBottom: 12
-              }}
-            >
-            </div>
-
             {/* Guidance card */}
             <Card className="mb-3" style={{ borderRadius: 16, border: '1px solid #eef1f6' }}>
               <Card.Body style={{ padding: '12px 14px' }}>
