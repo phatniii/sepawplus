@@ -250,7 +250,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
 						if (replyToken) {
 							console.log("Temperature request sent, replying with notification.");
-							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือกรณีอุณหภูมิสูงแล้ว' });
+							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
 
 						}
 					}
@@ -263,7 +263,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 						});
 						if (replyToken) {
 							console.log("Fall request sent, replying with notification.");
-							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือกรณีล้มแล้ว' });
+							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
 						}
 					}
 					else if (postback.type === 'heartrate') {
@@ -275,7 +275,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
 						if (replyToken) {
 							console.log("Heart Rate request sent, replying with notification.");
-							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือกรณีหัวใจผิดปกติแล้ว' });
+							await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
 						}
 					}
 					
