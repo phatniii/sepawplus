@@ -158,11 +158,6 @@ const SettingHeartRate = () => {
                 marginBottom: 12
               }}
             >
-              <div style={{ fontSize: 14, color: "#48526b", lineHeight: 1.6 }}>
-                <strong>ความหมายของชีพจร:</strong>{' '}
-                การขยายและหดตัวของผนังหลอดเลือดแดงที่เกิดตามจังหวะการเต้นของหัวใจ
-                วัดเป็นจำนวนครั้งต่อนาที (<strong>bpm</strong>).
-              </div>
             </div>
 
             {/* Guidance card */}
