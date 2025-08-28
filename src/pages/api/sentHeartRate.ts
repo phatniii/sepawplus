@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
 import _ from 'lodash';
-import { replyNotificationPostback } from '@/utils/apiLineReply'; // สมมุติว่าใช้แจ้งเตือน LINE
+import { replyNotificationPostbackHeart } from '@/utils/apiLineReply'; // สมมุติว่าใช้แจ้งเตือน LINE
 import moment from 'moment';
 
 type Data = {
@@ -86,7 +86,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
 
                 const replyToken = user.users_line_id || '';
                 if (replyToken) {
-                    await replyNotificationPostback({
+                    await replyNotificationPostbackHeart({
                         replyToken,
                         userId: user.users_id,
                         takecarepersonId: takecareperson.takecare_id,
