@@ -153,7 +153,7 @@ const SettingHeartRate = () => {
               <Card.Body style={{ padding: '12px 14px' }}>
                 <Badge bg="light" text="dark" style={{ border: '1px solid #e8ecf3' }}>คำแนะนำ</Badge>
                 <div style={{ fontSize: 14, color: '#48526b', marginTop: 8, lineHeight: 1.6 }}>
-                  ชีพจรขณะพัก (ผู้ใหญ่ทั่วไป): <strong>60–100 bpm</strong><br />
+                  ชีพจรขณะพัก (ผู้ใหญ่ทั่วไป): <strong>60–100 ครั้งต่อนาที</strong><br />
                 
                 </div>
               </Card.Body>
@@ -164,7 +164,7 @@ const SettingHeartRate = () => {
               className="mb-1"
               style={{ fontSize: 16, color: "#48526b", fontWeight: 500, display: 'flex', justifyContent: 'space-between' }}
             >
-              <span>ค่าสูงสุดของชีพจร (bpm)</span>
+              <span>ค่าสูงสุดของชีพจร (ครั้งต่อนาที)</span>
               <span aria-live="polite" style={{ color: "#ff6641", fontWeight: 700 }}>{maxBpm} bpm</span>
             </div>
 

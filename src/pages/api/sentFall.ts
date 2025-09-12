@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
 import _ from 'lodash';
-import { replyNotificationPostback } from '@/utils/apiLineReply';
+import { replyNotificationPostback ,replyNotificationPostbackfall} from '@/utils/apiLineReply';
 import axios from 'axios';
 import moment from 'moment';
 
@@ -78,7 +78,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 const replyToken = user.users_line_id || '';
                 if (replyToken) {
           
-                    await replyNotificationPostback({
+                    await replyNotificationPostbackfall({
                         replyToken,
                         userId: user.users_id,
                         takecarepersonId: takecareperson.takecare_id,

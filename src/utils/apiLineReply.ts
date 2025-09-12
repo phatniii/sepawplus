@@ -754,7 +754,7 @@ export const replySetting = async ({
                       layout: "baseline",
                       contents: [
                         { type: "text", text: "รัศมี ชั้นที่ 1", flex: 2, weight: "bold" },
-                        { type: "text", text: `${r1} ม.`, flex: 3 }
+                        { type: "text", text: `${r1} เมตร`, flex: 3 }
                       ]
                     },
                     {
@@ -762,14 +762,14 @@ export const replySetting = async ({
                       layout: "baseline",
                       contents: [
                         { type: "text", text: "รัศมี ชั้นที่ 2", flex: 2, weight: "bold" },
-                        { type: "text", text: `${r2} ม.`, flex: 3 }
+                        { type: "text", text: `${r2} เมตร`, flex: 3 }
                       ]
                     },
                     {
                       type: "box",
                       layout: "baseline",
                       contents: [
-                        { type: "text", text: "อุณหภูมิสูงสุด", flex: 2, weight: "bold" },
+                        { type: "text", text: "อุณหภูมิ", flex: 2, weight: "bold" },
                         { type: "text", text: `${maxTemperature} องศา`, flex: 3 }
                       ]
                     },
@@ -778,7 +778,7 @@ export const replySetting = async ({
                       layout: "baseline",
                       contents: [
                         { type: "text", text: "ชีพจร", flex: 2, weight: "bold" },
-                        { type: "text", text: `${maxBpm} bpm`, flex: 3 }
+                        { type: "text", text: `${maxBpm} ครั้งต่อนาที`, flex: 3 }
                       ]
                     }
                   ]
