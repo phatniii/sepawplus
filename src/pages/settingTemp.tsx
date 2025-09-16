@@ -158,7 +158,7 @@ const TemperatureSetting = () => {
               </Card.Body>
             </Card>
             <div className="mb-2" style={{ fontSize: 18, color: "#48526b", fontWeight: 500 }}>
-              ค่าอุณหภูมิสูงสุดที่อนุญาต:
+              กำหนดเกณฑ์สูงสุด:
               <span style={{ color: "#ff6641", fontWeight: 700, marginLeft: 6 }}>{maxTemperature}°C</span>
             </div>
             <div className="my-3">
@@ -171,7 +171,7 @@ const TemperatureSetting = () => {
               />
             </div>
             <div className="mb-4" style={{ fontSize: 16, color: "#48526b", marginTop: 20 }}>
-              หากเกินค่านี้ ระบบจะแจ้งเตือนทันทีผ่าน LINE
+              หากค่าอุณหภูมิเกินเกณฑ์ที่ตั้งไว้ ระบบจะแจ้งเตือนทันทีผ่าน LINE
             </div>
             <ButtonState
               text="✔ บันทึกการตั้งค่า"

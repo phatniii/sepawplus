@@ -144,7 +144,6 @@ const SettingHeartRate = () => {
             <div className="text-center mb-2">
               <h2 style={{ fontWeight: 700, color: "#2c3746", marginBottom: 8, fontSize: 26, lineHeight: 1.2 }}>
                 ตั้งค่าการแจ้งเตือน<br />ชีพจร
-                <span style={{ fontSize: 14, color: "#6c7a92", fontWeight: 400 }}> (อัตราการเต้นของหัวใจ)</span>
               </h2>
             </div>
 
@@ -164,8 +163,8 @@ const SettingHeartRate = () => {
               className="mb-1"
               style={{ fontSize: 16, color: "#48526b", fontWeight: 500, display: 'flex', justifyContent: 'space-between' }}
             >
-              <span>ค่าสูงสุดของชีพจร (ครั้งต่อนาที)</span>
-              <span aria-live="polite" style={{ color: "#ff6641", fontWeight: 700 }}>{maxBpm} bpm</span>
+              <span>กำหนดเกณฑ์สูงสุด (ครั้งต่อนาที)</span>
+              <span aria-live="polite" style={{ color: "#ff6641", fontWeight: 700 }}>{maxBpm} ครั้งต่อนาที</span>
             </div>
 
             {/* Slider + min/max labels */}
@@ -194,7 +193,7 @@ const SettingHeartRate = () => {
 
             {/* Notice */}
             <div className="mb-3" style={{ fontSize: 14.5, color: "#48526b" }}>
-              หากค่าชีพจรเกินกว่าที่กำหนด ระบบจะแจ้งเตือนผ่าน LINE ทันที
+              หากค่าชีพจรเกินเกณฑ์ที่ตั้งไว้ ระบบจะแจ้งเตือนทันทีผ่าน LINE
             </div>
 
             {/* Disclaimer */}
