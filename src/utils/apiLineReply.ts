@@ -490,7 +490,7 @@ export const replyConnection = async ({
                                 },
                                 {
                                     type  : "text",
-                                    text  : `ข้อมูลผู้สูงอายุ`,
+                                    text  : `ข้อมูลผู้ที่มีภาวะพึ่งพิง`,
                                     size  : "md",
                                     color : "#555555",
                                     wrap  : true,
@@ -586,8 +586,8 @@ export const replyLocation = async ({
         // แผนที่ตำแหน่ง (ข้อความประเภท location เพิ่มอะไรไม่ได้)
         {
           type: 'location',
-          title: `ตำแหน่งปัจจุบันของผู้สูงอายุ ${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`,
-          address: 'สถานที่ตั้งปัจจุบันของผู้สูงอายุ',
+          title: `ตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง ${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`,
+          address: 'สถานที่ตั้งปัจจุบันของผู้ที่มีภาวะพึ่งพิง',
           latitude,
           longitude
         },
@@ -916,7 +916,7 @@ export const replyUserInfo = async ({
                                 },
                                 {
                                     type  : "text",
-                                    text  : `ข้อมูลผู้สูงอายุ`,
+                                    text  : `ข้อมูลผู้ที่มีภาวะพึ่งพิง`,
                                     size  : "md",
                                     color : "#555555",
                                     wrap  : true,
@@ -1225,7 +1225,7 @@ export const replyNotificationPostback = async ({
                                     contents:[
                                         {
                                             type      : "span",
-                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
+                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง",
                                             color     : "#FC0303",
                                             size      : "md",
                                             // decoration: "none",
@@ -1513,7 +1513,7 @@ export const replyNotificationPostbackTemp = async ({
                                     contents:[
                                         {
                                             type      : "span",
-                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
+                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง",
                                             color     : "#FC0303",
                                             size      : "md",
                                             // decoration: "none",
@@ -1628,7 +1628,7 @@ export const replyNotificationPostbackfall = async ({
                                     contents:[
                                         {
                                             type      : "span",
-                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
+                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง",
                                             color     : "#FC0303",
                                             size      : "md",
                                             // decoration: "none",
@@ -1744,7 +1744,7 @@ export const replyNotificationPostbackHeart = async ({
                                     contents:[
                                         {
                                             type      : "span",
-                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้สูงอายุ",
+                                            text      : "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง",
                                             color     : "#FC0303",
                                             size      : "md",
                                             // decoration: "none",
